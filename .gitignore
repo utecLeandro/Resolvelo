@@ -1,0 +1,187 @@
+# ============================================================================
+# GITIGNORE PARA RESOLVELO
+# ============================================================================
+# Este archivo especifica qué archivos y directorios deben ser ignorados
+# por Git para mantener el repositorio limpio y seguro.
+# ============================================================================
+
+# ==========================================================================
+# DEPENDENCIAS DE NODE.JS
+# ==========================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ==========================================================================
+# ARCHIVOS DE ENTORNO Y CONFIGURACIÓN SENSIBLE
+# ==========================================================================
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+
+# Archivos de configuración con datos sensibles
+config/production.json
+config/staging.json
+secrets/
+
+# ==========================================================================
+# ARCHIVOS DE CONSTRUCCIÓN Y DISTRIBUCIÓN
+# ==========================================================================
+dist/
+build/
+.next/
+out/
+
+# ==========================================================================
+# LOGS Y ARCHIVOS TEMPORALES
+# ==========================================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Archivos temporales
+tmp/
+temp/
+.tmp/
+
+# ==========================================================================
+# ARCHIVOS DE TESTING Y COVERAGE
+# ==========================================================================
+coverage/
+.nyc_output/
+test-results/
+junit.xml
+
+# ==========================================================================
+# ARCHIVOS DE IDE Y EDITORES
+# ==========================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ==========================================================================
+# ARCHIVOS DEL SISTEMA OPERATIVO
+# ==========================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ==========================================================================
+# ARCHIVOS DE PRISMA
+# ==========================================================================
+# Archivo de bloqueo de migraciones (se genera automáticamente)
+prisma/migrations/migration_lock.toml
+# Cliente de Prisma generado
+prisma/generated/
+
+# ==========================================================================
+# ARCHIVOS DE BASE DE DATOS LOCAL
+# ==========================================================================
+*.sqlite
+*.sqlite3
+*.db
+
+# ==========================================================================
+# ARCHIVOS DE UPLOADS Y MEDIA
+# ==========================================================================
+uploads/
+public/uploads/
+storage/
+
+# ==========================================================================
+# CERTIFICADOS Y CLAVES
+# ==========================================================================
+*.pem
+*.key
+*.crt
+*.p12
+ssl/
+certificates/
+
+# ==========================================================================
+# ARCHIVOS DE DOCKER
+# ==========================================================================
+# Mantener docker-compose.yml pero ignorar overrides locales
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ==========================================================================
+# ARCHIVOS DE BACKUP
+# ==========================================================================
+*.backup
+*.bak
+*.dump
+
+# ==========================================================================
+# CACHE DE HERRAMIENTAS
+# ==========================================================================
+.cache/
+.parcel-cache/
+.eslintcache
+
+# ==========================================================================
+# ARCHIVOS ESPECÍFICOS DE NESTJS
+# ==========================================================================
+# Archivos de compilación de TypeScript
+*.tsbuildinfo
+# Archivos de decoradores compilados
+*.metadata.json
+
+# ==========================================================================
+# ARCHIVOS DE DOCUMENTACIÓN GENERADA
+# ==========================================================================
+docs/generated/
+api-docs/
+
+# ==========================================================================
+# ARCHIVOS DE MONITOREO Y MÉTRICAS
+# ==========================================================================
+metrics/
+monitoring/
+
+# ==========================================================================
+# ARCHIVOS DE TERRAFORM (SI SE USA PARA INFRAESTRUCTURA)
+# ==========================================================================
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# ==========================================================================
+# ARCHIVOS DE KUBERNETES (SI SE USA)
+# ==========================================================================
+k8s/secrets/
+k8s/configmaps/
+
+# ==========================================================================
+# ARCHIVOS DE AWS (SI SE USA)
+# ==========================================================================
+.aws/
+
+# ==========================================================================
+# OTROS ARCHIVOS ESPECÍFICOS DEL PROYECTO
+# ==========================================================================
+# Archivos de configuración local del desarrollador
+.local/
+.personal/
+
+# Archivos de pruebas de carga
+load-test-results/
+
+# Archivos de análisis de código
+sonar-project.properties

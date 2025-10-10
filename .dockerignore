@@ -1,0 +1,104 @@
+# ============================================================================
+# DOCKERIGNORE PARA RESOLVELO
+# ============================================================================
+# Este archivo especifica qué archivos y directorios deben ser excluidos
+# durante la construcción de la imagen Docker para optimizar el tamaño
+# y la velocidad de construcción.
+# ============================================================================
+
+# Dependencias de Node.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de distribución y construcción
+dist
+build
+.next
+
+# Archivos de entorno y configuración local
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+
+# Archivos de IDE y editores
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Archivos temporales
+tmp
+temp
+.tmp
+
+# Archivos de testing
+coverage
+.nyc_output
+test-results
+
+# Archivos de Git
+.git
+.gitignore
+.gitattributes
+
+# Documentación
+README.md
+CHANGELOG.md
+docs/
+*.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Archivos de CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+.circleci
+
+# Archivos de desarrollo
+.eslintrc*
+.prettierrc*
+jest.config.*
+tsconfig*.json
+
+# Archivos de base de datos local
+*.sqlite
+*.db
+
+# Archivos de backup
+*.backup
+*.bak
+
+# Archivos de certificados (no incluir en imagen)
+*.pem
+*.key
+*.crt
+ssl/
+
+# Archivos de uploads locales (se manejan con volúmenes)
+uploads/
+public/uploads/
+
+# Cache de herramientas
+.cache
+.parcel-cache
+
+# Archivos de Prisma generados localmente
+prisma/migrations/migration_lock.toml
