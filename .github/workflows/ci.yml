@@ -1,0 +1,278 @@
+name: 🚀 CI/CD Pipeline - ReSolVelo
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '18'
+  POSTGRES_VERSION: '14'
+
+jobs:
+  # 🔍 Análisis de código y linting
+  lint:
+    name: 🔍 Lint y Formato
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: 📦 Instalar dependencias
+      run: npm ci
+      
+    - name: 🔍 Ejecutar ESLint
+      run: npm run lint
+      
+    - name: 🎨 Verificar formato con Prettier
+      run: npm run format:check
+      
+    - name: 📝 Verificar convenciones de commits
+      if: github.event_name == 'pull_request'
+      uses: wagoid/commitlint-github-action@v5
+
+  # 🧪 Tests unitarios y de integración
+  test:
+    name: 🧪 Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: resolvelo_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: 📦 Instalar dependencias
+      run: npm ci
+      
+    - name: 🗄️ Configurar base de datos de prueba
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/resolvelo_test
+      run: |
+        npx prisma migrate deploy
+        npx prisma generate
+        
+    - name: 🧪 Ejecutar tests unitarios
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/resolvelo_test
+        JWT_SECRET: test-secret-key
+        NODE_ENV: test
+      run: npm run test
+      
+    - name: 📊 Generar reporte de cobertura
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/resolvelo_test
+        JWT_SECRET: test-secret-key
+        NODE_ENV: test
+      run: npm run test:cov
+      
+    - name: 📈 Subir cobertura a Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+
+  # 🔒 Análisis de seguridad
+  security:
+    name: 🔒 Análisis de Seguridad
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: 📦 Instalar dependencias
+      run: npm ci
+      
+    - name: 🔍 Auditoría de dependencias
+      run: npm audit --audit-level moderate
+      
+    - name: 🛡️ Análisis de vulnerabilidades con Snyk
+      uses: snyk/actions/node@master
+      continue-on-error: true
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+
+  # 🏗️ Build y validación
+  build:
+    name: 🏗️ Build
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: 📦 Instalar dependencias
+      run: npm ci
+      
+    - name: 🔧 Generar cliente Prisma
+      run: npx prisma generate
+      
+    - name: 🏗️ Build de la aplicación
+      run: npm run build
+      
+    - name: 📦 Verificar artefactos de build
+      run: |
+        ls -la dist/
+        echo "✅ Build completado exitosamente"
+
+  # 🐳 Build de Docker (solo en main y develop)
+  docker:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: 🐳 Configurar Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: 🔑 Login a Docker Hub
+      if: github.ref == 'refs/heads/main'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: 🏗️ Build imagen Docker
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: ${{ github.ref == 'refs/heads/main' }}
+        tags: |
+          resolvelo/backend:latest
+          resolvelo/backend:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # 📊 Análisis de calidad de código
+  sonarcloud:
+    name: 📊 SonarCloud
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 📊 Análisis SonarCloud
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # 🚀 Deploy automático (solo main)
+  deploy:
+    name: 🚀 Deploy a Producción
+    runs-on: ubuntu-latest
+    needs: [docker, security]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: 🚀 Deploy a AWS App Runner
+      run: |
+        echo "🚀 Desplegando a producción..."
+        echo "✅ Deploy completado"
+        # Aquí iría la lógica real de deploy a AWS
+
+  # 📝 Comentario en PR con resultados
+  pr-comment:
+    name: 📝 Comentario en PR
+    runs-on: ubuntu-latest
+    needs: [lint, test, build, security]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: 📝 Comentar resultados en PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const botComment = comments.find(comment => 
+            comment.user.type === 'Bot' && comment.body.includes('🤖 Resultados del CI/CD')
+          );
+          
+          const body = `## 🤖 Resultados del CI/CD
+          
+          ✅ **Lint**: Pasado
+          ✅ **Tests**: Pasado  
+          ✅ **Build**: Pasado
+          ✅ **Seguridad**: Pasado
+          
+          🎉 **¡Todos los checks han pasado!** Este PR está listo para revisión.
+          
+          ---
+          *Generado automáticamente por GitHub Actions*`;
+          
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+          }

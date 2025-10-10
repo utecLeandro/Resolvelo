@@ -214,19 +214,73 @@ resolvelo/
 
 ## 🤝 Contribución
 
-### Proceso de Contribución
-1. Fork del repositorio
-2. Crear rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit de cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Crear Pull Request
+¡Bienvenido al equipo de desarrollo de ReSolVelo! Para mantener un flujo de trabajo organizado y colaborativo, seguimos una estrategia específica de ramas y procesos.
 
-### Estándares de Código
+### 📋 Guía Rápida de Desarrollo
+
+Para información detallada sobre el proceso de contribución, consulta nuestro [**CONTRIBUTING.md**](CONTRIBUTING.md).
+
+### 🌿 Estrategia de Ramas
+
+#### **Ramas Principales**
+- **`main`**: Producción estable - ⚠️ **Protegida contra pushes directos**
+- **`develop`**: Integración de funcionalidades completadas
+- **`feature/*`**: Desarrollo de nuevas funcionalidades
+- **`bugfix/*`**: Corrección de errores
+- **`hotfix/*`**: Correcciones críticas en producción
+
+#### **Flujo de Trabajo**
+```bash
+# 1. Crear nueva funcionalidad
+git checkout develop
+git pull origin develop
+git checkout -b feature/nombre-funcionalidad
+
+# 2. Desarrollar y commitear
+git add .
+git commit -m "feat: descripción del cambio"
+git push origin feature/nombre-funcionalidad
+
+# 3. Crear Pull Request a develop
+# 4. Revisión de código obligatoria
+# 5. Merge después de aprobación
+```
+
+### 🔍 Pull Requests
+
+**Requisitos Obligatorios:**
+- ✅ **Revisión de código** por el otro miembro del equipo
+- ✅ **Tests pasando** (cuando estén implementados)
+- ✅ **Descripción clara** del cambio
+- ✅ **Sin conflictos** con la rama destino
+
+### 👥 Equipo de Desarrollo
+
+Somos **2 desarrolladores** trabajando colaborativamente:
+- Todas las funcionalidades requieren **revisión cruzada**
+- **Comunicación constante** sobre cambios importantes
+- **Pair programming** para funcionalidades complejas
+
+### 📝 Estándares de Código
+
+- **Nomenclatura**: 
+  - Variables/funciones: `camelCase`
+  - Clases: `PascalCase`
+  - Archivos: `kebab-case`
+- **Idioma**: Priorizar español cuando sea posible
 - **Formato**: Prettier con configuración del proyecto
 - **Linting**: ESLint con reglas estrictas
 - **Commits**: Conventional Commits
 - **Testing**: Cobertura mínima del 80%
 - **Documentación**: JSDoc para funciones públicas
+
+### 🚀 Proceso de Release
+
+1. **Desarrollo** en ramas `feature/*`
+2. **Integración** en `develop` vía PR
+3. **Testing completo** en `develop`
+4. **Release** de `develop` a `main` vía PR
+5. **Deploy** automático a producción
 
 ## 📊 Roadmap
 

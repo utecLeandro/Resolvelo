@@ -1,0 +1,319 @@
+name: 🔍 Validación de Pull Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [ main, develop ]
+
+jobs:
+  # 📋 Validación de estructura del PR
+  pr-validation:
+    name: 📋 Validar Estructura del PR
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: 📝 Validar título del PR
+      uses: amannn/action-semantic-pull-request@v5
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        types: |
+          feat
+          fix
+          docs
+          style
+          refactor
+          test
+          chore
+          hotfix
+        scopes: |
+          auth
+          users
+          publications
+          reservations
+          payments
+          ratings
+          admin
+          database
+          docker
+          ci
+        requireScope: false
+        
+    - name: 📏 Verificar longitud del título
+      run: |
+        TITLE="${{ github.event.pull_request.title }}"
+        if [ ${#TITLE} -gt 72 ]; then
+          echo "❌ El título del PR es demasiado largo (${#TITLE} caracteres). Máximo 72 caracteres."
+          exit 1
+        fi
+        echo "✅ Longitud del título: ${#TITLE} caracteres"
+        
+    - name: 📝 Verificar descripción del PR
+      run: |
+        BODY="${{ github.event.pull_request.body }}"
+        if [ -z "$BODY" ] || [ ${#BODY} -lt 20 ]; then
+          echo "❌ El PR debe tener una descripción de al menos 20 caracteres"
+          exit 1
+        fi
+        echo "✅ Descripción del PR válida"
+
+  # 🌿 Validación de estrategia de ramas
+  branch-validation:
+    name: 🌿 Validar Estrategia de Ramas
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: 🔍 Validar nombre de rama
+      run: |
+        BRANCH_NAME="${{ github.head_ref }}"
+        echo "🌿 Validando rama: $BRANCH_NAME"
+        
+        # Validar patrones de nombres de rama
+        if [[ $BRANCH_NAME =~ ^(feature|bugfix|hotfix)/.+ ]]; then
+          echo "✅ Nombre de rama válido: $BRANCH_NAME"
+        else
+          echo "❌ Nombre de rama inválido: $BRANCH_NAME"
+          echo "📋 Formatos válidos:"
+          echo "   - feature/nombre-descriptivo"
+          echo "   - bugfix/descripcion-del-bug"
+          echo "   - hotfix/descripcion-critica"
+          exit 1
+        fi
+        
+    - name: 🎯 Validar rama destino
+      run: |
+        BASE_BRANCH="${{ github.base_ref }}"
+        HEAD_BRANCH="${{ github.head_ref }}"
+        
+        echo "🎯 Rama origen: $HEAD_BRANCH"
+        echo "🎯 Rama destino: $BASE_BRANCH"
+        
+        # Validar flujo de ramas
+        if [[ $HEAD_BRANCH =~ ^feature/.+ ]] && [[ $BASE_BRANCH != "develop" ]]; then
+          echo "❌ Las ramas feature/* deben apuntar a 'develop'"
+          exit 1
+        fi
+        
+        if [[ $HEAD_BRANCH =~ ^bugfix/.+ ]] && [[ $BASE_BRANCH != "develop" ]]; then
+          echo "❌ Las ramas bugfix/* deben apuntar a 'develop'"
+          exit 1
+        fi
+        
+        if [[ $HEAD_BRANCH =~ ^hotfix/.+ ]] && [[ $BASE_BRANCH != "main" ]]; then
+          echo "❌ Las ramas hotfix/* deben apuntar a 'main'"
+          exit 1
+        fi
+        
+        echo "✅ Flujo de ramas válido"
+
+  # 📊 Análisis de cambios
+  change-analysis:
+    name: 📊 Análisis de Cambios
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 📊 Analizar archivos modificados
+      run: |
+        echo "📊 Analizando cambios en el PR..."
+        
+        # Obtener archivos modificados
+        CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+        
+        echo "📁 Archivos modificados:"
+        echo "$CHANGED_FILES"
+        
+        # Contadores
+        TS_FILES=0
+        PRISMA_FILES=0
+        CONFIG_FILES=0
+        TEST_FILES=0
+        
+        # Analizar tipos de archivos
+        while IFS= read -r file; do
+          if [[ $file == *.ts ]]; then
+            ((TS_FILES++))
+          elif [[ $file == *.prisma ]]; then
+            ((PRISMA_FILES++))
+          elif [[ $file == *.json ]] || [[ $file == *.yml ]] || [[ $file == *.yaml ]]; then
+            ((CONFIG_FILES++))
+          elif [[ $file == *.spec.ts ]] || [[ $file == *.test.ts ]]; then
+            ((TEST_FILES++))
+          fi
+        done <<< "$CHANGED_FILES"
+        
+        echo "📈 Resumen de cambios:"
+        echo "   - Archivos TypeScript: $TS_FILES"
+        echo "   - Archivos Prisma: $PRISMA_FILES"
+        echo "   - Archivos de configuración: $CONFIG_FILES"
+        echo "   - Archivos de test: $TEST_FILES"
+        
+        # Validaciones específicas
+        if [ $PRISMA_FILES -gt 0 ]; then
+          echo "⚠️  Se detectaron cambios en archivos Prisma"
+          echo "📋 Asegúrate de:"
+          echo "   - Crear migraciones apropiadas"
+          echo "   - Actualizar seeds si es necesario"
+          echo "   - Probar migraciones en desarrollo"
+        fi
+
+  # 🔒 Validación de seguridad específica para PRs
+  security-check:
+    name: 🔒 Verificación de Seguridad
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 🔍 Buscar secretos expuestos
+      run: |
+        echo "🔍 Buscando posibles secretos expuestos..."
+        
+        # Patrones de secretos comunes
+        PATTERNS=(
+          "password\s*=\s*['\"][^'\"]{8,}"
+          "api[_-]?key\s*=\s*['\"][^'\"]{16,}"
+          "secret\s*=\s*['\"][^'\"]{16,}"
+          "token\s*=\s*['\"][^'\"]{16,}"
+          "jwt[_-]?secret\s*=\s*['\"][^'\"]{16,}"
+          "database[_-]?url\s*=\s*['\"]postgresql://[^'\"]*:[^'\"]*@"
+        )
+        
+        FOUND_SECRETS=false
+        
+        for pattern in "${PATTERNS[@]}"; do
+          if git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -iE "$pattern"; then
+            echo "❌ Posible secreto encontrado: $pattern"
+            FOUND_SECRETS=true
+          fi
+        done
+        
+        if [ "$FOUND_SECRETS" = true ]; then
+          echo "🚨 Se encontraron posibles secretos en el código"
+          echo "📋 Por favor:"
+          echo "   - Revisa los archivos modificados"
+          echo "   - Usa variables de entorno para secretos"
+          echo "   - Actualiza .env.example si es necesario"
+          exit 1
+        fi
+        
+        echo "✅ No se encontraron secretos expuestos"
+        
+    - name: 🔍 Verificar archivos sensibles
+      run: |
+        echo "🔍 Verificando archivos sensibles..."
+        
+        SENSITIVE_FILES=(
+          ".env"
+          "*.pem"
+          "*.key"
+          "*.p12"
+          "*.pfx"
+          "id_rsa"
+          "id_dsa"
+        )
+        
+        FOUND_SENSITIVE=false
+        
+        for pattern in "${SENSITIVE_FILES[@]}"; do
+          if git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "$pattern"; then
+            echo "❌ Archivo sensible encontrado: $pattern"
+            FOUND_SENSITIVE=true
+          fi
+        done
+        
+        if [ "$FOUND_SENSITIVE" = true ]; then
+          echo "🚨 Se encontraron archivos sensibles"
+          echo "📋 Estos archivos no deben estar en el repositorio"
+          exit 1
+        fi
+        
+        echo "✅ No se encontraron archivos sensibles"
+
+  # 📏 Validación de tamaño del PR
+  size-validation:
+    name: 📏 Validar Tamaño del PR
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 📏 Verificar tamaño del PR
+      run: |
+        echo "📏 Analizando tamaño del PR..."
+        
+        # Contar líneas añadidas y eliminadas
+        STATS=$(git diff --shortstat ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+        echo "📊 Estadísticas: $STATS"
+        
+        # Extraer números
+        INSERTIONS=$(echo "$STATS" | grep -o '[0-9]\+ insertion' | grep -o '[0-9]\+' || echo "0")
+        DELETIONS=$(echo "$STATS" | grep -o '[0-9]\+ deletion' | grep -o '[0-9]\+' || echo "0")
+        
+        TOTAL_CHANGES=$((INSERTIONS + DELETIONS))
+        
+        echo "📈 Líneas añadidas: $INSERTIONS"
+        echo "📉 Líneas eliminadas: $DELETIONS"
+        echo "📊 Total de cambios: $TOTAL_CHANGES"
+        
+        # Validar tamaño
+        if [ $TOTAL_CHANGES -gt 1000 ]; then
+          echo "⚠️  PR grande detectado ($TOTAL_CHANGES líneas)"
+          echo "📋 Considera:"
+          echo "   - Dividir en PRs más pequeños"
+          echo "   - Revisar si todos los cambios son necesarios"
+          echo "   - Documentar bien los cambios extensos"
+        elif [ $TOTAL_CHANGES -gt 500 ]; then
+          echo "⚠️  PR mediano detectado ($TOTAL_CHANGES líneas)"
+          echo "📋 Asegúrate de documentar bien los cambios"
+        else
+          echo "✅ Tamaño de PR apropiado ($TOTAL_CHANGES líneas)"
+        fi
+
+  # 📝 Resumen final
+  validation-summary:
+    name: 📝 Resumen de Validación
+    runs-on: ubuntu-latest
+    needs: [pr-validation, branch-validation, change-analysis, security-check, size-validation]
+    if: always()
+    
+    steps:
+    - name: 📝 Generar resumen
+      run: |
+        echo "## 📋 Resumen de Validación del PR"
+        echo ""
+        echo "✅ **Estructura del PR**: ${{ needs.pr-validation.result }}"
+        echo "✅ **Estrategia de ramas**: ${{ needs.branch-validation.result }}"
+        echo "✅ **Análisis de cambios**: ${{ needs.change-analysis.result }}"
+        echo "✅ **Verificación de seguridad**: ${{ needs.security-check.result }}"
+        echo "✅ **Validación de tamaño**: ${{ needs.size-validation.result }}"
+        echo ""
+        
+        # Verificar si alguna validación falló
+        if [[ "${{ needs.pr-validation.result }}" == "failure" ]] || \
+           [[ "${{ needs.branch-validation.result }}" == "failure" ]] || \
+           [[ "${{ needs.change-analysis.result }}" == "failure" ]] || \
+           [[ "${{ needs.security-check.result }}" == "failure" ]] || \
+           [[ "${{ needs.size-validation.result }}" == "failure" ]]; then
+          echo "❌ **Algunas validaciones fallaron. Revisa los detalles arriba.**"
+          exit 1
+        else
+          echo "🎉 **¡Todas las validaciones pasaron exitosamente!**"
+        fi
