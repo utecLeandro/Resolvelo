@@ -129,16 +129,50 @@
    docker-compose up -d
    ```
 
-4. **Ejecutar migraciones de base de datos**
+4. **Instalar dependencias**
    ```bash
-   npx prisma migrate dev
-   npx prisma generate
+   npm install
+   cd frontend && npm install && cd ..
    ```
 
-5. **Sembrar datos iniciales**
+5. **Generar cliente de Prisma y aplicar esquema**
    ```bash
-   npx prisma db seed
+   npm run prisma:generate
+   npm run prisma:db:push
    ```
+
+6. **Sembrar datos iniciales (opcional)**
+   ```bash
+   npm run prisma:seed
+   ```
+
+7. **Iniciar la aplicación**
+   ```bash
+   # Backend (puerto 3000)
+   npm run start:dev
+   
+   # Frontend (puerto 5173) - en otra terminal
+   cd frontend && npm run dev
+   ```
+
+### 🧪 Datos de Prueba
+
+Después de ejecutar `npm run prisma:seed`, tendrás disponibles los siguientes usuarios de prueba:
+
+| Usuario | Email | Contraseña | Descripción |
+|---------|-------|------------|-------------|
+| Juan Pérez | `juan@test.com` | `JuanTest2024!` | Usuario con guitarra acústica |
+| María García | `maria@test.com` | `MariaTest2024!` | Usuario con batería |
+
+**Publicaciones de ejemplo:**
+- **Guitarra Acústica Yamaha FG800** - $25/día (Juan)
+- **Batería Pearl Export Series** - $50/día (María)
+
+**Datos incluidos:**
+- ✅ Usuarios verificados con contraseñas hasheadas
+- ✅ Publicaciones con imágenes de ejemplo
+- ✅ Reserva de prueba confirmada
+- ✅ Transacción de pago completada
 
 ## 🔧 Scripts Disponibles
 
@@ -197,6 +231,11 @@ resolvelo/
 - **Rate Limiting**: Protección contra ataques de fuerza bruta
 - **CORS Configurado**: Control de acceso entre dominios
 - **Encriptación de Contraseñas**: Hash + salt con bcrypt
+- **Validación de Contraseñas Seguras**: Cumple estándares OWASP
+  - Mínimo 8 caracteres, máximo 128
+  - Requiere mayúsculas, minúsculas, números y caracteres especiales
+  - Bloquea contraseñas comunes y patrones inseguros
+  - Validación en tiempo real con endpoint `/auth/validar-contrasena`
 - **Validación de Archivos**: Control de tipos y tamaños
 - **Auditoría Completa**: Log de todas las acciones administrativas
 
