@@ -47,16 +47,29 @@ const onSubmit = async () => {
     const response = await authService.login({ email: email.value, password: password.value })
     // Guardar el token de manera segura
     localStorage.setItem('access_token', response.access_token)
+    
+    // Guardar información del usuario
+    if (response.user) {
+      localStorage.setItem('userData', JSON.stringify(response.user))
+    }
 
     // Flujo de verificación pendiente
     if (response.user?.estadoVerificacion === 'PENDIENTE') {
       router.push({ path: '/verificacion-pendiente', query: { email: response.user.email } })
       return
     }
+    
     // Feedback temporal: mostrar confirmación de login exitoso
     successMessage.value = 'Inicio de sesión exitoso.'
-    // TODO: Redirigir al dashboard cuando esté disponible
-    // router.push('/dashboard')
+    
+    // Actualizar el estado de autenticación en la aplicación
+    if ((window as any).actualizarEstadoAutenticacion) {
+      (window as any).actualizarEstadoAutenticacion()
+    }
+    
+    // Redirigir a la página anterior o al catálogo por defecto
+    const rutaRedireccion = authService.obtenerRutaRedireccion()
+    router.push(rutaRedireccion)
   } catch (err: any) {
     if (err?.response?.status === 401) {
       formError.value = 'Credenciales incorrectas. Verifica tu email y contraseña.'

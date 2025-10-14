@@ -118,8 +118,17 @@ export class PublicacionesService {
         this.prisma.publicacion.count({ where: condiciones })
       ]);
 
+      // Convertir precios Decimal a números para el frontend
+      const publicacionesConPreciosNumericos = publicaciones.map(publicacion => ({
+        ...publicacion,
+        precioPorDia: Number(publicacion.precioPorDia),
+        precioPorSemana: publicacion.precioPorSemana ? Number(publicacion.precioPorSemana) : null,
+        precioPorMes: publicacion.precioPorMes ? Number(publicacion.precioPorMes) : null,
+        deposito: publicacion.deposito ? Number(publicacion.deposito) : null,
+      }));
+
       return {
-        publicaciones,
+        publicaciones: publicacionesConPreciosNumericos,
         paginacion: {
           paginaActual: pagina,
           totalPaginas: Math.ceil(total / limite),
@@ -137,7 +146,7 @@ export class PublicacionesService {
    * @param id ID de la publicación
    * @returns Publicación encontrada
    */
-  async obtenerPublicacionPorId(id: string): Promise<Publicacion> {
+  async obtenerPublicacionPorId(id: string): Promise<any> {
     try {
       const publicacion = await this.prisma.publicacion.findUnique({
         where: { id },
@@ -189,7 +198,16 @@ export class PublicacionesService {
         data: { visualizaciones: { increment: 1 } }
       });
 
-      return publicacion;
+      // Convertir precios Decimal a números para el frontend
+      const publicacionConPreciosNumericos = {
+        ...publicacion,
+        precioPorDia: Number(publicacion.precioPorDia),
+        precioPorSemana: publicacion.precioPorSemana ? Number(publicacion.precioPorSemana) : null,
+        precioPorMes: publicacion.precioPorMes ? Number(publicacion.precioPorMes) : null,
+        deposito: publicacion.deposito ? Number(publicacion.deposito) : null,
+      };
+
+      return publicacionConPreciosNumericos;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -359,7 +377,16 @@ export class PublicacionesService {
         orderBy: { fechaCreacion: 'desc' }
       });
 
-      return publicaciones;
+      // Convertir precios Decimal a números para el frontend
+      const publicacionesConPreciosNumericos = publicaciones.map(publicacion => ({
+        ...publicacion,
+        precioPorDia: Number(publicacion.precioPorDia),
+        precioPorSemana: publicacion.precioPorSemana ? Number(publicacion.precioPorSemana) : null,
+        precioPorMes: publicacion.precioPorMes ? Number(publicacion.precioPorMes) : null,
+        deposito: publicacion.deposito ? Number(publicacion.deposito) : null,
+      }));
+
+      return publicacionesConPreciosNumericos;
     } catch (error) {
       throw new BadRequestException('Error al obtener las publicaciones del usuario');
     }

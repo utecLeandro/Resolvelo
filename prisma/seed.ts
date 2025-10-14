@@ -21,6 +21,8 @@ async function main() {
   const passwordSaltJuan = await bcrypt.genSalt(10);
   const passwordHashMaria = await bcrypt.hash('MariaTest2024!', 10);
   const passwordSaltMaria = await bcrypt.genSalt(10);
+  const passwordHashLolo = await bcrypt.hash('LoloTest2024!', 10);
+  const passwordSaltLolo = await bcrypt.genSalt(10);
 
   const usuario1 = await prisma.usuario.create({
     data: {
@@ -30,7 +32,7 @@ async function main() {
       passwordHash: passwordHashJuan,
       passwordSalt: passwordSaltJuan,
       documentoIdentidad: '1.234.567-8',
-      telefono: '+51987654321',
+      telefono: '+59899123456',
       estadoVerificacion: 'VERIFICADA',
       emailVerificado: true,
     },
@@ -44,7 +46,21 @@ async function main() {
       passwordHash: passwordHashMaria,
       passwordSalt: passwordSaltMaria,
       documentoIdentidad: '8.765.432-1',
-      telefono: '+51123456789',
+      telefono: '+59898765432',
+      estadoVerificacion: 'VERIFICADA',
+      emailVerificado: true,
+    },
+  });
+
+  const usuario3 = await prisma.usuario.create({
+    data: {
+      nombre: 'Lolo',
+      apellido: 'Rivero',
+      email: 'lolo@test.com',
+      passwordHash: passwordHashLolo,
+      passwordSalt: passwordSaltLolo,
+      documentoIdentidad: '2.345.678-9',
+      telefono: '+59897654321',
       estadoVerificacion: 'VERIFICADA',
       emailVerificado: true,
     },
@@ -60,10 +76,12 @@ async function main() {
       modelo: 'FG800',
       anioFabricacion: 2020,
       precioPorDia: 25.00,
-      direccion: 'Av. Arequipa 1234',
-      ciudad: 'Lima',
-      departamento: 'Lima',
+      direccion: 'Av. 18 de Julio 1234',
+      ciudad: 'Montevideo',
+      departamento: 'Montevideo',
       estadoEquipo: 'Excelente',
+      estado: 'ACTIVA',
+      estadoModeracion: 'APROBADA',
       propietarioId: usuario1.id,
       imagenes: {
         create: [
@@ -91,10 +109,12 @@ async function main() {
       modelo: 'Export Series',
       anioFabricacion: 2019,
       precioPorDia: 50.00,
-      direccion: 'Jr. Huancavelica 567',
-      ciudad: 'Lima',
-      departamento: 'Lima',
+      direccion: 'Bvar. Artigas 567',
+      ciudad: 'Montevideo',
+      departamento: 'Montevideo',
       estadoEquipo: 'Muy bueno',
+      estado: 'ACTIVA',
+      estadoModeracion: 'APROBADA',
       propietarioId: usuario2.id,
       imagenes: {
         create: [
@@ -144,8 +164,8 @@ async function main() {
   });
 
   console.log('✅ Seed completado exitosamente!');
-  console.log('👤 Usuarios creados: juan@test.com, maria@test.com');
-  console.log('🔑 Contraseñas: Juan - JuanTest2024!, María - MariaTest2024!');
+  console.log('👤 Usuarios creados: juan@test.com, maria@test.com, lolo@test.com');
+  console.log('🔑 Contraseñas: Juan - JuanTest2024!, María - MariaTest2024!, Lolo - LoloTest2024!');
   console.log('🎸 Publicaciones creadas: 2');
   console.log('📅 Reservas creadas: 1');
 }
