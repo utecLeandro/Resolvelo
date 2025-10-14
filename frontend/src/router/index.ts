@@ -6,6 +6,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import LoginPage from '../views/LoginPage.vue'
 import RegisterPage from '../views/RegisterPage.vue'
+import PendingVerification from '../views/PendingVerification.vue'
 
 // Definición de rutas de la aplicación
 const routes: RouteRecordRaw[] = [
@@ -23,6 +24,11 @@ const routes: RouteRecordRaw[] = [
     path: '/registro',
     name: 'Registro',
     component: RegisterPage,
+  },
+  {
+    path: '/verificacion-pendiente',
+    name: 'VerificaciónPendiente',
+    component: PendingVerification,
   },
 ]
 

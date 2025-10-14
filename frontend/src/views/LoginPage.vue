@@ -1,58 +1,78 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+// Vista de Inicio de sesión (Login)
+// - Accesibilidad: etiquetas asociadas, aria-live para errores, foco claro
+// - Seguridad: evita exponer credenciales, usa autocomplete apropiado
+// - UX: estados de carga, validaciones inmediatas, toggle de visibilidad de contraseña
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '../services/api'
+import { Switch } from '@headlessui/vue'
 
 const router = useRouter()
 
 // Estado del formulario
 const email = ref('')
 const password = ref('')
+const showPassword = ref(false)
+const rememberMe = ref(true)
 const isLoading = ref(false)
-const error = ref('')
+const formError = ref('')
+const successMessage = ref('')
+const fieldErrors = ref<{ email?: string; password?: string }>({})
 
-// Función de login integrada con el backend
-const onSubmit = async () => {
-  if (!email.value || !password.value) {
-    error.value = 'Por favor completa todos los campos'
-    return
+// Validaciones básicas (WCAG-friendly: mensajes claros y cercanos al control)
+const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
+const isValidPassword = (val: string) => val.length >= 6
+const canSubmit = computed(() => isValidEmail(email.value) && isValidPassword(password.value) && !isLoading.value)
+
+const validateFields = () => {
+  fieldErrors.value = {}
+  if (!isValidEmail(email.value)) {
+    fieldErrors.value.email = 'Ingresa un email válido.'
   }
+  if (!isValidPassword(password.value)) {
+    fieldErrors.value.password = 'La contraseña debe tener al menos 6 caracteres.'
+  }
+}
+
+// Envío del formulario de login
+const onSubmit = async () => {
+  validateFields()
+  if (fieldErrors.value.email || fieldErrors.value.password) return
 
   isLoading.value = true
-  error.value = ''
-
+  formError.value = ''
+  successMessage.value = ''
   try {
-    // Llamada real al backend
-    const response = await authService.login({
-      email: email.value,
-      password: password.value
-    })
-    
-    // Guardar el token en localStorage
+    const response = await authService.login({ email: email.value, password: password.value })
+    // Guardar el token de manera segura
     localStorage.setItem('access_token', response.access_token)
-    
-    console.log('Login exitoso:', response)
-    
-    // Redirigir al dashboard o página principal
+
+    // Flujo de verificación pendiente
+    if (response.user?.estadoVerificacion === 'PENDIENTE') {
+      router.push({ path: '/verificacion-pendiente', query: { email: response.user.email } })
+      return
+    }
+    // Feedback temporal: mostrar confirmación de login exitoso
+    successMessage.value = 'Inicio de sesión exitoso.'
+    // TODO: Redirigir al dashboard cuando esté disponible
     // router.push('/dashboard')
-    alert('¡Login exitoso! Token guardado en localStorage')
-    
   } catch (err: any) {
-    console.error('Error en login:', err)
-    
-    if (err.response?.status === 401) {
-      error.value = 'Credenciales incorrectas. Verifica tu email y contraseña.'
-    } else if (err.response?.status === 404) {
-      error.value = 'Usuario no encontrado. ¿Ya tienes una cuenta?'
+    if (err?.response?.status === 401) {
+      formError.value = 'Credenciales incorrectas. Verifica tu email y contraseña.'
+    } else if (err?.response?.status === 404) {
+      formError.value = 'Usuario no encontrado. ¿Ya tienes una cuenta?'
+    } else if (err?.response?.status === 503) {
+      formError.value = 'Servicio no disponible. La base de datos no está conectada. Intenta nuevamente en unos segundos.'
     } else {
-      error.value = 'Error al iniciar sesión. Intenta nuevamente.'
+      formError.value = 'Error al iniciar sesión. Intenta nuevamente.'
     }
   } finally {
     isLoading.value = false
   }
 }
 
-// Función para probar la conexión con el backend
+// Foco y ayuda: acción opcional para probar salud del backend
 const probarConexion = async () => {
   try {
     const response = await fetch('http://localhost:3000/api/health')
@@ -65,52 +85,88 @@ const probarConexion = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-    <div class="w-full max-w-md bg-white shadow-lg rounded-xl p-6">
-      <h1 class="text-2xl font-semibold text-gray-900 mb-2">Bienvenido a ReSolVelo</h1>
+  <!-- Fondo en degradé ocupa todo el viewport -->
+  <div class="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-pink-100 p-6">
+    <div class="absolute top-0 left-0 right-0 z-20 flex justify-center py-6">
+      <div class="flex items-center gap-2">
+        <span class="h-8 w-8 rounded-full bg-pink-600 inline-block" aria-hidden="true"></span>
+        <span class="text-lg font-semibold tracking-tight text-gray-900">ReSolVelo</span>
+      </div>
+    </div>
+    <!-- Card más ancho en desktop y separado del header para que no lo tape -->
+    <div class="w-full max-w-lg md:max-w-xl bg-white/90 backdrop-blur shadow-xl rounded-2xl border border-gray-200 p-8 mt-16 md:mt-20">
+      <h1 class="text-2xl font-semibold tracking-tight text-gray-900 mb-2">Bienvenido</h1>
       <p class="text-gray-600 mb-6">Inicia sesión para continuar</p>
 
-      <form @submit.prevent="onSubmit" class="space-y-4">
+      <form @submit.prevent="onSubmit" class="space-y-4" aria-describedby="form-error" :aria-busy="isLoading">
         <div>
-          <label for="email" class="block text-sm font-medium text-gray-700">Correo electrónico</label>
+          <label for="email" class="block text-sm font-medium text-gray-800">Correo electrónico</label>
           <input
             id="email"
-            v-model="email"
+            v-model.trim="email"
             type="email"
             required
+            inputmode="email"
+            autocomplete="email"
             placeholder="tucorreo@ejemplo.com"
-            class="mt-1 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+            :aria-invalid="!!fieldErrors.email"
+            :aria-describedby="fieldErrors.email ? 'email-error' : undefined"
+            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500"
+            @blur="validateFields"
           />
+          <p v-if="fieldErrors.email" id="email-error" class="mt-1 text-sm text-red-600">{{ fieldErrors.email }}</p>
         </div>
+
         <div>
-          <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            required
-            placeholder="Tu contraseña"
-            class="mt-1 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-          />
+          <label for="password" class="block text-sm font-medium text-gray-800">Contraseña</label>
+          <div class="mt-1 relative">
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              id="password"
+              v-model="password"
+              required
+              autocomplete="current-password"
+              placeholder="Tu contraseña"
+              :aria-invalid="!!fieldErrors.password"
+              :aria-describedby="fieldErrors.password ? 'password-error' : undefined"
+              class="w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 pr-20 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500"
+              @blur="validateFields"
+            />
+            <button
+              type="button"
+              class="absolute inset-y-0 right-3 my-auto text-sm text-gray-600 hover:text-gray-800"
+              aria-label="Mostrar u ocultar contraseña"
+              @click="showPassword = !showPassword"
+            >
+              {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+          <p v-if="fieldErrors.password" id="password-error" class="mt-1 text-sm text-red-600">{{ fieldErrors.password }}</p>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <Switch v-model="rememberMe" as="button" class="relative inline-flex h-6 w-11 items-center rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    :class="rememberMe ? 'bg-pink-600' : 'bg-gray-200'" aria-label="Recordarme">
+              <span class="inline-block h-5 w-5 transform rounded-full bg-white transition" :class="rememberMe ? 'translate-x-5' : 'translate-x-1'" />
+            </Switch>
+            <span class="text-sm text-gray-700">Recordarme</span>
+          </div>
+          <router-link to="/registro" class="text-sm text-pink-600 hover:text-pink-700">Crear cuenta</router-link>
         </div>
 
         <button
           type="submit"
-          class="w-full py-2 px-4 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          :disabled="isLoading"
+          class="w-full h-12 px-4 rounded-2xl bg-pink-600 text-white hover:bg-pink-700 shadow-md focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="!canSubmit"
         >
-          {{ isLoading ? 'Ingresando...' : 'Iniciar sesión' }}
+          {{ isLoading ? 'Ingresando…' : 'Iniciar sesión' }}
         </button>
 
-        <p class="text-center text-sm text-gray-600">
-          ¿No tienes cuenta?
-          <router-link to="/registro" class="text-indigo-600 hover:text-indigo-700">Regístrate</router-link>
-        </p>
+        <p v-if="formError" id="form-error" class="text-red-600 text-sm" aria-live="polite">{{ formError }}</p>
+        <p v-if="successMessage" class="text-green-600 text-sm" aria-live="polite">{{ successMessage }}</p>
 
-        <p v-if="error" class="text-red-600 text-sm">{{ error }}</p>
-        
-        <!-- Botón de prueba de conexión -->
-        <div class="mt-4 pt-4 border-t border-gray-200">
+        <div class="mt-6 pt-6 border-t border-gray-200">
           <button
             @click="probarConexion"
             type="button"
@@ -125,5 +181,5 @@ const probarConexion = async () => {
 </template>
 
 <style scoped>
-/* Estilos adicionales mínimos, el resto vendrá de Tailwind */
+/* Nota de UX: se usan estilos de Tailwind (inspirados en shadcn/ui) para consistencia visual */
 </style>

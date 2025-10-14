@@ -2,7 +2,7 @@
  * Servicio de autenticación.
  * Maneja lógica de registro con hash + salt y verificación mock.
  */
-import { Injectable, UnauthorizedException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException, ConflictException, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -65,6 +65,10 @@ export class AuthService {
       if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
         throw new ConflictException('El email ya está registrado');
       }
+      // BD no disponible (Prisma no puede conectar)
+      if (error.code === 'P1001' || error.name === 'PrismaClientInitializationError') {
+        throw new ServiceUnavailableException('Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.');
+      }
       // Re-lanzar otros errores
       throw error;
     }
@@ -75,40 +79,47 @@ export class AuthService {
    * Valida credenciales y genera token JWT (mock por ahora)
    */
   async login(data: LoginDto) {
-    // Buscar usuario por email
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { email: data.email },
-    });
+    try {
+      // Buscar usuario por email
+      const usuario = await this.prisma.usuario.findUnique({
+        where: { email: data.email },
+      });
 
-    if (!usuario) {
-      throw new NotFoundException('Usuario no encontrado');
+      if (!usuario) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      // Verificar que el usuario esté activo
+      if (!usuario.activo) {
+        throw new UnauthorizedException('Cuenta desactivada');
+      }
+
+      // Verificar contraseña usando bcrypt
+      const passwordValida = await bcrypt.compare(data.password, usuario.passwordHash);
+      
+      if (!passwordValida) {
+        throw new UnauthorizedException('Credenciales incorrectas');
+      }
+
+      // Generar token JWT (mock por ahora - en el futuro usar @nestjs/jwt)
+      const mockToken = `mock_jwt_token_${usuario.id}_${Date.now()}`;
+
+      return {
+        access_token: mockToken,
+        user: {
+          id: usuario.id,
+          nombre: usuario.nombre,
+          apellido: usuario.apellido,
+          email: usuario.email,
+          estadoVerificacion: usuario.estadoVerificacion,
+          emailVerificado: usuario.emailVerificado,
+        },
+      };
+    } catch (error: any) {
+      if (error.code === 'P1001' || error.name === 'PrismaClientInitializationError') {
+        throw new ServiceUnavailableException('Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.');
+      }
+      throw error;
     }
-
-    // Verificar que el usuario esté activo
-    if (!usuario.activo) {
-      throw new UnauthorizedException('Cuenta desactivada');
-    }
-
-    // Verificar contraseña usando bcrypt
-    const passwordValida = await bcrypt.compare(data.password, usuario.passwordHash);
-    
-    if (!passwordValida) {
-      throw new UnauthorizedException('Credenciales incorrectas');
-    }
-
-    // Generar token JWT (mock por ahora - en el futuro usar @nestjs/jwt)
-    const mockToken = `mock_jwt_token_${usuario.id}_${Date.now()}`;
-
-    return {
-      access_token: mockToken,
-      user: {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        apellido: usuario.apellido,
-        email: usuario.email,
-        estadoVerificacion: usuario.estadoVerificacion,
-        emailVerificado: usuario.emailVerificado,
-      },
-    };
   }
 }
