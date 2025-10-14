@@ -205,8 +205,11 @@
             >
               Contactar para alquilar
             </button>
-            <p class="text-xs text-gray-500 text-center mt-2">
+            <p v-if="!usuarioAutenticado" class="text-xs text-gray-500 text-center mt-2">
               Necesitas iniciar sesión para contactar al propietario
+            </p>
+            <p v-else class="text-xs text-green-600 text-center mt-2">
+              ✓ Listo para contactar al propietario
             </p>
           </div>
         </div>
@@ -231,6 +234,8 @@ const publicacion = ref<Publicacion | null>(null)
 const cargando = ref(false)
 const error = ref<string | null>(null)
 const imagenPrincipal = ref<string>('')
+const usuarioAutenticado = ref(false)
+const datosUsuario = ref<any>(null)
 
 // Computed properties
 const categoriaTexto = computed(() => {
@@ -273,6 +278,25 @@ const tieneOpcionesEntrega = computed(() => {
 })
 
 // Métodos
+const verificarAutenticacion = () => {
+  try {
+    const token = localStorage.getItem('access_token')
+    const userData = localStorage.getItem('userData')
+    
+    if (token && userData) {
+      usuarioAutenticado.value = true
+      datosUsuario.value = JSON.parse(userData)
+    } else {
+      usuarioAutenticado.value = false
+      datosUsuario.value = null
+    }
+  } catch (error) {
+    console.error('Error al verificar autenticación:', error)
+    usuarioAutenticado.value = false
+    datosUsuario.value = null
+  }
+}
+
 const cargarPublicacion = async () => {
   const id = route.params.id as string
   
@@ -312,18 +336,25 @@ const manejarErrorImagen = (event: Event) => {
 }
 
 const contactarPropietario = () => {
-  // Redirigir al login con mensaje de que necesita autenticarse
-  router.push({
-    path: '/login',
-    query: {
-      redirect: route.fullPath,
-      message: 'Inicia sesión para contactar al propietario del instrumento'
-    }
-  })
+  if (!usuarioAutenticado.value) {
+    // Redirigir al login con mensaje de que necesita autenticarse
+    router.push({
+      path: '/login',
+      query: {
+        redirect: route.fullPath,
+        message: 'Inicia sesión para contactar al propietario del instrumento'
+      }
+    })
+  } else {
+    // Usuario autenticado - implementar lógica de contacto
+    // Por ahora mostrar un mensaje de confirmación
+    alert(`¡Hola ${datosUsuario.value?.nombre}! La funcionalidad de contacto se implementará próximamente.`)
+  }
 }
 
 // Lifecycle hooks
 onMounted(() => {
+  verificarAutenticacion()
   cargarPublicacion()
 })
 

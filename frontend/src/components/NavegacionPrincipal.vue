@@ -337,8 +337,14 @@ const manejarTeclaEscape = (event: KeyboardEvent) => {
 
 // Método para cerrar sesión
 const cerrarSesion = () => {
-  // Limpiar token del localStorage
-  localStorage.removeItem('token')
+  // Limpiar todos los datos de autenticación del localStorage
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('userData')
+  
+  // Actualizar el estado de autenticación en la aplicación
+  if ((window as any).actualizarEstadoAutenticacion) {
+    (window as any).actualizarEstadoAutenticacion()
+  }
   
   // Cerrar menús
   cerrarMenuUsuario()

@@ -25,18 +25,36 @@ onMounted(() => {
   verificarAutenticacion()
 })
 
+// Función para actualizar el estado de autenticación (puede ser llamada desde otros componentes)
+const actualizarEstadoAutenticacion = () => {
+  verificarAutenticacion()
+}
+
+// Exponer la función globalmente para que otros componentes puedan usarla
+;(window as any).actualizarEstadoAutenticacion = actualizarEstadoAutenticacion
+
 // Función para verificar si el usuario está autenticado
 const verificarAutenticacion = () => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('access_token')
   if (token) {
     // Aquí podrías verificar el token con el backend
     usuarioAutenticado.value = true
     // Obtener información del usuario del token o localStorage
     const userData = localStorage.getItem('userData')
     if (userData) {
-      const user = JSON.parse(userData)
-      nombreUsuario.value = `${user.nombre} ${user.apellido}`
+      try {
+        const user = JSON.parse(userData)
+        nombreUsuario.value = `${user.nombre} ${user.apellido}`
+      } catch (error) {
+        console.error('Error al parsear datos del usuario:', error)
+        // Si hay error, limpiar datos corruptos
+        localStorage.removeItem('userData')
+        usuarioAutenticado.value = false
+      }
     }
+  } else {
+    usuarioAutenticado.value = false
+    nombreUsuario.value = ''
   }
 }
 </script>

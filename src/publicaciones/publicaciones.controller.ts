@@ -71,7 +71,7 @@ export class PublicacionesController {
    * Endpoint público para ver detalles de una publicación
    */
   @Get(':id')
-  async obtenerPorId(@Param('id', ParseUUIDPipe) id: string) {
+  async obtenerPorId(@Param('id') id: string) {
     return this.publicacionesService.obtenerPublicacionPorId(id);
   }
 
@@ -82,7 +82,7 @@ export class PublicacionesController {
   @Patch(':id')
   // @UseGuards(JwtAuthGuard)
   async actualizar(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() actualizarPublicacionDto: ActualizarPublicacionDto,
     @Query('usuarioId') usuarioId: string, // Temporal hasta implementar auth
   ) {
@@ -101,7 +101,7 @@ export class PublicacionesController {
   // @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async eliminar(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Query('usuarioId') usuarioId: string, // Temporal hasta implementar auth
   ) {
     await this.publicacionesService.eliminarPublicacion(id, usuarioId);

@@ -201,7 +201,7 @@ const filtros = ref<FiltrosPublicacion>({
   pagina: route.query.pagina ? Number(route.query.pagina) : 1,
   limite: limite.value,
   ordenarPor: (route.query.ordenarPor as string) || 'fechaCreacion',
-  orden: (route.query.orden as 'asc' | 'desc') || 'desc'
+  direccionOrden: (route.query.direccionOrden as 'asc' | 'desc') || 'desc'
 })
 
 // Computed properties
@@ -257,9 +257,9 @@ const cargarPublicaciones = async () => {
     const respuesta: RespuestaPublicaciones = await publicacionesService.obtenerPublicaciones(filtros.value)
     
     publicaciones.value = respuesta.publicaciones
-    totalPublicaciones.value = respuesta.total
-    paginaActual.value = respuesta.pagina
-    totalPaginas.value = respuesta.totalPaginas
+    totalPublicaciones.value = respuesta.paginacion.totalElementos
+    paginaActual.value = respuesta.paginacion.paginaActual
+    totalPaginas.value = respuesta.paginacion.totalPaginas
     
   } catch (err) {
     console.error('Error al cargar publicaciones:', err)
@@ -292,7 +292,7 @@ const limpiarFiltros = () => {
     pagina: 1,
     limite: limite.value,
     ordenarPor: 'fechaCreacion',
-    orden: 'desc'
+    direccionOrden: 'desc'
   }
   actualizarURL()
   cargarPublicaciones()
@@ -323,7 +323,7 @@ watch(() => route.query, (newQuery) => {
     pagina: newQuery.pagina ? Number(newQuery.pagina) : 1,
     limite: limite.value,
     ordenarPor: (newQuery.ordenarPor as string) || 'fechaCreacion',
-    orden: (newQuery.orden as 'asc' | 'desc') || 'desc'
+    direccionOrden: (newQuery.direccionOrden as 'asc' | 'desc') || 'desc'
   }
 }, { deep: true })
 
