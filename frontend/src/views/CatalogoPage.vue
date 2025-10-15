@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-gray-50">
     
     <!-- Componente de filtros -->
@@ -65,7 +65,7 @@
             aria-label="Página anterior"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7-7-7" />
             </svg>
           </button>
           
@@ -161,7 +161,7 @@
         
         <div class="mt-8 pt-8 border-t border-gray-200">
           <p class="text-center text-gray-600">
-            © 2024 ReSolVelo. Todos los derechos reservados.
+             2024 ReSolVelo. Todos los derechos reservados.
           </p>
         </div>
       </div>
@@ -198,6 +198,8 @@ const filtros = ref<FiltrosPublicacion>({
   departamento: (route.query.departamento as string) || '',
   precioMinimo: route.query.precioMinimo ? Number(route.query.precioMinimo) : undefined,
   precioMaximo: route.query.precioMaximo ? Number(route.query.precioMaximo) : undefined,
+  fechaInicio: (route.query.fechaInicio as string) || undefined,
+  fechaFin: (route.query.fechaFin as string) || undefined,
   pagina: route.query.pagina ? Number(route.query.pagina) : 1,
   limite: limite.value,
   ordenarPor: (route.query.ordenarPor as string) || 'fechaCreacion',
@@ -206,6 +208,7 @@ const filtros = ref<FiltrosPublicacion>({
 
 // Computed properties
 const tituloSeccion = computed(() => {
+  const tieneFechas = filtros.value.fechaInicio && filtros.value.fechaFin
   if (filtros.value.busqueda) {
     return `Resultados para "${filtros.value.busqueda}"`
   }
@@ -224,7 +227,14 @@ const tituloSeccion = computed(() => {
       'Accessories': 'Accesorios',
       'Others': 'Otros instrumentos'
     }
-    return categorias[filtros.value.categoria] || 'Instrumentos musicales'
+    const base = categorias[filtros.value.categoria] || 'Instrumentos musicales'
+    if (tieneFechas) {
+      return `${base} disponibles entre ${formatoEtiquetaFecha(filtros.value.fechaInicio!)} y ${formatoEtiquetaFecha(filtros.value.fechaFin!)}`
+    }
+    return base
+  }
+  if (tieneFechas) {
+    return `Instrumentos disponibles entre ${formatoEtiquetaFecha(filtros.value.fechaInicio!)} y ${formatoEtiquetaFecha(filtros.value.fechaFin!)}`
   }
   return 'Instrumentos musicales disponibles'
 })
@@ -254,7 +264,17 @@ const cargarPublicaciones = async () => {
     cargando.value = true
     error.value = null
     
-    const respuesta: RespuestaPublicaciones = await publicacionesService.obtenerPublicaciones(filtros.value)
+    let respuesta: RespuestaPublicaciones
+    if (filtros.value.fechaInicio && filtros.value.fechaFin) {
+      const { fechaInicio, fechaFin, ...otrosFiltros } = filtros.value
+      respuesta = await publicacionesService.obtenerPublicacionesDisponibles(
+        fechaInicio!,
+        fechaFin!,
+        otrosFiltros
+      )
+    } else {
+      respuesta = await publicacionesService.obtenerPublicaciones(filtros.value)
+    }
     
     publicaciones.value = respuesta.publicaciones
     totalPublicaciones.value = respuesta.paginacion.totalElementos
@@ -298,6 +318,15 @@ const limpiarFiltros = () => {
   cargarPublicaciones()
 }
 
+const formatoEtiquetaFecha = (iso: string) => {
+  try {
+    const [y, m, d] = iso.split('-')
+    return `${d}/${m}`
+  } catch {
+    return iso
+  }
+}
+
 const actualizarURL = () => {
   const query: Record<string, string> = {}
   
@@ -320,6 +349,8 @@ watch(() => route.query, (newQuery) => {
     departamento: (newQuery.departamento as string) || '',
     precioMinimo: newQuery.precioMinimo ? Number(newQuery.precioMinimo) : undefined,
     precioMaximo: newQuery.precioMaximo ? Number(newQuery.precioMaximo) : undefined,
+    fechaInicio: (newQuery.fechaInicio as string) || undefined,
+    fechaFin: (newQuery.fechaFin as string) || undefined,
     pagina: newQuery.pagina ? Number(newQuery.pagina) : 1,
     limite: limite.value,
     ordenarPor: (newQuery.ordenarPor as string) || 'fechaCreacion',
