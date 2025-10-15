@@ -9,7 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CrearPublicacionDto } from './dto/crear-publicacion.dto';
 import { ActualizarPublicacionDto } from './dto/actualizar-publicacion.dto';
 import { FiltrosPublicacionDto } from './dto/filtros-publicacion.dto';
-import { Publicacion, EstadoPublicacion, EstadoModeracion } from '@prisma/client';
+import { Publicacion, EstadoPublicacion, EstadoModeracion, EstadoReserva } from '@prisma/client';
 
 @Injectable()
 export class PublicacionesService {
@@ -469,6 +469,33 @@ export class PublicacionesService {
 
     if (filtros.calificacionMinima) {
       condiciones.calificacionPromedio = { gte: filtros.calificacionMinima };
+    }
+
+    // Disponibilidad por rango de fechas: excluir publicaciones con reservas que se solapen
+    if (filtros as any && (filtros as any).fechaInicio && (filtros as any).fechaFin) {
+      const fechaInicio = (filtros as any).fechaInicio as Date;
+      const fechaFin = (filtros as any).fechaFin as Date;
+
+      // Asegurar que el rango es válido
+      if (fechaInicio > fechaFin) {
+        throw new BadRequestException('El rango de fechas es inválido: fechaInicio es posterior a fechaFin');
+      }
+
+      // Publicaciones sin reservas activas que se solapen con el rango solicitado
+      condiciones.reservas = {
+        none: {
+          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
+          NOT: {
+            OR: [
+              { fechaFin: { lte: fechaInicio } }, // Reserva termina antes o el mismo día que inicia el rango
+              { fechaInicio: { gte: fechaFin } }, // Reserva inicia después o el mismo día que termina el rango
+            ],
+          },
+        },
+      };
+
+      // Solo publicaciones marcadas como disponibles
+      condiciones.disponible = true;
     }
 
     return condiciones;
