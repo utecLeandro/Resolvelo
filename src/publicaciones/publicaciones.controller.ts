@@ -159,4 +159,30 @@ export class PublicacionesController {
     
     return this.publicacionesService.obtenerPublicaciones(filtrosConFechas);
   }
+
+  /**
+   * Obtener reservas activas (rangos ocupados) de una publicación específica
+   * Estados considerados: PENDIENTE, CONFIRMADA, EN_CURSO
+   */
+  @Get(':id/reservas-activas')
+  async obtenerReservasActivas(@Param('id') id: string) {
+    return this.publicacionesService.obtenerReservasActivasPorPublicacion(id);
+  }
+
+  /**
+   * Verificar disponibilidad de una publicación en un rango de fechas
+   * Devuelve { disponible: boolean }
+   */
+  @Get(':id/disponibilidad/:fechaInicio/:fechaFin')
+  async verificarDisponibilidad(
+    @Param('id') id: string,
+    @Param('fechaInicio') fechaInicio: string,
+    @Param('fechaFin') fechaFin: string,
+  ) {
+    return this.publicacionesService.verificarDisponibilidadPublicacion(
+      id,
+      new Date(fechaInicio),
+      new Date(fechaFin)
+    );
+  }
 }

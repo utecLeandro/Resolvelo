@@ -392,6 +392,60 @@ export class PublicacionesService {
     }
   }
 
+  /**
+   * Obtener reservas activas (rangos ocupados) de una publicación
+   */
+  async obtenerReservasActivasPorPublicacion(id: string) {
+    try {
+      const reservas = await this.prisma.reserva.findMany({
+        where: {
+          publicacionId: id,
+          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
+        },
+        select: { fechaInicio: true, fechaFin: true },
+        orderBy: { fechaInicio: 'asc' },
+      });
+      return reservas;
+    } catch (error) {
+      throw new BadRequestException('Error al obtener reservas activas');
+    }
+  }
+
+  /**
+   * Verificar disponibilidad de una publicación en un rango de fechas
+   */
+  async verificarDisponibilidadPublicacion(id: string, fechaInicio: Date, fechaFin: Date) {
+    try {
+      if (!fechaInicio || !fechaFin || isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
+        throw new BadRequestException('Las fechas proporcionadas no son válidas');
+      }
+      if (fechaInicio > fechaFin) {
+        throw new BadRequestException('El rango de fechas es inválido: fechaInicio es posterior a fechaFin');
+      }
+
+      // Contar reservas activas que se solapan con el rango solicitado
+      const solapadas = await this.prisma.reserva.count({
+        where: {
+          publicacionId: id,
+          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
+          NOT: {
+            OR: [
+              { fechaFin: { lte: fechaInicio } },
+              { fechaInicio: { gte: fechaFin } },
+            ],
+          },
+        },
+      });
+
+      return { disponible: solapadas === 0 };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Error al verificar disponibilidad');
+    }
+  }
+
   // ========================================================================
   // MÉTODOS PRIVADOS DE UTILIDAD
   // ========================================================================

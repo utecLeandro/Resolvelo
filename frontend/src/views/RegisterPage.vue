@@ -115,14 +115,9 @@ const registroRapido = () => {
 </script>
 
 <template>
-  <div class="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-pink-100 p-6">
-    <div class="absolute top-0 left-0 right-0 z-20 flex justify-center py-6">
-      <div class="flex items-center gap-2">
-        <span class="h-8 w-8 rounded-full bg-pink-600 inline-block" aria-hidden="true"></span>
-        <span class="text-lg font-semibold tracking-tight text-gray-900">ReSolVelo</span>
-      </div>
-    </div>
-    <div class="w-full max-w-xl md:max-w-2xl bg-white/90 backdrop-blur shadow-xl rounded-2xl border border-gray-200 p-8 mt-16 md:mt-20">
+  <div class="min-h-[calc(100vh-4rem)] w-full flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Card de registro: el logo ahora proviene de la barra de navegación del layout principal -->
+    <div class="w-full max-w-xl md:max-w-2xl mx-auto bg-white/90 backdrop-blur shadow-xl rounded-2xl border border-gray-200 p-8">
       <h1 class="text-2xl font-semibold tracking-tight text-gray-900 mb-2">Crea tu cuenta</h1>
       <p class="text-gray-600 mb-6">Regístrate para comenzar</p>
 
@@ -139,7 +134,7 @@ const registroRapido = () => {
               placeholder="Tu nombre"
               :aria-invalid="!!fieldErrors.nombre"
               :aria-describedby="fieldErrors.nombre ? 'nombre-error' : undefined"
-              class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500"
+              class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
               @blur="validateFields"
             />
             <p v-if="fieldErrors.nombre" id="nombre-error" class="mt-1 text-sm text-red-600">{{ fieldErrors.nombre }}</p>
@@ -155,7 +150,7 @@ const registroRapido = () => {
               placeholder="Tu apellido"
               :aria-invalid="!!fieldErrors.apellido"
               :aria-describedby="fieldErrors.apellido ? 'apellido-error' : undefined"
-              class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500"
+              class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
               @blur="validateFields"
             />
             <p v-if="fieldErrors.apellido" id="apellido-error" class="mt-1 text-sm text-red-600">{{ fieldErrors.apellido }}</p>
@@ -174,7 +169,7 @@ const registroRapido = () => {
             placeholder="tucorreo@ejemplo.com"
             :aria-invalid="!!fieldErrors.email"
             :aria-describedby="fieldErrors.email ? 'email-error' : undefined"
-            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500"
+            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             @blur="validateFields"
           />
           <p v-if="fieldErrors.email" id="email-error" class="mt-1 text-sm text-red-600">{{ fieldErrors.email }}</p>
@@ -190,7 +185,7 @@ const registroRapido = () => {
             placeholder="1.234.567-8"
             :aria-invalid="!!fieldErrors.documentoIdentidad"
             :aria-describedby="fieldErrors.documentoIdentidad ? 'doc-error' : undefined"
-            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500"
+            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             @blur="validateFields"
           />
           <p v-if="fieldErrors.documentoIdentidad" id="doc-error" class="mt-1 text-sm text-red-600">{{ fieldErrors.documentoIdentidad }}</p>
@@ -205,7 +200,7 @@ const registroRapido = () => {
             inputmode="tel"
             autocomplete="tel"
             placeholder="Tu número de teléfono"
-            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500"
+            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -220,7 +215,7 @@ const registroRapido = () => {
             placeholder="Mínimo 8 caracteres"
             :aria-invalid="!!fieldErrors.password"
             :aria-describedby="fieldErrors.password ? 'password-error' : 'password-help'"
-            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500"
+            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             @input="validateFields"
           />
           <p id="password-help" class="mt-1 text-xs text-gray-500">Debe incluir mayúsculas, minúsculas, números y un caracter especial (@$!%*?&).</p>
@@ -252,15 +247,15 @@ const registroRapido = () => {
             placeholder="Repite tu contraseña"
             :aria-invalid="!!fieldErrors.confirmPassword"
             :aria-describedby="fieldErrors.confirmPassword ? 'confirm-error' : undefined"
-            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500"
+            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             @input="validateFields"
           />
           <p v-if="fieldErrors.confirmPassword" id="confirm-error" class="mt-1 text-sm text-red-600">{{ fieldErrors.confirmPassword }}</p>
         </div>
 
         <div class="flex items-center gap-2">
-          <Switch v-model="aceptaTerminos" as="button" class="relative inline-flex h-6 w-11 items-center rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  :class="aceptaTerminos ? 'bg-pink-600' : 'bg-gray-200'" aria-label="Aceptar términos y condiciones">
+          <Switch v-model="aceptaTerminos" as="button" class="relative inline-flex h-6 w-11 items-center rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  :class="aceptaTerminos ? 'bg-blue-600' : 'bg-gray-200'" aria-label="Aceptar términos y condiciones">
             <span class="inline-block h-5 w-5 transform rounded-full bg-white transition" :class="aceptaTerminos ? 'translate-x-5' : 'translate-x-1'" />
           </Switch>
           <span class="text-sm text-gray-700">Acepto los términos y la política de privacidad</span>
@@ -269,7 +264,7 @@ const registroRapido = () => {
 
         <button
           type="submit"
-          class="w-full h-12 px-4 rounded-2xl bg-pink-600 text-white hover:bg-pink-700 shadow-md focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full h-12 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="!canSubmit"
         >
           {{ isLoading ? 'Creando cuenta…' : 'Registrarme' }}
@@ -277,7 +272,7 @@ const registroRapido = () => {
 
         <p class="text-center text-sm text-gray-600">
           ¿Ya tienes cuenta?
-          <router-link to="/login" class="text-pink-600 hover:text-pink-700">Inicia sesión</router-link>
+          <router-link to="/login" class="text-blue-600 hover:text-blue-700">Inicia sesión</router-link>
         </p>
 
         <p v-if="formError" id="form-error" class="text-red-600 text-sm" aria-live="polite">{{ formError }}</p>

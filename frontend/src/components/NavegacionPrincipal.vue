@@ -261,6 +261,22 @@
       </div>
     </div>
   </nav>
+  <!-- Toast de notificación (p.ej., cierre de sesión) -->
+  <div
+    v-if="toastVisible"
+    class="fixed top-4 left-1/2 -translate-x-1/2 transform bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-3"
+    role="status"
+    aria-live="polite"
+  >
+    <span>{{ toastMessage }}</span>
+    <button
+      @click="cerrarToast"
+      class="text-white/80 hover:text-white focus:outline-none"
+      aria-label="Cerrar notificación"
+    >
+      ×
+    </button>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -350,8 +366,11 @@ const cerrarSesion = () => {
   cerrarMenuUsuario()
   cerrarMenuMovil()
   
-  // Redirigir al login
-  router.push('/login')
+  // Mostrar confirmación de cierre de sesión
+  mostrarToast('Has cerrado sesión correctamente.')
+  
+  // Redirigir al catálogo
+  router.push('/catalogo')
 }
 
 // Lifecycle hooks
@@ -364,4 +383,21 @@ onUnmounted(() => {
   document.removeEventListener('click', cerrarMenusAlClickFuera)
   document.removeEventListener('keydown', manejarTeclaEscape)
 })
+
+// Estado y métodos para toast
+const toastVisible = ref(false)
+const toastMessage = ref('')
+
+const mostrarToast = (mensaje: string) => {
+  toastMessage.value = mensaje
+  toastVisible.value = true
+  // Ocultar automáticamente después de 3 segundos
+  setTimeout(() => {
+    toastVisible.value = false
+  }, 3000)
+}
+
+const cerrarToast = () => {
+  toastVisible.value = false
+}
 </script>
