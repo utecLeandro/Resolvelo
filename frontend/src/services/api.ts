@@ -197,6 +197,15 @@ export interface RespuestaPublicaciones {
   }
 }
 
+export interface ReservaActiva {
+  fechaInicio: string
+  fechaFin: string
+}
+
+export interface VerificacionDisponibilidad {
+  disponible: boolean
+}
+
 // Servicios de publicaciones
 export const publicacionesService = {
   // Obtener todas las publicaciones con filtros opcionales
@@ -276,6 +285,22 @@ export const publicacionesService = {
     const response = await api.get(
       `/publicaciones/disponibles/${encodeURIComponent(fechaInicio)}/${encodeURIComponent(fechaFin)}?${params.toString()}`
     )
+    return response.data
+  },
+
+  // Obtener reservas activas (rangos ocupados) de una publicación
+  async obtenerReservasActivasDePublicacion(id: string): Promise<ReservaActiva[]> {
+    const response = await api.get(`/publicaciones/${id}/reservas-activas`)
+    return response.data
+  },
+
+  // Verificar disponibilidad de una publicación en un rango de fechas
+  async verificarDisponibilidadPublicacion(
+    id: string,
+    fechaInicio: string,
+    fechaFin: string
+  ): Promise<VerificacionDisponibilidad> {
+    const response = await api.get(`/publicaciones/${id}/disponibilidad/${encodeURIComponent(fechaInicio)}/${encodeURIComponent(fechaFin)}`)
     return response.data
   },
 }

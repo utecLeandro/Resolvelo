@@ -151,6 +151,74 @@
             <p class="text-gray-700 leading-relaxed">{{ publicacion.descripcion }}</p>
           </div>
 
+          <!-- Selector de fechas de alquiler (RES-15) -->
+          <div class="bg-white border border-gray-200 rounded-lg p-6" aria-labelledby="titulo-fechas-alquiler">
+            <h3 id="titulo-fechas-alquiler" class="font-semibold text-gray-900 mb-4">Fechas de alquiler</h3>
+
+            <!-- Campos de fecha inicio/fin -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="fechaInicio" class="block text-sm font-medium text-gray-700 mb-1">Fecha inicio</label>
+                <VueDatePicker
+                  v-model="fechaInicio"
+                  :locale="'es'"
+                  :format="formatearDDMMYYYY"
+                  :enable-time-picker="false"
+                  :clearable="false"
+                  :week-start="1"
+                  :min-date="hoy"
+                  :auto-apply="true"
+                  :close-on-auto-apply="true"
+                  :text-input="false"
+                  input-id="fechaInicio"
+                  placeholder="dd/mm/yyyy"
+                  :input-class="'w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pl-14 pr-3 py-2'"
+                  aria-describedby="ayuda-fecha-inicio"
+                />
+                <p id="ayuda-fecha-inicio" class="mt-1 text-xs text-gray-500">Selecciona el día en que comienza el alquiler</p>
+              </div>
+
+              <div>
+                <label for="fechaFin" class="block text-sm font-medium text-gray-700 mb-1">Fecha fin</label>
+                <VueDatePicker
+                  v-model="fechaFin"
+                  :locale="'es'"
+                  :format="formatearDDMMYYYY"
+                  :enable-time-picker="false"
+                  :clearable="false"
+                  :week-start="1"
+                  :min-date="fechaInicio || hoy"
+                  :auto-apply="true"
+                  :close-on-auto-apply="true"
+                  :text-input="false"
+                  input-id="fechaFin"
+                  placeholder="dd/mm/yyyy"
+                  :input-class="'w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pl-14 pr-3 py-2'"
+                  aria-describedby="ayuda-fecha-fin"
+                />
+                <p id="ayuda-fecha-fin" class="mt-1 text-xs text-gray-500">Selecciona el último día del alquiler</p>
+              </div>
+            </div>
+
+            <!-- Estado de selección / errores -->
+            <div class="mt-3">
+              <p v-if="mensajeErrorFechas" class="text-sm text-red-600">{{ mensajeErrorFechas }}</p>
+              <p v-else-if="diasSeleccionados > 0" class="text-sm text-gray-700">
+                <span class="font-medium">{{ diasSeleccionados }}</span> días seleccionados.
+              </p>
+              <p v-else class="text-sm text-gray-500">Selecciona las fechas para calcular el total del alquiler.</p>
+              <p v-if="comprobandoDisponibilidad" class="text-xs text-gray-500 mt-2">Verificando disponibilidad…</p>
+              <div v-if="reservasActivas && reservasActivas.length > 0" class="text-xs text-gray-600 mt-2">
+                <span class="font-medium">Fechas ocupadas próximas:</span>
+                <ul class="list-disc ml-4 mt-1 space-y-1">
+                  <li v-for="(r, i) in reservasActivas.slice(0, 3)" :key="i">
+                    {{ new Date(r.fechaInicio).toLocaleDateString() }} → {{ new Date(r.fechaFin).toLocaleDateString() }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           <!-- Precios -->
           <div class="bg-white border border-gray-200 rounded-lg p-6">
             <h3 class="font-semibold text-gray-900 mb-4">Precios de alquiler</h3>
@@ -158,6 +226,11 @@
               <div class="flex justify-between items-center">
                 <span class="text-gray-600">Por día</span>
                 <span class="text-2xl font-bold text-gray-900">${{ publicacion.precioPorDia }}</span>
+              </div>
+              <!-- Total estimado según rango seleccionado -->
+              <div v-if="diasSeleccionados > 0 && !mensajeErrorFechas" class="flex justify-between items-center">
+                <span class="text-gray-600">Total por {{ diasSeleccionados }} días</span>
+                <span class="text-2xl font-bold text-gray-900">${{ totalEstimado.toLocaleString() }}</span>
               </div>
               <div v-if="publicacion.precioPorSemana" class="flex justify-between items-center">
                 <span class="text-gray-600">Por semana</span>
@@ -201,7 +274,13 @@
           <div class="bg-white border border-gray-200 rounded-lg p-6">
             <button
               @click="contactarPropietario"
-              class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              :disabled="!fechaInicio || !fechaFin || !!mensajeErrorFechas || disponibilidadRango === false"
+              :class="[
+                'w-full py-3 px-6 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
+                (!fechaInicio || !fechaFin || !!mensajeErrorFechas || disponibilidadRango === false)
+                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'
+              ]"
             >
               Contactar para alquilar
             </button>
@@ -211,6 +290,7 @@
             <p v-else class="text-xs text-green-600 text-center mt-2">
               ✓ Listo para contactar al propietario
             </p>
+            <p v-if="!fechaInicio || !fechaFin" class="text-xs text-red-600 text-center mt-2">Selecciona un rango válido para continuar</p>
           </div>
         </div>
       </div>
@@ -219,11 +299,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EstadosUI from '../components/EstadosUI.vue'
 import { publicacionesService } from '../services/api'
-import type { Publicacion } from '../services/api'
+import type { Publicacion, ReservaActiva } from '../services/api'
+import VueDatePicker from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
 
 // Composables
 const route = useRoute()
@@ -236,6 +318,56 @@ const error = ref<string | null>(null)
 const imagenPrincipal = ref<string>('')
 const usuarioAutenticado = ref(false)
 const datosUsuario = ref<any>(null)
+
+// Fechas de alquiler (RES-15)
+const hoy = new Date()
+const fechaInicio = ref<Date | null>(null)
+const fechaFin = ref<Date | null>(null)
+// Disponibilidad real
+const reservasActivas = ref<ReservaActiva[]>([])
+const disponibilidadRango = ref<boolean | null>(null)
+const comprobandoDisponibilidad = ref(false)
+
+const diasSeleccionados = computed(() => {
+  if (!fechaInicio.value || !fechaFin.value) return 0
+  const inicio = fechaInicio.value
+  const fin = fechaFin.value
+  if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) return 0
+  // Validación básica: inicio no puede ser posterior a fin
+  if (inicio > fin) return 0
+  // Diferencia en días (inclusiva)
+  const msPorDia = 24 * 60 * 60 * 1000
+  const diff = Math.round((fin.getTime() - inicio.getTime()) / msPorDia) + 1
+  return Math.max(diff, 0)
+})
+
+const mensajeErrorFechas = computed(() => {
+  if (!fechaInicio.value || !fechaFin.value) return ''
+  const inicio = fechaInicio.value
+  const fin = fechaFin.value
+  if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) return ''
+  if (inicio > fin) return 'La fecha inicio no puede ser posterior a la fecha fin.'
+  // Validación de mínimo/máximo días
+  const minDias = publicacion.value?.diasMinimoAlquiler
+  const maxDias = publicacion.value?.diasMaximoAlquiler ?? null
+  if (diasSeleccionados.value && minDias && diasSeleccionados.value < minDias) {
+    return `El alquiler mínimo es de ${minDias} días.`
+  }
+  if (diasSeleccionados.value && maxDias && diasSeleccionados.value > maxDias) {
+    return `El alquiler máximo es de ${maxDias} días.`
+  }
+  // Verificación de disponibilidad real
+  if (disponibilidadRango.value === false) {
+    return 'El instrumento no está disponible en el rango seleccionado.'
+  }
+  return ''
+})
+
+const totalEstimado = computed(() => {
+  if (!publicacion.value) return 0
+  if (!diasSeleccionados.value || mensajeErrorFechas.value) return 0
+  return publicacion.value.precioPorDia * diasSeleccionados.value
+})
 
 // Computed properties
 const categoriaTexto = computed(() => {
@@ -310,6 +442,13 @@ const cargarPublicacion = async () => {
     error.value = null
     
     publicacion.value = await publicacionesService.obtenerPublicacionPorId(id)
+    // Cargar reservas activas de la publicación para informar fechas ocupadas
+    try {
+      reservasActivas.value = await publicacionesService.obtenerReservasActivasDePublicacion(id)
+    } catch (e) {
+      console.warn('No se pudieron cargar las reservas activas de la publicación:', e)
+      reservasActivas.value = []
+    }
     
     // Configurar imagen principal
     if (publicacion.value?.imagenes && publicacion.value.imagenes.length > 0) {
@@ -335,20 +474,67 @@ const manejarErrorImagen = (event: Event) => {
   target.src = '/placeholder-instrument.jpg'
 }
 
+// Formateadores
+const formatearISO = (d: Date) => {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+const formatearDDMMYYYY = (d: Date) => {
+  const dd = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const yyyy = d.getFullYear()
+  return `${dd}/${mm}/${yyyy}`
+}
+
 const contactarPropietario = () => {
+  // Validar rango antes de continuar
+  if (!fechaInicio.value || !fechaFin.value) {
+    alert('Selecciona un rango de fechas para continuar.')
+    return
+  }
+  if (mensajeErrorFechas.value) {
+    alert(mensajeErrorFechas.value)
+    return
+  }
+  if (disponibilidadRango.value === false) {
+    alert('El instrumento no está disponible en el rango seleccionado.')
+    return
+  }
+
+  // Persistir fechas seleccionadas para el flujo de contacto
+  try {
+    const datos = {
+      publicacionId: publicacion.value?.id,
+      fechaInicio: formatearISO(fechaInicio.value!),
+      fechaFin: formatearISO(fechaFin.value!),
+      dias: diasSeleccionados.value,
+      totalEstimado: totalEstimado.value,
+      titulo: publicacion.value?.titulo,
+    }
+    sessionStorage.setItem('alquilerSeleccionado', JSON.stringify(datos))
+  } catch (e) {
+    console.warn('No se pudieron guardar las fechas seleccionadas en sessionStorage')
+  }
+
   if (!usuarioAutenticado.value) {
     // Redirigir al login con mensaje de que necesita autenticarse
+    // Guardar ruta anterior para redirección posterior al login, incluyendo las fechas seleccionadas
+    const rutaConFechas = `${route.fullPath}${route.fullPath.includes('?') ? '&' : '?'}fechaInicio=${encodeURIComponent(formatearISO(fechaInicio.value!))}&fechaFin=${encodeURIComponent(formatearISO(fechaFin.value!))}`
+    sessionStorage.setItem('rutaAnteriorLogin', rutaConFechas)
     router.push({
       path: '/login',
       query: {
-        redirect: route.fullPath,
+        redirect: rutaConFechas,
         message: 'Inicia sesión para contactar al propietario del instrumento'
       }
     })
   } else {
     // Usuario autenticado - implementar lógica de contacto
-    // Por ahora mostrar un mensaje de confirmación
-    alert(`¡Hola ${datosUsuario.value?.nombre}! La funcionalidad de contacto se implementará próximamente.`)
+    // Por ahora mostrar un mensaje de confirmación con las fechas seleccionadas
+    alert(`¡Hola ${datosUsuario.value?.nombre}! Has seleccionado desde ${formatearISO(fechaInicio.value!)} hasta ${formatearISO(fechaFin.value!)} (${diasSeleccionados.value} días). La funcionalidad de contacto se implementará próximamente.`)
   }
 }
 
@@ -356,6 +542,32 @@ const contactarPropietario = () => {
 onMounted(() => {
   verificarAutenticacion()
   cargarPublicacion()
+})
+
+// Verificar disponibilidad real cuando cambian las fechas
+watch([fechaInicio, fechaFin], async ([inicio, fin]) => {
+  const id = publicacion.value?.id
+  if (!id || !inicio || !fin) {
+    disponibilidadRango.value = null
+    return
+  }
+  // Evitar verificar si ya hay un error de rango básico
+  const dInicio = inicio
+  const dFin = fin
+  if (isNaN(dInicio.getTime()) || isNaN(dFin.getTime()) || dInicio > dFin) {
+    disponibilidadRango.value = null
+    return
+  }
+  comprobandoDisponibilidad.value = true
+  try {
+    const res = await publicacionesService.verificarDisponibilidadPublicacion(id, formatearISO(dInicio), formatearISO(dFin))
+    disponibilidadRango.value = !!res?.disponible
+  } catch (e) {
+    console.warn('Fallo al verificar disponibilidad en el backend:', e)
+    disponibilidadRango.value = null
+  } finally {
+    comprobandoDisponibilidad.value = false
+  }
 })
 
 // Expose reactive properties and methods
@@ -369,7 +581,16 @@ defineExpose({
   contactarPropietario,
   estadoTexto,
   categoriaTexto,
-  tieneOpcionesEntrega
+  tieneOpcionesEntrega,
+  // Exponer propiedades del selector de fechas (por si se necesitan en pruebas)
+  fechaInicio,
+  fechaFin,
+  diasSeleccionados,
+  totalEstimado,
+  mensajeErrorFechas,
+  reservasActivas,
+  disponibilidadRango,
+  comprobandoDisponibilidad
 })
 </script>
 
@@ -432,5 +653,40 @@ a:focus {
   .lg\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* Mejoras de estilo para el DatePicker */
+:deep(.dp__theme_default) {
+  --dp-primary-color: #2563eb; /* azul tailwind 600 */
+  --dp-primary-text-color: #ffffff;
+  --dp-hover-color: #eff6ff; /* azul claro */
+  --dp-hover-text-color: #1f2937; /* gris 800 */
+  --dp-secondary-color: #f9fafb; /* fondo */
+  --dp-text-color: #111827; /* gris 900 */
+  --dp-border-color: #d1d5db; /* gris 300 */
+  --dp-disabled-color: #e5e7eb; /* gris 200 */
+  --dp-overlay-color: rgba(37, 99, 235, 0.12);
+  --dp-range-bg-color: #93c5fd; /* azul 300 */
+  --dp-range-text-color: #111827;
+}
+
+/* Icono más cercano al texto y mejor alineado */
+:deep(.dp__input_wrap) { position: relative; }
+:deep(.dp__input_icon) {
+  left: 0.75rem; /* separa un poco más del borde */
+  right: auto;
+  width: 1.25rem; /* agranda suavemente el icono */
+  height: 1.25rem;
+}
+:deep(.dp__input_icon svg) {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+:deep(.dp__input) { padding-left: 3.25rem; /* separa un poco más el texto del icono */ }
+
+/* Sombras y bordes del calendario */
+:deep(.dp__menu) {
+  box-shadow: 0 10px 18px -5px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
 }
 </style>

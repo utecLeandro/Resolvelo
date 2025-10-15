@@ -99,15 +99,9 @@ const probarConexion = async () => {
 
 <template>
   <!-- Fondo en degradé ocupa todo el viewport -->
-  <div class="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-pink-100 p-6">
-    <div class="absolute top-0 left-0 right-0 z-20 flex justify-center py-6">
-      <div class="flex items-center gap-2">
-        <span class="h-8 w-8 rounded-full bg-pink-600 inline-block" aria-hidden="true"></span>
-        <span class="text-lg font-semibold tracking-tight text-gray-900">ReSolVelo</span>
-      </div>
-    </div>
-    <!-- Card más ancho en desktop y separado del header para que no lo tape -->
-    <div class="w-full max-w-lg md:max-w-xl bg-white/90 backdrop-blur shadow-xl rounded-2xl border border-gray-200 p-8 mt-16 md:mt-20">
+  <div class="min-h-[calc(100vh-4rem)] w-full flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Card de login: el logo ahora proviene de la barra de navegación del layout principal -->
+    <div class="w-full max-w-lg md:max-w-xl mx-auto bg-white/90 backdrop-blur shadow-xl rounded-2xl border border-gray-200 p-8">
       <h1 class="text-2xl font-semibold tracking-tight text-gray-900 mb-2">Bienvenido</h1>
       <p class="text-gray-600 mb-6">Inicia sesión para continuar</p>
 
@@ -124,7 +118,7 @@ const probarConexion = async () => {
             placeholder="tucorreo@ejemplo.com"
             :aria-invalid="!!fieldErrors.email"
             :aria-describedby="fieldErrors.email ? 'email-error' : undefined"
-            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500"
+            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             @blur="validateFields"
           />
           <p v-if="fieldErrors.email" id="email-error" class="mt-1 text-sm text-red-600">{{ fieldErrors.email }}</p>
@@ -142,7 +136,7 @@ const probarConexion = async () => {
               placeholder="Tu contraseña"
               :aria-invalid="!!fieldErrors.password"
               :aria-describedby="fieldErrors.password ? 'password-error' : undefined"
-              class="w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 pr-20 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500"
+              class="w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 pr-20 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
               @blur="validateFields"
             />
             <button
@@ -159,18 +153,18 @@ const probarConexion = async () => {
 
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <Switch v-model="rememberMe" as="button" class="relative inline-flex h-6 w-11 items-center rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    :class="rememberMe ? 'bg-pink-600' : 'bg-gray-200'" aria-label="Recordarme">
+            <Switch v-model="rememberMe" as="button" class="relative inline-flex h-6 w-11 items-center rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    :class="rememberMe ? 'bg-blue-600' : 'bg-gray-200'" aria-label="Recordarme">
               <span class="inline-block h-5 w-5 transform rounded-full bg-white transition" :class="rememberMe ? 'translate-x-5' : 'translate-x-1'" />
             </Switch>
             <span class="text-sm text-gray-700">Recordarme</span>
           </div>
-          <router-link to="/registro" class="text-sm text-pink-600 hover:text-pink-700">Crear cuenta</router-link>
+          <router-link to="/registro" class="text-sm text-blue-600 hover:text-blue-700">Crear cuenta</router-link>
         </div>
 
         <button
           type="submit"
-          class="w-full h-12 px-4 rounded-2xl bg-pink-600 text-white hover:bg-pink-700 shadow-md focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full h-12 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="!canSubmit"
         >
           {{ isLoading ? 'Ingresando…' : 'Iniciar sesión' }}

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="bg-white border-b border-gray-200 sticky top-0 z-40">
     <!-- Barra de búsqueda principal -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -203,6 +203,76 @@
               </div>
             </div>
           </div>
+
+          <!-- Filtro de fechas -->
+          <div class="relative">
+            <button
+              @click="toggleDropdown('fechas')"
+              class="inline-flex items-center px-4 py-3 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              :class="{ 'bg-blue-50 border-blue-300 text-blue-700': filtrosLocales.fechaInicio && filtrosLocales.fechaFin }"
+              aria-haspopup="true"
+              :aria-expanded="dropdownAbierto === 'fechas'"
+            >
+              <span>{{ fechasSeleccionadas }}</span>
+              <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            <!-- Dropdown de fechas -->
+            <div
+              v-if="dropdownAbierto === 'fechas'"
+              class="absolute top-full mt-1 w-[340px] bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+              @click.stop
+            >
+              <div class="p-4 space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label for="fechaInicio" class="block text-sm font-medium text-gray-700 mb-1">
+                      Fecha inicio
+                    </label>
+                    <input
+                      id="fechaInicio"
+                      v-model="filtrosLocales.fechaInicio"
+                      type="date"
+                      class="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label for="fechaFin" class="block text-sm font-medium text-gray-700 mb-1">
+                      Fecha fin
+                    </label>
+                    <input
+                      id="fechaFin"
+                      v-model="filtrosLocales.fechaFin"
+                      type="date"
+                      class="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                
+                <p v-if="mensajeErrorFechas" class="text-xs text-red-600">
+                  {{ mensajeErrorFechas }}
+                </p>
+                
+                <div class="flex justify-end space-x-2 pt-2">
+                  <button
+                    @click="limpiarFechas"
+                    class="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    Limpiar
+                  </button>
+                  <button
+                    @click="cerrarDropdown"
+                    class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                    :disabled="!!mensajeErrorFechas"
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <!-- Botón de búsqueda -->
           <button
@@ -231,7 +301,7 @@
             class="ml-1 text-blue-600 hover:text-blue-800"
             aria-label="Quitar filtro de categoría"
           >
-            ×
+            
           </button>
         </span>
         
@@ -245,7 +315,7 @@
             class="ml-1 text-green-600 hover:text-green-800"
             aria-label="Quitar filtro de departamento"
           >
-            ×
+            
           </button>
         </span>
         
@@ -259,7 +329,7 @@
             class="ml-1 text-green-600 hover:text-green-800"
             aria-label="Quitar filtro de ciudad"
           >
-            ×
+            
           </button>
         </span>
         
@@ -267,13 +337,27 @@
           v-if="filtrosLocales.precioMinimo || filtrosLocales.precioMaximo"
           class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800"
         >
-          ${{ filtrosLocales.precioMinimo || 0 }} - ${{ filtrosLocales.precioMaximo || '∞' }}
+          ${{ filtrosLocales.precioMinimo || 0 }} - ${{ filtrosLocales.precioMaximo || '' }}
           <button
             @click="limpiarPrecio"
             class="ml-1 text-purple-600 hover:text-purple-800"
             aria-label="Quitar filtro de precio"
           >
-            ×
+            
+          </button>
+        </span>
+
+        <span
+          v-if="filtrosLocales.fechaInicio && filtrosLocales.fechaFin"
+          class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800"
+        >
+          {{ formatoEtiquetaFecha(filtrosLocales.fechaInicio) }} - {{ formatoEtiquetaFecha(filtrosLocales.fechaFin) }}
+          <button
+            @click="limpiarFechas"
+            class="ml-1 text-yellow-600 hover:text-yellow-800"
+            aria-label="Quitar filtro de fechas"
+          >
+            
           </button>
         </span>
         
@@ -358,6 +442,30 @@ const precioSeleccionado = computed(() => {
   return 'Precio'
 })
 
+const fechasSeleccionadas = computed(() => {
+  const inicio = filtrosLocales.value.fechaInicio
+  const fin = filtrosLocales.value.fechaFin
+  if (!inicio && !fin) return 'Fechas'
+  if (inicio && fin) {
+    return `${formatoEtiquetaFecha(inicio)} - ${formatoEtiquetaFecha(fin)}`
+  }
+  if (inicio) return `Desde ${formatoEtiquetaFecha(inicio)}`
+  if (fin) return `Hasta ${formatoEtiquetaFecha(fin)}`
+  return 'Fechas'
+})
+
+const mensajeErrorFechas = computed(() => {
+  const inicio = filtrosLocales.value.fechaInicio
+  const fin = filtrosLocales.value.fechaFin
+  if (inicio && fin) {
+    // Validación simple: inicio <= fin
+    const i = new Date(inicio)
+    const f = new Date(fin)
+    if (i > f) return 'La fecha inicio no puede ser posterior a la fecha fin.'
+  }
+  return ''
+})
+
 const tienesFiltrosActivos = computed(() => {
   return !!(
     filtrosLocales.value.categoria ||
@@ -365,7 +473,8 @@ const tienesFiltrosActivos = computed(() => {
     filtrosLocales.value.departamento ||
     filtrosLocales.value.precioMinimo ||
     filtrosLocales.value.precioMaximo ||
-    filtrosLocales.value.busqueda
+    filtrosLocales.value.busqueda ||
+    (filtrosLocales.value.fechaInicio && filtrosLocales.value.fechaFin)
   )
 })
 
@@ -395,6 +504,11 @@ const limpiarPrecio = () => {
   filtrosLocales.value.precioMaximo = undefined
 }
 
+const limpiarFechas = () => {
+  filtrosLocales.value.fechaInicio = undefined
+  filtrosLocales.value.fechaFin = undefined
+}
+
 const limpiarTodosFiltros = () => {
   filtrosLocales.value = {
     busqueda: '',
@@ -402,9 +516,21 @@ const limpiarTodosFiltros = () => {
     ciudad: '',
     departamento: '',
     precioMinimo: undefined,
-    precioMaximo: undefined
+    precioMaximo: undefined,
+    fechaInicio: undefined,
+    fechaFin: undefined,
   }
   aplicarFiltros()
+}
+
+const formatoEtiquetaFecha = (iso?: string) => {
+  if (!iso) return ''
+  try {
+    const [y, m, d] = iso.split('-')
+    return `${d}/${m}`
+  } catch {
+    return iso
+  }
 }
 
 const aplicarFiltros = () => {

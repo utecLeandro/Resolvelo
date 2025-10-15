@@ -3,7 +3,7 @@
  * Incluye parámetros de búsqueda, filtros y paginación
  */
 
-import { IsOptional, IsString, IsEnum, IsDecimal, IsInt, Min, Max, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsDecimal, IsInt, Min, Max, IsBoolean, IsDate } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { CategoriaEquipo, EstadoPublicacion } from '@prisma/client';
 
@@ -107,4 +107,15 @@ export class FiltrosPublicacionDto {
   @Min(0.1, { message: 'El radio debe ser mayor a 0.1 km' })
   @Max(100, { message: 'El radio no puede ser mayor a 100 km' })
   radioKm?: number;
+
+  // Filtro por rango de fechas (para verificar disponibilidad)
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate({ message: 'La fecha de inicio debe ser una fecha válida' })
+  fechaInicio?: Date;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate({ message: 'La fecha de fin debe ser una fecha válida' })
+  fechaFin?: Date;
 }

@@ -13,7 +13,8 @@ const usuarioAutenticado = ref(false)
 const nombreUsuario = ref('')
 
 // Rutas que no deben mostrar navegación y pie de página
-const rutasSinLayout = ['/login', '/registro', '/verificacion-pendiente']
+// Mostramos la navegación también en /login y /registro para mantener estilos consistentes con el catálogo
+const rutasSinLayout = ['/verificacion-pendiente']
 
 // Computed para determinar si mostrar el layout completo
 const mostrarLayoutCompleto = computed(() => {
