@@ -20,7 +20,7 @@ WORKDIR /app
 
 # Copiar archivos de configuración de dependencias
 COPY package*.json ./
-COPY prisma ./prisma/
+COPY context ./context/
 
 # ============================================================================
 # ETAPA DE DEPENDENCIAS
@@ -44,8 +44,8 @@ COPY --from=dependencies /app/node_modules ./node_modules
 # Copiar código fuente
 COPY . .
 
-# Generar cliente de Prisma
-RUN npx prisma generate
+# Generar cliente de Prisma usando schema en context
+RUN npx prisma generate --schema context/schema.prisma
 
 # Compilar aplicación TypeScript
 RUN npm run build
@@ -82,7 +82,7 @@ ENV PORT=3000
 ENTRYPOINT ["dumb-init", "--"]
 
 # Script de inicio que ejecuta migraciones y luego inicia la aplicación
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy --schema context/schema.prisma && node dist/main"]
 
 # ============================================================================
 # ETIQUETAS DE METADATOS
