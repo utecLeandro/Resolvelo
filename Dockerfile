@@ -27,11 +27,9 @@ COPY context ./context/
 # ============================================================================
 FROM base AS dependencies
 
-# Instalar todas las dependencias (incluyendo devDependencies)
-RUN npm ci --only=production --silent
-
-# Instalar dependencias de desarrollo en una capa separada
-RUN npm ci --only=development --silent
+# Instalar todas las dependencias (prod + dev). Usamos `npm install` para evitar
+# errores de sincronización cuando el package-lock.json está desactualizado.
+RUN npm install --silent
 
 # ============================================================================
 # ETAPA DE CONSTRUCCIÓN

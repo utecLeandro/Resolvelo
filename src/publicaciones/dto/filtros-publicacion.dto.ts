@@ -3,7 +3,7 @@
  * Incluye parámetros de búsqueda, filtros y paginación
  */
 
-import { IsOptional, IsString, IsEnum, IsDecimal, IsInt, Min, Max, IsBoolean, IsDate } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsDecimal, IsInt, Min, Max, IsBoolean, IsDate, IsNumber } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { CategoriaEquipo, EstadoPublicacion } from '@prisma/client';
 
@@ -29,12 +29,14 @@ export class FiltrosPublicacionDto {
 
   // Filtros por precio
   @IsOptional()
-  @IsDecimal({ decimal_digits: '2' }, { message: 'El precio mínimo debe ser un decimal válido' })
+  @IsNumber({}, { message: 'El precio mínimo debe ser un número válido' })
+  @Min(0, { message: 'El precio mínimo debe ser mayor o igual a 0' })
   @Transform(({ value }) => value ? parseFloat(value) : undefined)
   precioMinimo?: number;
 
   @IsOptional()
-  @IsDecimal({ decimal_digits: '2' }, { message: 'El precio máximo debe ser un decimal válido' })
+  @IsNumber({}, { message: 'El precio máximo debe ser un número válido' })
+  @Min(0, { message: 'El precio máximo debe ser mayor o igual a 0' })
   @Transform(({ value }) => value ? parseFloat(value) : undefined)
   precioMaximo?: number;
 

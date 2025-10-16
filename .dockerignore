@@ -76,7 +76,9 @@ docker-compose*.yml
 .eslintrc*
 .prettierrc*
 jest.config.*
-tsconfig*.json
+# Importante: NO ignorar archivos de configuración de TypeScript
+# para permitir construir la app dentro de Docker (tsconfig.json y tsconfig.build.json)
+# tsconfig*.json
 
 # Archivos de base de datos local
 *.sqlite

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="bg-white border-b border-gray-200 sticky top-0 z-40">
     <!-- Barra de búsqueda principal -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -394,18 +394,18 @@ const dropdownAbierto = ref<string | null>(null)
 
 // Datos estáticos
 const categorias = [
-  { valor: 'Guitars', etiqueta: 'Guitarras' },
-  { valor: 'Drums', etiqueta: 'Batería' },
-  { valor: 'Keyboards', etiqueta: 'Teclados' },
-  { valor: 'Winds', etiqueta: 'Vientos' },
-  { valor: 'Strings', etiqueta: 'Cuerdas' },
-  { valor: 'Amplifiers', etiqueta: 'Amplificadores' },
-  { valor: 'PA_Audio', etiqueta: 'Audio PA' },
-  { valor: 'Percussion', etiqueta: 'Percusión' },
-  { valor: 'Recording', etiqueta: 'Grabación' },
-  { valor: 'Lighting', etiqueta: 'Iluminación' },
-  { valor: 'Accessories', etiqueta: 'Accesorios' },
-  { valor: 'Others', etiqueta: 'Otros' }
+  { valor: 'GUITARRAS', etiqueta: 'Guitarras' },
+  { valor: 'BATERIAS', etiqueta: 'Baterías' },
+  { valor: 'TECLADOS', etiqueta: 'Teclados' },
+  { valor: 'VIENTOS', etiqueta: 'Instrumentos de viento' },
+  { valor: 'CUERDAS', etiqueta: 'Instrumentos de cuerda' },
+  { valor: 'AMPLIFICADORES', etiqueta: 'Amplificadores' },
+  { valor: 'AUDIO_PA', etiqueta: 'Audio PA' },
+  { valor: 'PERCUSION', etiqueta: 'Percusión' },
+  { valor: 'GRABACION', etiqueta: 'Equipos de grabación' },
+  { valor: 'ILUMINACION', etiqueta: 'Iluminación' },
+  { valor: 'ACCESORIOS', etiqueta: 'Accesorios' },
+  { valor: 'OTROS', etiqueta: 'Otros' }
 ]
 
 const departamentos = [
