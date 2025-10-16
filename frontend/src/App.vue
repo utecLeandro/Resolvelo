@@ -84,3 +84,21 @@ const verificarAutenticacion = () => {
 <style scoped>
 /* Estilos globales mínimos para el layout */
 </style>
+
+<!-- Estilos globales no scoped para cursores en elementos clicables -->
+<style>
+/* Cursor de mano en elementos clicables al pasar por encima */
+a[href]:hover,
+button:not(:disabled):hover,
+[role="button"]:not([aria-disabled="true"]):hover,
+.clickable:hover,
+.link:hover {
+  cursor: pointer;
+}
+
+/* Mantener el cursor de no permitido si el botón está deshabilitado */
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+</style>

@@ -48,6 +48,21 @@
       
       <!-- Grid de publicaciones -->
       <div v-else>
+        <!-- Barra de ordenamiento -->
+        <div class="flex items-center justify-end mb-4">
+          <label class="mr-2 text-sm text-gray-600">Ordenar por</label>
+          <select
+            v-model="ordenSeleccionado"
+            @change="aplicarOrden"
+            class="text-sm px-3 py-2 border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label="Ordenar publicaciones"
+          >
+            <option value="relevancia">Más relevantes</option>
+            <option value="precio_asc">Menor precio</option>
+            <option value="precio_desc">Mayor precio</option>
+          </select>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           <PublicacionCard
             v-for="publicacion in publicaciones"
@@ -125,6 +140,9 @@ const paginaActual = ref(1)
 const totalPaginas = ref(1)
 const limite = ref(12)
 
+// Orden seleccionado en la UI
+const ordenSeleccionado = ref<'relevancia' | 'precio_asc' | 'precio_desc'>('relevancia')
+
 // Filtros iniciales desde query params
 const filtros = ref<FiltrosPublicacion>({
   busqueda: (route.query.busqueda as string) || '',
@@ -141,6 +159,9 @@ const filtros = ref<FiltrosPublicacion>({
   direccionOrden: (route.query.direccionOrden as 'asc' | 'desc') || 'desc'
 })
 
+// Inicializar el selector según los filtros actuales
+ordenSeleccionado.value = obtenerIdOrdenDesdeFiltros(filtros.value)
+
 // Computed properties
 const tituloSeccion = computed(() => {
   const tieneFechas = filtros.value.fechaInicio && filtros.value.fechaFin
@@ -149,18 +170,18 @@ const tituloSeccion = computed(() => {
   }
   if (filtros.value.categoria) {
     const categorias: Record<string, string> = {
-      'Guitars': 'Guitarras',
-      'Drums': 'Batería',
-      'Keyboards': 'Teclados',
-      'Winds': 'Instrumentos de viento',
-      'Strings': 'Instrumentos de cuerda',
-      'Amplifiers': 'Amplificadores',
-      'PA_Audio': 'Audio PA',
-      'Percussion': 'Percusión',
-      'Recording': 'Equipos de grabación',
-      'Lighting': 'Iluminación',
-      'Accessories': 'Accesorios',
-      'Others': 'Otros instrumentos'
+      'GUITARRAS': 'Guitarras',
+      'BATERIAS': 'Baterías',
+      'TECLADOS': 'Teclados',
+      'VIENTOS': 'Instrumentos de viento',
+      'CUERDAS': 'Instrumentos de cuerda',
+      'AMPLIFICADORES': 'Amplificadores',
+      'AUDIO_PA': 'Audio PA',
+      'PERCUSION': 'Percusión',
+      'GRABACION': 'Equipos de grabación',
+      'ILUMINACION': 'Iluminación',
+      'ACCESORIOS': 'Accesorios',
+      'OTROS': 'Otros instrumentos'
     }
     const base = categorias[filtros.value.categoria] || 'Instrumentos musicales'
     if (tieneFechas) {
@@ -253,6 +274,35 @@ const limpiarFiltros = () => {
   cargarPublicaciones()
 }
 
+// Mapear el selector de orden a los parámetros del backend
+function obtenerIdOrdenDesdeFiltros(f: FiltrosPublicacion): 'relevancia' | 'precio_asc' | 'precio_desc' {
+  if (f.ordenarPor === 'precioPorDia') {
+    return f.direccionOrden === 'asc' ? 'precio_asc' : 'precio_desc'
+  }
+  // Por defecto mostramos "Más relevantes"
+  return 'relevancia'
+}
+
+const aplicarOrden = () => {
+  switch (ordenSeleccionado.value) {
+    case 'precio_asc':
+      filtros.value.ordenarPor = 'precioPorDia'
+      filtros.value.direccionOrden = 'asc'
+      break
+    case 'precio_desc':
+      filtros.value.ordenarPor = 'precioPorDia'
+      filtros.value.direccionOrden = 'desc'
+      break
+    default:
+      filtros.value.ordenarPor = 'calificacionPromedio'
+      filtros.value.direccionOrden = 'desc'
+      break
+  }
+  filtros.value.pagina = 1
+  actualizarURL()
+  cargarPublicaciones()
+}
+
 const formatoEtiquetaFecha = (iso: string) => {
   try {
     const [y, m, d] = iso.split('-')
@@ -291,6 +341,8 @@ watch(() => route.query, (newQuery) => {
     ordenarPor: (newQuery.ordenarPor as string) || 'fechaCreacion',
     direccionOrden: (newQuery.direccionOrden as 'asc' | 'desc') || 'desc'
   }
+  // Mantener sincronizado el selector de orden
+  ordenSeleccionado.value = obtenerIdOrdenDesdeFiltros(filtros.value)
 }, { deep: true })
 
 // Lifecycle hooks

@@ -23,6 +23,8 @@ async function main() {
   const passwordSaltMaria = await bcrypt.genSalt(10);
   const passwordHashLolo = await bcrypt.hash('LoloTest2024!', 10);
   const passwordSaltLolo = await bcrypt.genSalt(10);
+  const passwordHashFederico = await bcrypt.hash('FedericoTest2024!', 10);
+  const passwordSaltFederico = await bcrypt.genSalt(10);
 
   const usuario1 = await prisma.usuario.create({
     data: {
@@ -61,6 +63,20 @@ async function main() {
       passwordSalt: passwordSaltLolo,
       documentoIdentidad: '2.345.678-9',
       telefono: '+59897654321',
+      estadoVerificacion: 'VERIFICADA',
+      emailVerificado: true,
+    },
+  });
+
+  const usuario4 = await prisma.usuario.create({
+    data: {
+      nombre: 'Federico',
+      apellido: 'Gutierrez',
+      email: 'gtbump2012@gmail.com',
+      passwordHash: passwordHashFederico,
+      passwordSalt: passwordSaltFederico,
+      documentoIdentidad: '3.456.789-0',
+      telefono: '+59896543210',
       estadoVerificacion: 'VERIFICADA',
       emailVerificado: true,
     },
@@ -133,6 +149,34 @@ async function main() {
     },
   });
 
+  const publicacion3 = await prisma.publicacion.create({
+    data: {
+      titulo: 'Teclado Yamaha PSR-E373',
+      descripcion: 'Teclado electrónico de 61 teclas con múltiples sonidos y ritmos.',
+      categoria: 'TECLADOS',
+      marca: 'Yamaha',
+      modelo: 'PSR-E373',
+      anioFabricacion: 2021,
+      precioPorDia: 30.00,
+      direccion: 'Av. Brasil 2345',
+      ciudad: 'Montevideo',
+      departamento: 'Montevideo',
+      estadoEquipo: 'Excelente',
+      estado: 'ACTIVA',
+      estadoModeracion: 'APROBADA',
+      propietarioId: usuario4.id,
+      imagenes: {
+        create: [
+          {
+            url: 'https://example.com/teclado1.jpg',
+            descripcion: 'Vista frontal del teclado',
+            orden: 1,
+          },
+        ],
+      },
+    },
+  });
+
   // Crear reservas de prueba
   const reserva1 = await prisma.reserva.create({
     data: {
@@ -164,9 +208,9 @@ async function main() {
   });
 
   console.log('✅ Seed completado exitosamente!');
-  console.log('👤 Usuarios creados: juan@test.com, maria@test.com, lolo@test.com');
-  console.log('🔑 Contraseñas: Juan - JuanTest2024!, María - MariaTest2024!, Lolo - LoloTest2024!');
-  console.log('🎸 Publicaciones creadas: 2');
+  console.log('👤 Usuarios creados: juan@test.com, maria@test.com, lolo@test.com, gtbump2012@gmail.com');
+  console.log('🔑 Contraseñas: Juan - JuanTest2024!, María - MariaTest2024!, Lolo - LoloTest2024!, Federico - FedericoTest2024!');
+  console.log('🎸 Publicaciones creadas: 3');
   console.log('📅 Reservas creadas: 1');
 }
 

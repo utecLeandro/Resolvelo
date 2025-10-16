@@ -61,8 +61,9 @@ export class PublicacionesController {
   // @UseGuards(JwtAuthGuard)
   async obtenerMisPublicaciones(
     @Query('usuarioId') usuarioId: string, // Temporal hasta implementar auth
-    @Query() filtros: FiltrosPublicacionDto,
   ) {
+    // Crear filtros vacíos por ahora, se pueden agregar más tarde si es necesario
+    const filtros: FiltrosPublicacionDto = {};
     return this.publicacionesService.obtenerPublicacionesUsuario(usuarioId, filtros);
   }
 

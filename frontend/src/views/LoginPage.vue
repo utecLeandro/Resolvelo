@@ -88,7 +88,8 @@ const onSubmit = async () => {
 // Foco y ayuda: acción opcional para probar salud del backend
 const probarConexion = async () => {
   try {
-    const response = await fetch('http://localhost:3000/api/health')
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api').replace(/\/$/, '')
+    const response = await fetch(`${baseUrl}/health`)
     const data = await response.json()
     alert(`✅ Conexión exitosa: ${JSON.stringify(data)}`)
   } catch (err) {

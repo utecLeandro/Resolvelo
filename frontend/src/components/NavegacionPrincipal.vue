@@ -42,6 +42,14 @@
             Catálogo
           </router-link>
           
+          <button
+            @click="manejarClickPublicar"
+            class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            :class="{ 'text-blue-600 bg-blue-50': $route.path === '/crear-publicacion' }"
+          >
+            Publicar
+          </button>
+          
           <router-link 
             to="/como-funciona"
             class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -189,6 +197,15 @@
           >
             Catálogo
           </router-link>
+          
+          <button
+            @click="manejarClickPublicarMovil"
+            class="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            :class="{ 'text-blue-600 bg-blue-50': $route.path === '/crear-publicacion' }"
+            role="menuitem"
+          >
+            Publicar
+          </button>
           
           <router-link 
             to="/como-funciona"
@@ -349,6 +366,23 @@ const manejarTeclaEscape = (event: KeyboardEvent) => {
     menuMovilAbierto.value = false
     menuUsuarioAbierto.value = false
   }
+}
+
+// Método para manejar click en botón Publicar (desktop)
+const manejarClickPublicar = () => {
+  if (props.usuarioAutenticado) {
+    // Usuario autenticado, redirigir a página de creación
+    router.push('/crear-publicacion')
+  } else {
+    // Usuario no autenticado, redirigir a login con parámetro de redirección
+    router.push('/login?redirect=/crear-publicacion')
+  }
+}
+
+// Método para manejar click en botón Publicar (móvil)
+const manejarClickPublicarMovil = () => {
+  cerrarMenuMovil()
+  manejarClickPublicar()
 }
 
 // Método para cerrar sesión
