@@ -5,7 +5,8 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import * as cors from 'cors';
+import cors from 'cors';
+import type { Request, Response, NextFunction } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -32,23 +33,12 @@ async function bootstrap() {
       allowedHeaders: 'Content-Type, Authorization',
     });
   } else {
-    // Desarrollo: permitir cualquier origen (sin credenciales)
-    app.use(cors({
-      origin: '*',
+    // Desarrollo: reflejar el origen para que el navegador reciba Access-Control-Allow-Origin correcto
+    app.enableCors({
+      origin: true, // refleja el Origin recibido
       credentials: false,
-      methods: ['GET','HEAD','PUT','PATCH','POST','DELETE'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-    }));
-
-    // Middleware adicional para asegurar que el header Access-Control-Allow-Origin se envíe
-    app.use((req, res, next) => {
-      const origin = req.headers.origin as string | undefined;
-      res.header('Access-Control-Allow-Origin', origin || '*');
-      res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      // Aunque credentials estén deshabilitados en desarrollo, algunos navegadores requieren el header definido
-      res.header('Access-Control-Allow-Credentials', 'true');
-      next();
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      allowedHeaders: 'Content-Type, Authorization',
     });
   }
 

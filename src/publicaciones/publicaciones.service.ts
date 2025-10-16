@@ -10,6 +10,7 @@ import { CrearPublicacionDto } from './dto/crear-publicacion.dto';
 import { ActualizarPublicacionDto } from './dto/actualizar-publicacion.dto';
 import { FiltrosPublicacionDto } from './dto/filtros-publicacion.dto';
 import { Publicacion, EstadoPublicacion, EstadoModeracion, EstadoReserva } from '@prisma/client';
+import { extraerPalabrasClave, crearCondicionesBusqueda } from './utils/text-utils';
 
 @Injectable()
 export class PublicacionesService {
@@ -192,6 +193,11 @@ export class PublicacionesService {
         throw new NotFoundException('Publicación no encontrada');
       }
 
+      // Verificar que la publicación no esté eliminada
+      if (publicacion.estado === EstadoPublicacion.ELIMINADA) {
+        throw new NotFoundException('Publicación no encontrada');
+      }
+
       // Incrementar contador de visualizaciones
       await this.prisma.publicacion.update({
         where: { id },
@@ -345,16 +351,67 @@ export class PublicacionesService {
   }
 
   /**
-   * Obtener publicaciones del usuario
+   * Obtener publicaciones de un usuario específico
    * @param usuarioId ID del usuario
    * @param filtros Filtros adicionales
    * @returns Publicaciones del usuario
    */
   async obtenerPublicacionesUsuario(usuarioId: string, filtros: FiltrosPublicacionDto) {
+    // Para "Mis publicaciones", no aplicamos filtros de moderación
+    // El usuario debe ver todas sus publicaciones independientemente del estado
     const condiciones = {
       propietarioId: usuarioId,
-      ...this.construirCondicionesFiltrado(filtros)
+      estado: EstadoPublicacion.ACTIVA, // Solo publicaciones activas (no eliminadas)
+      // No filtramos por estadoModeracion para que vea todas sus publicaciones
     };
+
+    // Aplicar filtros adicionales (búsqueda, categoría, etc.) pero sin moderación
+    if (filtros.busqueda) {
+      condiciones['OR'] = [
+        { titulo: { contains: filtros.busqueda, mode: 'insensitive' } },
+        { descripcion: { contains: filtros.busqueda, mode: 'insensitive' } },
+        { marca: { contains: filtros.busqueda, mode: 'insensitive' } },
+        { modelo: { contains: filtros.busqueda, mode: 'insensitive' } },
+      ];
+    }
+
+    if (filtros.categoria) {
+      condiciones['categoria'] = filtros.categoria;
+    }
+
+    if (filtros.ciudad) {
+      condiciones['ciudad'] = { contains: filtros.ciudad, mode: 'insensitive' };
+    }
+
+    if (filtros.departamento) {
+      condiciones['departamento'] = { contains: filtros.departamento, mode: 'insensitive' };
+    }
+
+    if (filtros.precioMinimo || filtros.precioMaximo) {
+      condiciones['precioPorDia'] = {};
+      if (filtros.precioMinimo) {
+        condiciones['precioPorDia']['gte'] = filtros.precioMinimo;
+      }
+      if (filtros.precioMaximo) {
+        condiciones['precioPorDia']['lte'] = filtros.precioMaximo;
+      }
+    }
+
+    if (filtros.disponible !== undefined) {
+      condiciones['disponible'] = filtros.disponible;
+    }
+
+    if (filtros.entregaDomicilio !== undefined) {
+      condiciones['entregaDomicilio'] = filtros.entregaDomicilio;
+    }
+
+    if (filtros.retiroLocal !== undefined) {
+      condiciones['retiroLocal'] = filtros.retiroLocal;
+    }
+
+    if (filtros.calificacionMinima) {
+      condiciones['calificacionPromedio'] = { gte: filtros.calificacionMinima };
+    }
 
     try {
       const publicaciones = await this.prisma.publicacion.findMany({
@@ -479,12 +536,35 @@ export class PublicacionesService {
     };
 
     if (filtros.busqueda) {
-      condiciones.OR = [
-        { titulo: { contains: filtros.busqueda, mode: 'insensitive' } },
-        { descripcion: { contains: filtros.busqueda, mode: 'insensitive' } },
-        { marca: { contains: filtros.busqueda, mode: 'insensitive' } },
-        { modelo: { contains: filtros.busqueda, mode: 'insensitive' } },
-      ];
+      // Extraer palabras clave y sus variaciones del texto de búsqueda
+      const palabrasClave = extraerPalabrasClave(filtros.busqueda);
+      
+      if (palabrasClave.length > 0) {
+        // Crear condiciones de búsqueda para cada campo usando todas las palabras clave
+        const condicionesBusqueda = [];
+        
+        // Buscar en título
+        condicionesBusqueda.push(...crearCondicionesBusqueda('titulo', palabrasClave));
+        
+        // Buscar en descripción
+        condicionesBusqueda.push(...crearCondicionesBusqueda('descripcion', palabrasClave));
+        
+        // Buscar en marca
+        condicionesBusqueda.push(...crearCondicionesBusqueda('marca', palabrasClave));
+        
+        // Buscar en modelo
+        condicionesBusqueda.push(...crearCondicionesBusqueda('modelo', palabrasClave));
+        
+        // También mantener la búsqueda original como fallback
+        condicionesBusqueda.push(
+          { titulo: { contains: filtros.busqueda, mode: 'insensitive' } },
+          { descripcion: { contains: filtros.busqueda, mode: 'insensitive' } },
+          { marca: { contains: filtros.busqueda, mode: 'insensitive' } },
+          { modelo: { contains: filtros.busqueda, mode: 'insensitive' } }
+        );
+        
+        condiciones.OR = condicionesBusqueda;
+      }
     }
 
     if (filtros.categoria) {

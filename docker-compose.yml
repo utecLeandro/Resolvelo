@@ -102,8 +102,9 @@ services:
       EMAIL_FROM: noreply@resolvelo.com
       
       # URLs del frontend
-      FRONTEND_URL: http://localhost:8080
-      CORS_ORIGIN: http://localhost:8080
+      FRONTEND_URL: http://localhost:5174
+      # Permitir ambos orígenes en desarrollo (Vite por defecto 5173/5174 y Adminer 8080 si fuese necesario)
+      CORS_ORIGIN: http://localhost:5174,http://localhost:8080
       
       # Configuración de pagos (mock para desarrollo)
       PAYMENT_GATEWAY_URL: http://localhost:3000/api/mock-payments

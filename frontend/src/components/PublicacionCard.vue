@@ -169,18 +169,18 @@ const manejarErrorImagen = (event: Event) => {
 const formatearCategoria = (categoria: string): string => {
   // Convertir categorías del enum a texto legible
   const categorias: Record<string, string> = {
-    'Guitars': 'Guitarras',
-    'Drums': 'Batería',
-    'Keyboards': 'Teclados',
-    'Winds': 'Vientos',
-    'Strings': 'Cuerdas',
-    'Amplifiers': 'Amplificadores',
-    'PA_Audio': 'Audio PA',
-    'Percussion': 'Percusión',
-    'Recording': 'Grabación',
-    'Lighting': 'Iluminación',
-    'Accessories': 'Accesorios',
-    'Others': 'Otros'
+    'GUITARRAS': 'Guitarras',
+    'BATERIAS': 'Baterías',
+    'TECLADOS': 'Teclados',
+    'VIENTOS': 'Instrumentos de Viento',
+    'CUERDAS': 'Instrumentos de Cuerda',
+    'AMPLIFICADORES': 'Amplificadores',
+    'AUDIO_PA': 'Audio PA',
+    'PERCUSION': 'Percusión',
+    'GRABACION': 'Equipos de Grabación',
+    'ILUMINACION': 'Iluminación',
+    'ACCESORIOS': 'Accesorios',
+    'OTROS': 'Otros'
   }
   
   return categorias[categoria] || categoria

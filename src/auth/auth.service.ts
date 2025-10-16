@@ -122,4 +122,53 @@ export class AuthService {
       throw error;
     }
   }
+
+  /**
+   * Obtiene el perfil del usuario a partir del encabezado Authorization con token mock.
+   * Formato del token mock: "mock_jwt_token_<USER_ID>_<TIMESTAMP>".
+   */
+  async obtenerPerfilDesdeToken(authHeader: string) {
+    try {
+      const token = authHeader?.startsWith('Bearer ')
+        ? authHeader.slice('Bearer '.length)
+        : authHeader;
+
+      if (!token || !token.startsWith('mock_jwt_token_')) {
+        throw new UnauthorizedException('Token inválido');
+      }
+
+      // mock_jwt_token_<USER_ID>_<TIMESTAMP>
+      const parts = token.split('_');
+      const userId = parts[3];
+      if (!userId) {
+        throw new UnauthorizedException('Token malformado');
+      }
+
+      const usuario = await this.prisma.usuario.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          email: true,
+          telefono: true,
+          direccion: true,
+          avatarUrl: true,
+          calificacionPromedio: true,
+          totalCalificaciones: true,
+        },
+      });
+
+      if (!usuario) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      return usuario;
+    } catch (error: any) {
+      if (error.code === 'P1001' || error.name === 'PrismaClientInitializationError') {
+        throw new ServiceUnavailableException('Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.');
+      }
+      throw error;
+    }
+  }
 }

@@ -85,6 +85,12 @@ export const authService = {
     return response.data
   },
 
+  // Obtener el perfil del usuario autenticado a partir del JWT (mock)
+  async perfil() {
+    const response = await api.get('/auth/profile')
+    return response.data
+  },
+
   // Verificar token actual
   async verificarToken(): Promise<boolean> {
     try {
@@ -206,8 +212,76 @@ export interface VerificacionDisponibilidad {
   disponible: boolean
 }
 
+// Tipo para crear publicación
+export interface CrearPublicacionRequest {
+  titulo: string
+  descripcion: string
+  categoria: string
+  marca?: string
+  modelo?: string
+  anioFabricacion?: number
+  precioPorDia: number
+  precioPorSemana?: number
+  precioPorMes?: number
+  deposito?: number
+  diasMinimoAlquiler?: number
+  diasMaximoAlquiler?: number
+  direccion: string
+  ciudad: string
+  departamento: string
+  codigoPostal?: string
+  latitud?: number
+  longitud?: number
+  entregaDomicilio?: boolean
+  retiroLocal?: boolean
+  estadoEquipo: string
+  instrucciones?: string
+}
+
+// Tipo para actualizar publicación
+export interface ActualizarPublicacionRequest {
+  titulo?: string
+  descripcion?: string
+  categoria?: string
+  marca?: string
+  modelo?: string
+  anioFabricacion?: number
+  precioPorDia?: number
+  precioPorSemana?: number
+  precioPorMes?: number
+  deposito?: number
+  diasMinimoAlquiler?: number
+  diasMaximoAlquiler?: number
+  direccion?: string
+  ciudad?: string
+  departamento?: string
+  codigoPostal?: string
+  latitud?: number
+  longitud?: number
+  entregaDomicilio?: boolean
+  retiroLocal?: boolean
+  estadoEquipo?: string
+  instrucciones?: string
+}
+
 // Servicios de publicaciones
 export const publicacionesService = {
+  // Crear una nueva publicación
+  async crearPublicacion(datos: CrearPublicacionRequest): Promise<Publicacion> {
+    // Obtener el perfil del usuario autenticado para conseguir su ID
+    const perfil = await authService.perfil()
+    const response = await api.post(`/publicaciones?usuarioId=${perfil.id}`, datos)
+    return response.data
+  },
+
+  // Obtener mis publicaciones
+  async obtenerMisPublicaciones(): Promise<Publicacion[]> {
+    // Obtener el perfil del usuario autenticado para conseguir su ID
+    const perfil = await authService.perfil()
+    const response = await api.get(`/publicaciones/mis-publicaciones?usuarioId=${perfil.id}`)
+    return response.data
+  },
+
   // Obtener todas las publicaciones con filtros opcionales
   async obtenerPublicaciones(filtros: FiltrosPublicacion = {}): Promise<RespuestaPublicaciones> {
     const params = new URLSearchParams()
@@ -303,6 +377,34 @@ export const publicacionesService = {
     const response = await api.get(`/publicaciones/${id}/disponibilidad/${encodeURIComponent(fechaInicio)}/${encodeURIComponent(fechaFin)}`)
     return response.data
   },
+
+  // Actualizar una publicación existente
+  async actualizarPublicacion(id: string, datos: ActualizarPublicacionRequest): Promise<Publicacion> {
+    // Obtener el perfil del usuario autenticado para conseguir su ID
+    const perfil = await authService.perfil()
+    const response = await api.patch(`/publicaciones/${id}?usuarioId=${perfil.id}`, datos)
+    return response.data
+  },
+
+  // Eliminar una publicación
+  async eliminarPublicacion(id: string): Promise<void> {
+    // Obtener el perfil del usuario autenticado para conseguir su ID
+    const perfil = await authService.perfil()
+    await api.delete(`/publicaciones/${id}?usuarioId=${perfil.id}`)
+  },
 }
 
 export default api
+
+// Servicios de usuario (perfil)
+export const usuarioService = {
+  async obtenerPerfil(id: string) {
+    const response = await api.get(`/usuarios/${id}`)
+    return response.data
+  },
+
+  async actualizarPerfil(id: string, datos: { nombre?: string; apellido?: string; telefono?: string; direccion?: string }) {
+    const response = await api.patch(`/usuarios/${id}`, datos)
+    return response.data
+  },
+}

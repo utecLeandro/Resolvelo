@@ -3,7 +3,7 @@
  * Todos los campos son opcionales para permitir actualizaciones parciales
  */
 
-import { IsString, IsOptional, IsDecimal, IsBoolean, IsInt, Min, Max, IsEnum, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsDecimal, IsBoolean, IsInt, Min, Max, IsEnum, MaxLength, IsDateString, IsNumber } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { CategoriaEquipo, EstadoPublicacion } from '@prisma/client';
 
@@ -40,22 +40,26 @@ export class ActualizarPublicacionDto {
 
   // Información de precios
   @IsOptional()
-  @IsDecimal({ decimal_digits: '2' }, { message: 'El precio por día debe ser un decimal válido' })
+  @IsNumber({}, { message: 'El precio por día debe ser un número válido' })
+  @Min(0.01, { message: 'El precio por día debe ser mayor a 0' })
   @Transform(({ value }) => value ? parseFloat(value) : undefined)
   precioPorDia?: number;
 
   @IsOptional()
-  @IsDecimal({ decimal_digits: '2' }, { message: 'El precio por semana debe ser un decimal válido' })
+  @IsNumber({}, { message: 'El precio por semana debe ser un número válido' })
+  @Min(0.01, { message: 'El precio por semana debe ser mayor a 0' })
   @Transform(({ value }) => value ? parseFloat(value) : undefined)
   precioPorSemana?: number;
 
   @IsOptional()
-  @IsDecimal({ decimal_digits: '2' }, { message: 'El precio por mes debe ser un decimal válido' })
+  @IsNumber({}, { message: 'El precio por mes debe ser un número válido' })
+  @Min(0.01, { message: 'El precio por mes debe ser mayor a 0' })
   @Transform(({ value }) => value ? parseFloat(value) : undefined)
   precioPorMes?: number;
 
   @IsOptional()
-  @IsDecimal({ decimal_digits: '2' }, { message: 'El depósito debe ser un decimal válido' })
+  @IsNumber({}, { message: 'El depósito debe ser un número válido' })
+  @Min(0, { message: 'El depósito debe ser mayor o igual a 0' })
   @Transform(({ value }) => value ? parseFloat(value) : undefined)
   deposito?: number;
 

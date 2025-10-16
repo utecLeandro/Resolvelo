@@ -2,7 +2,7 @@
  * Controlador de autenticación.
  * Implementa el registro de usuario siguiendo TDD.
  */
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, Headers, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -43,5 +43,19 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async validarContrasena(@Body() body: { password: string }) {
     return this.passwordStrengthService.evaluarFortaleza(body.password);
+  }
+
+  /**
+   * Devuelve el perfil del usuario autenticado.
+   * Por ahora usa token mock en Authorization para extraer el userId.
+   * Formato del token mock: "mock_jwt_token_<USER_ID>_<TIMESTAMP>".
+   */
+  @Get('profile')
+  @HttpCode(HttpStatus.OK)
+  async profile(@Headers('authorization') authHeader?: string) {
+    if (!authHeader) {
+      throw new UnauthorizedException('Falta encabezado Authorization');
+    }
+    return this.authService.obtenerPerfilDesdeToken(authHeader);
   }
 }
