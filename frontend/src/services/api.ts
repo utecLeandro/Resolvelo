@@ -8,7 +8,8 @@
 import axios from 'axios'
 
 // URL base del API desde variables de entorno
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+// En desarrollo, usamos el proxy de Vite (/api) para evitar problemas de CORS
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 // Configuración base de Axios
 const api = axios.create({
@@ -391,6 +392,79 @@ export const publicacionesService = {
     // Obtener el perfil del usuario autenticado para conseguir su ID
     const perfil = await authService.perfil()
     await api.delete(`/publicaciones/${id}?usuarioId=${perfil.id}`)
+  },
+}
+
+// Tipos para las reservas
+export interface SolicitudReserva {
+  id: string
+  fechaInicio: string
+  fechaFin: string
+  precioTotal: number
+  telefonoContacto?: string
+  estado: string
+  publicacion: {
+    titulo: string
+    descripcion: string
+  }
+  usuario: {
+    nombre: string
+    apellido: string
+    email: string
+    direccion?: string
+  }
+}
+
+export interface AprobarReservaRequest {
+  notasPropietario?: string
+}
+
+export interface RechazarReservaRequest {
+  motivo?: string
+}
+
+export interface CrearReservaRequest {
+  usuarioId: string
+  publicacionId: string
+  propietarioId: string
+  fechaInicio: string
+  fechaFin: string
+  precioTotal: number
+  comisionPlataforma: number
+  tipoEntrega: string
+  direccionEntrega: string
+  telefonoContacto: string
+  notasUsuario?: string
+}
+
+// Servicios de reservas
+export const reservasService = {
+  // Crear una nueva reserva
+  async crearReserva(datos: CrearReservaRequest): Promise<any> {
+    const response = await api.post('/usuarios/reservas/crear', datos)
+    return response.data
+  },
+
+  // Obtener solicitudes de alquiler pendientes para el propietario
+  async obtenerSolicitudesPendientes(): Promise<SolicitudReserva[]> {
+    const response = await api.get('/usuarios/reservas/mis-solicitudes')
+    return response.data.data || []
+  },
+
+  // Aprobar una reserva
+  async aprobarReserva(reservaId: string, datos: AprobarReservaRequest): Promise<void> {
+    await api.patch(`/reservas/${reservaId}/aprobar`, datos)
+  },
+
+  // Rechazar una reserva
+  async rechazarReserva(reservaId: string, datos: RechazarReservaRequest): Promise<void> {
+    await api.patch(`/reservas/${reservaId}/rechazar`, datos)
+  },
+
+  // Obtener mis reservas como arrendatario
+  async obtenerMisReservas(): Promise<any> {
+    const response = await api.get('/usuarios/reservas/mis-reservas')
+    return response.data
   },
 }
 

@@ -3,6 +3,7 @@
  * Maneja lógica de registro con hash + salt y verificación mock.
  */
 import { Injectable, UnauthorizedException, NotFoundException, ConflictException, ServiceUnavailableException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -10,7 +11,10 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   /**
    * Registra un usuario con email y contraseña aplicando OWASP: hash + salt.
@@ -44,11 +48,12 @@ export class AuthService {
       // Simular servicio externo de verificación (por ahora responde OK)
       const verificationOk = true; // mock
 
-      // Generar token JWT mock (en el futuro usar @nestjs/jwt)
-      const mockToken = `mock_jwt_token_${usuario.id}_${Date.now()}`;
+      // Generar token JWT real
+      const payload = { sub: usuario.id, email: usuario.email };
+      const accessToken = this.jwtService.sign(payload);
 
       return {
-        access_token: mockToken,
+        access_token: accessToken,
         user: {
           id: usuario.id,
           nombre: usuario.nombre,
@@ -101,11 +106,12 @@ export class AuthService {
         throw new UnauthorizedException('Credenciales incorrectas');
       }
 
-      // Generar token JWT (mock por ahora - en el futuro usar @nestjs/jwt)
-      const mockToken = `mock_jwt_token_${usuario.id}_${Date.now()}`;
+      // Generar token JWT real
+      const payload = { sub: usuario.id, email: usuario.email };
+      const accessToken = this.jwtService.sign(payload);
 
       return {
-        access_token: mockToken,
+        access_token: accessToken,
         user: {
           id: usuario.id,
           nombre: usuario.nombre,
@@ -124,8 +130,7 @@ export class AuthService {
   }
 
   /**
-   * Obtiene el perfil del usuario a partir del encabezado Authorization con token mock.
-   * Formato del token mock: "mock_jwt_token_<USER_ID>_<TIMESTAMP>".
+   * Obtiene el perfil del usuario a partir del encabezado Authorization con token JWT.
    */
   async obtenerPerfilDesdeToken(authHeader: string) {
     try {
@@ -133,15 +138,16 @@ export class AuthService {
         ? authHeader.slice('Bearer '.length)
         : authHeader;
 
-      if (!token || !token.startsWith('mock_jwt_token_')) {
-        throw new UnauthorizedException('Token inválido');
+      if (!token) {
+        throw new UnauthorizedException('Token no proporcionado');
       }
 
-      // mock_jwt_token_<USER_ID>_<TIMESTAMP>
-      const parts = token.split('_');
-      const userId = parts[3];
+      // Verificar y decodificar el token JWT
+      const payload = this.jwtService.verify(token);
+      const userId = payload.sub;
+
       if (!userId) {
-        throw new UnauthorizedException('Token malformado');
+        throw new UnauthorizedException('Token inválido');
       }
 
       const usuario = await this.prisma.usuario.findUnique({
@@ -156,6 +162,7 @@ export class AuthService {
           avatarUrl: true,
           calificacionPromedio: true,
           totalCalificaciones: true,
+          documentoIdentidad: true,
         },
       });
 
@@ -165,6 +172,9 @@ export class AuthService {
 
       return usuario;
     } catch (error: any) {
+      if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Token inválido o expirado');
+      }
       if (error.code === 'P1001' || error.name === 'PrismaClientInitializationError') {
         throw new ServiceUnavailableException('Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.');
       }

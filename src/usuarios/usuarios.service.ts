@@ -22,6 +22,7 @@ export class UsuariosService {
         avatarUrl: true,
         perfilPublico: true,
         estadoVerificacion: true,
+        documentoIdentidad: true,
       },
     })
 

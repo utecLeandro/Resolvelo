@@ -8,7 +8,7 @@ interface UsuarioPerfil {
   nombre?: string
   apellido?: string
   email?: string
-  telefono?: string
+  documentoIdentidad?: string
   direccion?: string
 }
 
@@ -20,7 +20,7 @@ const error = ref('')
 const usuarioId = ref<string | null>(null)
 const nombre = ref('')
 const apellido = ref('')
-const telefono = ref('')
+const documentoIdentidad = ref('')
 const direccion = ref('')
 
 // Variables para mis publicaciones
@@ -42,7 +42,7 @@ onMounted(async () => {
     usuarioId.value = perfil.id
     nombre.value = perfil.nombre || ''
     apellido.value = perfil.apellido || ''
-    telefono.value = perfil.telefono || ''
+    documentoIdentidad.value = perfil.documentoIdentidad || ''
     direccion.value = perfil.direccion || ''
   } catch (e: any) {
     // Fallback a localStorage si el endpoint falla
@@ -54,7 +54,7 @@ onMounted(async () => {
         const perfil: UsuarioPerfil = await usuarioService.obtenerPerfil(userData.id)
         nombre.value = perfil.nombre || ''
         apellido.value = perfil.apellido || ''
-        telefono.value = perfil.telefono || ''
+        documentoIdentidad.value = perfil.documentoIdentidad || ''
         direccion.value = perfil.direccion || ''
       } catch (innerErr: any) {
         error.value = innerErr?.response?.data?.message || 'Error al cargar tu perfil.'
@@ -76,7 +76,6 @@ const guardarCambios = async () => {
     const res = await usuarioService.actualizarPerfil(usuarioId.value, {
       nombre: nombre.value || undefined,
       apellido: apellido.value || undefined,
-      telefono: telefono.value || undefined,
       direccion: direccion.value || undefined,
     })
     mensaje.value = res.message || 'Perfil actualizado correctamente.'
@@ -178,15 +177,19 @@ const cambiarPestana = (pestana: 'perfil' | 'publicaciones') => {
         </div>
 
         <div>
-          <label for="telefono" class="block text-sm font-medium text-gray-800">Teléfono</label>
+          <label for="documentoIdentidad" class="block text-sm font-medium text-gray-800">Documento de identidad</label>
           <input
-            id="telefono"
-            v-model.trim="telefono"
+            id="documentoIdentidad"
+            v-model.trim="documentoIdentidad"
             type="text"
             maxlength="20"
-            placeholder="Tu teléfono"
+            placeholder="Tu número de documento"
             class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            readonly
+            disabled
+            aria-readonly="true"
           />
+          <p class="mt-1 text-xs text-gray-500">Este dato es de solo lectura.</p>
         </div>
 
         <div>
@@ -234,15 +237,11 @@ const cambiarPestana = (pestana: 'perfil' | 'publicaciones') => {
             :key="publicacion.id"
             class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
           >
-            <div class="aspect-w-16 aspect-h-9 bg-gray-200">
-              <img
-                v-if="publicacion.imagenes && publicacion.imagenes.length > 0"
-                :src="publicacion.imagenes[0].url"
-                :alt="publicacion.titulo"
-                class="w-full h-48 object-cover"
-              />
-              <div v-else class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                <span class="text-gray-400">Sin imagen</span>
+            <div class="aspect-w-16 aspect-h-9 bg-gradient-to-br from-blue-50 to-indigo-100">
+              <div class="w-full h-48 flex items-center justify-center">
+                <svg class="h-12 w-12 text-blue-400 opacity-60" fill="currentColor" viewBox="0 0 24 24" :aria-label="publicacion.titulo">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
               </div>
             </div>
             <div class="p-4">

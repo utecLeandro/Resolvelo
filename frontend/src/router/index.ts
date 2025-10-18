@@ -12,6 +12,7 @@ import DetallePublicacion from '../views/DetallePublicacion.vue'
 import PerfilPage from '../views/PerfilPage.vue'
 import CrearPublicacionPage from '../views/CrearPublicacionPage.vue'
 import MisPublicacionesPage from '../views/MisPublicacionesPage.vue'
+import MisReservasPage from '../views/MisReservasPage.vue'
 import DebugPage from '../views/DebugPage.vue'
 
 // Definición de rutas de la aplicación
@@ -83,8 +84,17 @@ const routes: RouteRecordRaw[] = [
     name: 'MisPublicaciones',
     component: MisPublicacionesPage,
     meta: {
-      title: 'Mis Publicaciones - ReSolVelo',
-      description: 'Gestiona tus instrumentos musicales publicados'
+      title: 'Panel del Propietario - ReSolVelo',
+      description: 'Gestiona tus instrumentos musicales publicados y solicitudes de alquiler'
+    }
+  },
+  {
+    path: '/mis-reservas',
+    name: 'MisReservas',
+    component: MisReservasPage,
+    meta: {
+      title: 'Mis Reservas - ReSolVelo',
+      description: 'Gestiona tus reservas de instrumentos musicales'
     }
   },
   {

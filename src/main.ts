@@ -2,6 +2,7 @@
  * Punto de entrada de la aplicación NestJS.
  * Se configura la app con buenas prácticas de seguridad y CORS.
  */
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';

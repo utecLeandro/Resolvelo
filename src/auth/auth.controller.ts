@@ -47,8 +47,7 @@ export class AuthController {
 
   /**
    * Devuelve el perfil del usuario autenticado.
-   * Por ahora usa token mock en Authorization para extraer el userId.
-   * Formato del token mock: "mock_jwt_token_<USER_ID>_<TIMESTAMP>".
+   * Usa token JWT en Authorization para extraer el userId.
    */
   @Get('profile')
   @HttpCode(HttpStatus.OK)

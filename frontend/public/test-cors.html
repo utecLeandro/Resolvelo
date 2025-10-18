@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test CORS - ReSolVelo</title>
+</head>
+<body>
+    <h1>Test de Conectividad CORS</h1>
+    <button onclick="testPublicaciones()">Probar Publicaciones</button>
+    <button onclick="testLogin()">Probar Login</button>
+    <div id="resultado"></div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+        
+        async function testPublicaciones() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<p>Probando publicaciones...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/publicaciones`);
+                const data = await response.json();
+                resultado.innerHTML = `<p style="color: green;">✅ Publicaciones OK: ${data.publicaciones.length} encontradas</p>`;
+            } catch (error) {
+                resultado.innerHTML = `<p style="color: red;">❌ Error en publicaciones: ${error.message}</p>`;
+                console.error('Error:', error);
+            }
+        }
+        
+        async function testLogin() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<p>Probando login...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'juan@test.com',
+                        password: 'JuanTest2024!'
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    resultado.innerHTML = `<p style="color: green;">✅ Login OK: Token recibido</p>`;
+                } else {
+                    resultado.innerHTML = `<p style="color: orange;">⚠️ Login falló: ${data.message}</p>`;
+                }
+            } catch (error) {
+                resultado.innerHTML = `<p style="color: red;">❌ Error en login: ${error.message}</p>`;
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

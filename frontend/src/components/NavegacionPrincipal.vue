@@ -122,7 +122,7 @@
                 role="menuitem"
                 @click="cerrarMenuUsuario"
               >
-                Mis publicaciones
+                Panel del Propietario
               </router-link>
               <router-link 
                 to="/mis-reservas"
@@ -256,7 +256,7 @@
               role="menuitem"
               @click="cerrarMenuMovil"
             >
-              Mis publicaciones
+              Panel del Propietario
             </router-link>
             <router-link 
               to="/mis-reservas"

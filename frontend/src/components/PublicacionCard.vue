@@ -8,16 +8,19 @@
     @keydown.space.prevent="navegarADetalle"
     :aria-label="`Ver detalles de ${publicacion.titulo}`"
   >
-    <!-- Contenedor de imagen -->
-    <div class="relative aspect-square overflow-hidden rounded-t-xl">
-      <!-- Imagen principal -->
-      <img
-        :src="imagenPrincipal"
-        :alt="`Imagen de ${publicacion.titulo}`"
-        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        loading="lazy"
-        @error="manejarErrorImagen"
-      />
+    <!-- Contenedor de imagen placeholder -->
+    <div class="relative aspect-square overflow-hidden rounded-t-xl bg-gradient-to-br from-blue-50 to-indigo-100">
+      <!-- Placeholder con nota musical -->
+      <div class="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+        <svg 
+          class="w-16 h-16 text-blue-400 opacity-60" 
+          fill="currentColor" 
+          viewBox="0 0 24 24"
+          :aria-label="`Imagen de ${publicacion.titulo}`"
+        >
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+        </svg>
+      </div>
       
       <!-- Badge de categoría -->
       <div class="absolute top-3 left-3">
@@ -40,7 +43,7 @@
         </span>
       </div>
       
-      <!-- Indicador de múltiples imágenes -->
+      <!-- Indicador de múltiples imágenes (simulado) -->
       <div 
         v-if="totalImagenes > 1" 
         class="absolute bottom-3 right-3 bg-black/50 text-white px-2 py-1 rounded-full text-xs"
@@ -126,7 +129,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Publicacion, ImagenPublicacion } from '../services/api'
+import type { Publicacion } from '../services/api'
 
 // Props
 interface Props {
@@ -139,16 +142,9 @@ const props = defineProps<Props>()
 const router = useRouter()
 
 // Computed properties
-const imagenPrincipal = computed(() => {
-  // Buscar imagen principal o usar la primera disponible
-  const imagenPrincipal = props.publicacion.imagenes?.find((img: ImagenPublicacion) => img.esPrincipal)
-  const primeraImagen = props.publicacion.imagenes?.[0]
-  
-  return imagenPrincipal?.url || primeraImagen?.url || '/placeholder-instrument.jpg'
-})
-
 const totalImagenes = computed(() => {
-  return props.publicacion.imagenes?.length || 0
+  // Simular que hay imágenes para mostrar el indicador
+  return props.publicacion.imagenes?.length || 1
 })
 
 const ubicacionCompleta = computed(() => {
@@ -159,11 +155,6 @@ const ubicacionCompleta = computed(() => {
 // Métodos
 const navegarADetalle = () => {
   router.push(`/publicacion/${props.publicacion.id}`)
-}
-
-const manejarErrorImagen = (event: Event) => {
-  const target = event.target as HTMLImageElement
-  target.src = '/placeholder-instrument.jpg'
 }
 
 const formatearCategoria = (categoria: string): string => {

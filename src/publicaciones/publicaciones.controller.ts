@@ -15,7 +15,7 @@ import {
   ValidationPipe,
   UsePipes,
 } from '@nestjs/common';
-// import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // TODO: Implementar guard
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PublicacionesService } from './publicaciones.service';
 import { CrearPublicacionDto } from './dto/crear-publicacion.dto';
 import { ActualizarPublicacionDto } from './dto/actualizar-publicacion.dto';
@@ -32,16 +32,16 @@ export class PublicacionesController {
 
   /**
    * Crear una nueva publicación de equipo musical
-   * TODO: Agregar autenticación cuando se implemente JwtAuthGuard
+   * Requiere autenticación JWT
    */
   @Post()
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   async crear(
     @Body() crearPublicacionDto: CrearPublicacionDto,
-    @Query('usuarioId') usuarioId: string, // Temporal hasta implementar auth
+    @Request() req: any,
   ) {
-    return this.publicacionesService.crearPublicacion(usuarioId, crearPublicacionDto);
+    return this.publicacionesService.crearPublicacion(req.user.id, crearPublicacionDto);
   }
 
   /**
@@ -54,15 +54,12 @@ export class PublicacionesController {
   }
 
   /**
-   * Obtener publicaciones del usuario
-   * TODO: Agregar autenticación cuando se implemente JwtAuthGuard
+   * Obtener publicaciones del usuario autenticado
    */
   @Get('mis-publicaciones')
-  // @UseGuards(JwtAuthGuard)
-  async obtenerMisPublicaciones(
-    @Query('usuarioId') usuarioId: string, // Temporal hasta implementar auth
-  ) {
-    // Crear filtros vacíos por ahora, se pueden agregar más tarde si es necesario
+  @UseGuards(JwtAuthGuard)
+  async obtenerMisPublicaciones(@Request() req: any) {
+    const usuarioId = req.user.id; // El ID del usuario viene del objeto user
     const filtros: FiltrosPublicacionDto = {};
     return this.publicacionesService.obtenerPublicacionesUsuario(usuarioId, filtros);
   }
@@ -78,34 +75,34 @@ export class PublicacionesController {
 
   /**
    * Actualizar una publicación existente
-   * TODO: Agregar autenticación cuando se implemente JwtAuthGuard
+   * Requiere autenticación JWT
    */
   @Patch(':id')
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async actualizar(
     @Param('id') id: string,
     @Body() actualizarPublicacionDto: ActualizarPublicacionDto,
-    @Query('usuarioId') usuarioId: string, // Temporal hasta implementar auth
+    @Request() req: any,
   ) {
     return this.publicacionesService.actualizarPublicacion(
       id,
-      usuarioId,
+      req.user.id,
       actualizarPublicacionDto,
     );
   }
 
   /**
    * Eliminar (soft delete) una publicación
-   * TODO: Agregar autenticación cuando se implemente JwtAuthGuard
+   * Requiere autenticación JWT
    */
   @Delete(':id')
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async eliminar(
     @Param('id') id: string,
-    @Query('usuarioId') usuarioId: string, // Temporal hasta implementar auth
+    @Request() req: any,
   ) {
-    await this.publicacionesService.eliminarPublicacion(id, usuarioId);
+    await this.publicacionesService.eliminarPublicacion(id, req.user.id);
   }
 
   /**

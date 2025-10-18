@@ -55,36 +55,40 @@
 
       <!-- Detalle de la publicación -->
       <div v-else-if="publicacion" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Galería de imágenes -->
+        <!-- Galería de imágenes placeholder -->
         <div class="space-y-4">
-          <!-- Imagen principal -->
-          <div class="aspect-w-16 aspect-h-12 bg-gray-200 rounded-xl overflow-hidden">
-            <img
-              :src="imagenPrincipal"
-              :alt="publicacion.titulo"
-              class="w-full h-full object-cover"
-              @error="manejarErrorImagen"
-            />
+          <!-- Imagen principal placeholder -->
+          <div class="aspect-w-16 aspect-h-12 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl overflow-hidden">
+            <div class="w-full h-full flex items-center justify-center">
+              <svg 
+                class="w-24 h-24 text-blue-400 opacity-60" 
+                fill="currentColor" 
+                viewBox="0 0 24 24"
+                :aria-label="publicacion.titulo"
+              >
+                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+              </svg>
+            </div>
           </div>
           
-          <!-- Miniaturas -->
+          <!-- Miniaturas placeholder -->
           <div v-if="publicacion.imagenes && publicacion.imagenes.length > 1" class="grid grid-cols-4 gap-2">
-            <button
+            <div
               v-for="(imagen, index) in publicacion.imagenes.slice(0, 4)"
               :key="imagen.id"
-              @click="cambiarImagenPrincipal(imagen.url)"
-              :class="[
-                'aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden border-2 transition-colors',
-                imagenPrincipal === imagen.url ? 'border-blue-600' : 'border-transparent hover:border-gray-300'
-              ]"
+              class="aspect-w-1 aspect-h-1 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden border-2 border-gray-300"
             >
-              <img
-                :src="imagen.url"
-                :alt="`${publicacion.titulo} - imagen ${index + 1}`"
-                class="w-full h-full object-cover"
-                @error="manejarErrorImagen"
-              />
-            </button>
+              <div class="w-full h-full flex items-center justify-center">
+                <svg 
+                  class="w-6 h-6 text-gray-400" 
+                  fill="currentColor" 
+                  viewBox="0 0 24 24"
+                  :aria-label="`${publicacion.titulo} - imagen ${index + 1}`"
+                >
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -302,8 +306,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EstadosUI from '../components/EstadosUI.vue'
-import { publicacionesService } from '../services/api'
-import type { Publicacion, ReservaActiva } from '../services/api'
+import { publicacionesService, reservasService } from '../services/api'
+import type { Publicacion, ReservaActiva, CrearReservaRequest } from '../services/api'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 
@@ -315,7 +319,7 @@ const router = useRouter()
 const publicacion = ref<Publicacion | null>(null)
 const cargando = ref(false)
 const error = ref<string | null>(null)
-const imagenPrincipal = ref<string>('')
+
 const usuarioAutenticado = ref(false)
 const datosUsuario = ref<any>(null)
 
@@ -450,12 +454,7 @@ const cargarPublicacion = async () => {
       reservasActivas.value = []
     }
     
-    // Configurar imagen principal
-    if (publicacion.value?.imagenes && publicacion.value.imagenes.length > 0) {
-      imagenPrincipal.value = publicacion.value.imagenes[0].url
-    } else {
-      imagenPrincipal.value = '/placeholder-instrument.jpg'
-    }
+
     
   } catch (err) {
     console.error('Error al cargar publicación:', err)
@@ -465,14 +464,7 @@ const cargarPublicacion = async () => {
   }
 }
 
-const cambiarImagenPrincipal = (url: string) => {
-  imagenPrincipal.value = url
-}
 
-const manejarErrorImagen = (event: Event) => {
-  const target = event.target as HTMLImageElement
-  target.src = '/placeholder-instrument.jpg'
-}
 
 // Formateadores
 const formatearISO = (d: Date) => {
@@ -489,7 +481,7 @@ const formatearDDMMYYYY = (d: Date) => {
   return `${dd}/${mm}/${yyyy}`
 }
 
-const contactarPropietario = () => {
+const contactarPropietario = async () => {
   // Validar rango antes de continuar
   if (!fechaInicio.value || !fechaFin.value) {
     alert('Selecciona un rango de fechas para continuar.')
@@ -532,9 +524,43 @@ const contactarPropietario = () => {
       }
     })
   } else {
-    // Usuario autenticado - implementar lógica de contacto
-    // Por ahora mostrar un mensaje de confirmación con las fechas seleccionadas
-    alert(`¡Hola ${datosUsuario.value?.nombre}! Has seleccionado desde ${formatearISO(fechaInicio.value!)} hasta ${formatearISO(fechaFin.value!)} (${diasSeleccionados.value} días). La funcionalidad de contacto se implementará próximamente.`)
+    // Usuario autenticado - crear la reserva
+    try {
+      if (!publicacion.value || !datosUsuario.value) {
+        alert('Error: No se pudo obtener la información necesaria.')
+        return
+      }
+
+      // Preparar datos de la reserva
+      const datosReserva: CrearReservaRequest = {
+        usuarioId: datosUsuario.value.id,
+        publicacionId: publicacion.value.id,
+        propietarioId: publicacion.value.propietarioId,
+        fechaInicio: formatearISO(fechaInicio.value!),
+        fechaFin: formatearISO(fechaFin.value!),
+        precioTotal: totalEstimado.value,
+        comisionPlataforma: Math.round(totalEstimado.value * 0.1), // 10% de comisión
+        tipoEntrega: 'DOMICILIO', // Por defecto
+        direccionEntrega: datosUsuario.value.direccion || 'Por definir',
+        telefonoContacto: datosUsuario.value.telefono || 'Por definir',
+        notasUsuario: `Solicitud de alquiler para ${diasSeleccionados.value} días`
+      }
+
+      // Crear la reserva
+      const resultado = await reservasService.crearReserva(datosReserva)
+      
+      if (resultado.success) {
+        alert(`¡Solicitud enviada exitosamente! Tu solicitud de alquiler ha sido enviada al propietario. Te notificaremos cuando sea aprobada.`)
+        // Opcional: redirigir a una página de confirmación o mis reservas
+        router.push('/mis-publicaciones?tab=solicitudes')
+      } else {
+        alert('Error al enviar la solicitud. Por favor, inténtalo de nuevo.')
+      }
+    } catch (error: any) {
+      console.error('Error creando reserva:', error)
+      const mensaje = error.response?.data?.message || error.message || 'Error desconocido'
+      alert(`Error al enviar la solicitud: ${mensaje}`)
+    }
   }
 }
 
@@ -575,9 +601,7 @@ defineExpose({
   publicacion,
   cargando,
   error,
-  imagenPrincipal,
   cargarPublicacion,
-  cambiarImagenPrincipal,
   contactarPropietario,
   estadoTexto,
   categoriaTexto,
