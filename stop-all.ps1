@@ -15,14 +15,13 @@ catch {
 }
 
 # Detener procesos de Node.js en los puertos específicos
-$ports = @(3000, 5174, 5555)
+$ports = @(3000, 5173, 5555)
 foreach ($port in $ports) {
     Write-Host "🔍 Buscando procesos en puerto $port..." -ForegroundColor Yellow
     try {
-        $processes = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | 
-                    Select-Object -ExpandProperty OwningProcess -Unique
-        
-        foreach ($processId in $processes) {
+        $connections = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
+        foreach ($connection in $connections) {
+            $processId = $connection.OwningProcess
             if ($processId -and $processId -ne 0) {
                 $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
                 if ($process) {
@@ -37,21 +36,17 @@ foreach ($port in $ports) {
     }
 }
 
-# Detener procesos específicos de Node.js relacionados con el proyecto
-Write-Host "🔍 Buscando procesos de Node.js del proyecto..." -ForegroundColor Yellow
+# Detener todos los procesos de Node.js
+Write-Host "🔍 Buscando procesos de Node.js..." -ForegroundColor Yellow
 try {
-    $nodeProcesses = Get-Process -Name "node" -ErrorAction SilentlyContinue | 
-                    Where-Object { $_.CommandLine -like "*start:dev*" -or 
-                                  $_.CommandLine -like "*vite*" -or 
-                                  $_.CommandLine -like "*prisma studio*" }
-    
+    $nodeProcesses = Get-Process -Name "node" -ErrorAction SilentlyContinue
     foreach ($process in $nodeProcesses) {
         Write-Host "🔪 Deteniendo proceso Node.js: $($process.Id)" -ForegroundColor Red
         Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
     }
 }
 catch {
-    Write-Host "⚠️  No se encontraron procesos específicos de Node.js" -ForegroundColor Yellow
+    Write-Host "⚠️  No se encontraron procesos de Node.js" -ForegroundColor Yellow
 }
 
 # Limpiar archivos temporales si existen

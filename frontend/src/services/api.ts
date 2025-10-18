@@ -14,10 +14,16 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 // Configuración base de Axios
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 15000, // Aumentar timeout
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  // Configuraciones adicionales para mejorar compatibilidad
+  withCredentials: false,
+  validateStatus: function (status) {
+    return status >= 200 && status < 500; // Aceptar errores 4xx para manejarlos apropiadamente
+  }
 })
 
 // Interceptor para agregar token JWT a las requests (cuando esté disponible)
@@ -38,11 +44,39 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Manejo específico de errores de red
+    if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+      console.error('Error de conexión de red:', error.message)
+      error.message = 'No se puede conectar al servidor. Verifica tu conexión a internet.'
+    } else if (error.code === 'ENOTFOUND') {
+      console.error('Servidor no encontrado:', error.message)
+      error.message = 'Servidor no encontrado. Verifica la URL del servidor.'
+    } else if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
+      console.error('Timeout de conexión:', error.message)
+      error.message = 'La conexión tardó demasiado. Intenta nuevamente.'
+    }
+    
+    // Manejo de errores HTTP
     if (error.response?.status === 401) {
       // Token expirado o inválido
       localStorage.removeItem('access_token')
       // TODO: redirigir a login si es necesario
     }
+    
+    // Log detallado para debugging
+    console.error('API Error Details:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        baseURL: error.config?.baseURL
+      }
+    })
+    
     return Promise.reject(error)
   }
 )
@@ -72,24 +106,65 @@ export interface AuthResponse {
   }
 }
 
+// Función auxiliar para fallback con fetch
+async function fetchFallback(url: string, options: RequestInit = {}) {
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`
+  const response = await fetch(fullUrl, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...options.headers
+    }
+  })
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }))
+    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+  }
+  
+  return response.json()
+}
+
 // Servicios de autenticación
 export const authService = {
   // Registro de nuevo usuario
   async registro(datos: RegistroRequest): Promise<AuthResponse> {
-    const response = await api.post('/auth/register', datos)
-    return response.data
+    try {
+      const response = await api.post('/auth/register', datos)
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for registro:', error.message)
+      return await fetchFallback('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(datos)
+      })
+    }
   },
 
   // Login de usuario existente
   async login(datos: LoginRequest): Promise<AuthResponse> {
-    const response = await api.post('/auth/login', datos)
-    return response.data
+    try {
+      const response = await api.post('/auth/login', datos)
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for login:', error.message)
+      return await fetchFallback('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(datos)
+      })
+    }
   },
 
   // Obtener el perfil del usuario autenticado a partir del JWT (mock)
   async perfil() {
-    const response = await api.get('/auth/profile')
-    return response.data
+    try {
+      const response = await api.get('/auth/profile')
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for perfil:', error.message)
+      return await fetchFallback('/auth/profile')
+    }
   },
 
   // Verificar token actual
@@ -97,8 +172,14 @@ export const authService = {
     try {
       await api.get('/auth/profile')
       return true
-    } catch {
-      return false
+    } catch (axiosError) {
+      try {
+        console.warn('Axios failed, trying fetch fallback for verificarToken')
+        await fetchFallback('/auth/profile')
+        return true
+      } catch (fetchError) {
+        return false
+      }
     }
   },
 
@@ -269,18 +350,33 @@ export interface ActualizarPublicacionRequest {
 export const publicacionesService = {
   // Crear una nueva publicación
   async crearPublicacion(datos: CrearPublicacionRequest): Promise<Publicacion> {
-    // Obtener el perfil del usuario autenticado para conseguir su ID
-    const perfil = await authService.perfil()
-    const response = await api.post(`/publicaciones?usuarioId=${perfil.id}`, datos)
-    return response.data
+    try {
+      // Obtener el perfil del usuario autenticado para conseguir su ID
+      const perfil = await authService.perfil()
+      const response = await api.post(`/publicaciones?usuarioId=${perfil.id}`, datos)
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for crearPublicacion:', error.message)
+      const perfil = await authService.perfil()
+      return await fetchFallback(`/publicaciones?usuarioId=${perfil.id}`, {
+        method: 'POST',
+        body: JSON.stringify(datos)
+      })
+    }
   },
 
   // Obtener mis publicaciones
   async obtenerMisPublicaciones(): Promise<Publicacion[]> {
-    // Obtener el perfil del usuario autenticado para conseguir su ID
-    const perfil = await authService.perfil()
-    const response = await api.get(`/publicaciones/mis-publicaciones?usuarioId=${perfil.id}`)
-    return response.data
+    try {
+      // Obtener el perfil del usuario autenticado para conseguir su ID
+      const perfil = await authService.perfil()
+      const response = await api.get(`/publicaciones/mis-publicaciones?usuarioId=${perfil.id}`)
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for obtenerMisPublicaciones:', error.message)
+      const perfil = await authService.perfil()
+      return await fetchFallback(`/publicaciones/mis-publicaciones?usuarioId=${perfil.id}`)
+    }
   },
 
   // Obtener todas las publicaciones con filtros opcionales
@@ -293,26 +389,30 @@ export const publicacionesService = {
       }
     })
 
-    const url = `${API_BASE_URL}/publicaciones?${params.toString()}`
-    console.log('🔍 URL de la solicitud:', url)
-    console.log('🔍 Filtros enviados:', filtros)
-
-    // Usar fetch directo para evitar problemas con interceptores
-    const response = await fetch(url)
-    console.log('🔍 Status de respuesta:', response.status)
+    const queryString = params.toString()
+    const endpoint = queryString ? `/publicaciones?${queryString}` : '/publicaciones'
     
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('🔍 Error response body:', errorText)
-      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`)
+    try {
+      console.log('🔍 Intentando obtener publicaciones con Axios:', endpoint)
+      const response = await api.get(endpoint)
+      console.log('✅ Axios exitoso para obtenerPublicaciones')
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for obtenerPublicaciones:', error.message)
+      const fallbackEndpoint = queryString ? `/publicaciones?${queryString}` : '/publicaciones'
+      return await fetchFallback(fallbackEndpoint)
     }
-    return await response.json()
   },
 
   // Obtener una publicación específica por ID
   async obtenerPublicacionPorId(id: string): Promise<Publicacion> {
-    const response = await api.get(`/publicaciones/${id}`)
-    return response.data
+    try {
+      const response = await api.get(`/publicaciones/${id}`)
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for obtenerPublicacionPorId:', error.message)
+      return await fetchFallback(`/publicaciones/${id}`)
+    }
   },
 
   // Buscar publicaciones por término
