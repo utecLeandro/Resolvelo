@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login Real</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Test Login Real con Fallback</h1>
+        <p>Esta página prueba el login con usuarios reales de la base de datos.</p>
+
+        <div class="test-section">
+            <h3>👤 Seleccionar Usuario</h3>
+            <select id="userSelect" onchange="updateCredentials()">
+                <option value="maria@test.com:password123">María García (maria@test.com)</option>
+                <option value="juan@test.com:password123">Juan (juan@test.com)</option>
+                <option value="gtbump2012@gmail.com:password123">Federico (gtbump2012@gmail.com)</option>
+            </select>
+            
+            <input type="email" id="email" placeholder="Email" readonly>
+            <input type="password" id="password" placeholder="Password" readonly>
+            
+            <button onclick="testRealLogin()">🚀 Probar Login Real</button>
+            <button onclick="testDirectFetch()">🔄 Probar Fetch Directo</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Resultado</h3>
+            <div id="result" class="log">Esperando prueba...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Logs Detallados</h3>
+            <button onclick="clearLogs()">Limpiar</button>
+            <div id="logs" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let logs = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            logs.push(logEntry);
+            
+            const logDiv = document.getElementById('logs');
+            logDiv.textContent = logs.join('\n');
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            console.log(logEntry);
+        }
+
+        function updateCredentials() {
+            const select = document.getElementById('userSelect');
+            const [email, password] = select.value.split(':');
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = password;
+            log(`Credenciales actualizadas para: ${email}`);
+        }
+
+        // Simular el servicio de autenticación con fallback (como en la app real)
+        async function simulateAuthServiceWithFallback(email, password) {
+            const API_BASE_URL = 'http://localhost:3000/api';
+            
+            // Función de fallback con fetch
+            async function fetchFallback(url, options = {}) {
+                const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+                const response = await fetch(fullUrl, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return response.json();
+            }
+
+            // Simular que Axios falla (para forzar el uso del fallback)
+            log('Simulando fallo de Axios, usando fallback con fetch...', 'warning');
+            
+            try {
+                const result = await fetchFallback('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                log('✅ Login exitoso con fetch fallback', 'success');
+                return result;
+                
+            } catch (fetchError) {
+                log(`❌ Fetch fallback falló: ${fetchError.message}`, 'error');
+                throw fetchError;
+            }
+        }
+
+        async function testRealLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            log(`🚀 Iniciando login real para: ${email}`);
+            
+            try {
+                const result = await simulateAuthServiceWithFallback(email, password);
+                
+                document.getElementById('result').innerHTML = `
+                    <div class="success">
+                        <h4>✅ Login Exitoso!</h4>
+                        <p><strong>Usuario:</strong> ${result.user.nombre}</p>
+                        <p><strong>Email:</strong> ${result.user.email}</p>
+                        <p><strong>ID:</strong> ${result.user.id}</p>
+                        <p><strong>Estado:</strong> ${result.user.estadoVerificacion}</p>
+                        <p><strong>Token:</strong> ${result.access_token.substring(0, 50)}...</p>
+                    </div>
+                `;
+                
+                log(`✅ Login completado para ${result.user.nombre}`, 'success');
+                
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="error">
+                        <h4>❌ Error en Login</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                
+                log(`❌ Login falló: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDirectFetch() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            log(`🔄 Iniciando fetch directo para: ${email}`);
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                document.getElementById('result').innerHTML = `
+                    <div class="success">
+                        <h4>✅ Fetch Directo Exitoso!</h4>
+                        <p><strong>Usuario:</strong> ${result.user.nombre}</p>
+                        <p><strong>Email:</strong> ${result.user.email}</p>
+                        <p><strong>ID:</strong> ${result.user.id}</p>
+                        <p><strong>Estado:</strong> ${result.user.estadoVerificacion}</p>
+                        <p><strong>Token:</strong> ${result.access_token.substring(0, 50)}...</p>
+                    </div>
+                `;
+                
+                log(`✅ Fetch directo completado para ${result.user.nombre}`, 'success');
+                
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="error">
+                        <h4>❌ Error en Fetch Directo</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                
+                log(`❌ Fetch directo falló: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLogs() {
+            logs = [];
+            document.getElementById('logs').textContent = '';
+            log('Logs limpiados');
+        }
+
+        // Inicializar al cargar la página
+        window.addEventListener('load', () => {
+            updateCredentials();
+            log('Página de prueba de login real cargada');
+        });
+    </script>
+</body>
+</html>
