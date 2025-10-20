@@ -551,8 +551,8 @@ const contactarPropietario = async () => {
       
       if (resultado.success) {
         alert(`¡Solicitud enviada exitosamente! Tu solicitud de alquiler ha sido enviada al propietario. Te notificaremos cuando sea aprobada.`)
-        // Opcional: redirigir a una página de confirmación o mis reservas
-        router.push('/mis-publicaciones?tab=solicitudes')
+        // Redirigir a mis reservas para ver la solicitud creada
+        router.push('/mis-reservas')
       } else {
         alert('Error al enviar la solicitud. Por favor, inténtalo de nuevo.')
       }

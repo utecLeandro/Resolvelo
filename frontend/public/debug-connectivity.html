@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Connectivity - ReSolVelo</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result { 
+            margin: 10px 0; 
+            padding: 10px; 
+            border-radius: 5px; 
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .clear-btn {
+            background: #6c757d;
+        }
+        .clear-btn:hover { background: #545b62; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Debug de Conectividad - ReSolVelo</h1>
+        
+        <div class="test-section">
+            <h3>🌐 Tests de Conectividad Básica</h3>
+            <button onclick="testHealth()">Test Health Endpoint</button>
+            <button onclick="testPublicaciones()">Test Publicaciones</button>
+            <button onclick="testAuth()">Test Auth Endpoint</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔐 Tests de Autenticación</h3>
+            <button onclick="testLoginWithValidUser()">Test Login (Usuario Válido)</button>
+            <button onclick="testLoginWithInvalidUser()">Test Login (Usuario Inválido)</button>
+            <button onclick="testRegister()">Test Register Endpoint</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Tests de Configuración</h3>
+            <button onclick="testCORS()">Test CORS Headers</button>
+            <button onclick="testTimeout()">Test Timeout</button>
+            <button onclick="testNetworkInfo()">Mostrar Info de Red</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🧹 Utilidades</h3>
+            <button onclick="clearResults()" class="clear-btn">Limpiar Resultados</button>
+            <button onclick="exportResults()">Exportar Resultados</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        function addResult(message, type = 'info', details = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            
+            let content = `[${timestamp}] ${message}`;
+            if (details) {
+                content += `\n\nDetalles:\n${JSON.stringify(details, null, 2)}`;
+            }
+            
+            div.textContent = content;
+            document.getElementById('results').appendChild(div);
+            
+            // Guardar para exportar
+            testResults.push({
+                timestamp,
+                message,
+                type,
+                details
+            });
+            
+            // Scroll al final
+            div.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function testHealth() {
+            addResult('🏥 Testing health endpoint...', 'info');
+            try {
+                const response = await fetch('http://localhost:3000/api/health', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                addResult(`✅ Health endpoint: ${response.status}`, 'success', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data: data
+                });
+            } catch (error) {
+                addResult(`❌ Health endpoint error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+            }
+        }
+
+        async function testPublicaciones() {
+            addResult('📚 Testing publicaciones endpoint...', 'info');
+            try {
+                const response = await fetch('http://localhost:3000/api/publicaciones', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                addResult(`✅ Publicaciones endpoint: ${response.status} - Found ${data.publicaciones?.length || 0} items`, 'success', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    dataLength: data.publicaciones?.length || 0,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
+            } catch (error) {
+                addResult(`❌ Publicaciones endpoint error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+            }
+        }
+
+        async function testAuth() {
+            addResult('🔐 Testing auth endpoint structure...', 'info');
+            try {
+                // Test con método GET (debería fallar pero nos dice si el endpoint existe)
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'GET'
+                });
+                
+                addResult(`⚠️ Auth endpoint responds to GET: ${response.status}`, 'warning', {
+                    status: response.status,
+                    statusText: response.statusText
+                });
+            } catch (error) {
+                addResult(`❌ Auth endpoint error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message
+                });
+            }
+        }
+
+        async function testLoginWithValidUser() {
+            addResult('👤 Testing login with test user...', 'info');
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'maria@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Login successful: ${response.status}`, 'success', {
+                        status: response.status,
+                        user: data.user,
+                        hasToken: !!data.access_token
+                    });
+                } else {
+                    addResult(`⚠️ Login failed (expected): ${response.status} - ${data.message}`, 'warning', {
+                        status: response.status,
+                        error: data
+                    });
+                }
+            } catch (error) {
+                addResult(`❌ Login test error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+            }
+        }
+
+        async function testLoginWithInvalidUser() {
+            addResult('🚫 Testing login with invalid user...', 'info');
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'invalid@test.com',
+                        password: 'wrongpassword'
+                    })
+                });
+                
+                const data = await response.json();
+                addResult(`⚠️ Invalid login (expected): ${response.status} - ${data.message}`, 'warning', {
+                    status: response.status,
+                    error: data
+                });
+            } catch (error) {
+                addResult(`❌ Invalid login test error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message
+                });
+            }
+        }
+
+        async function testRegister() {
+            addResult('📝 Testing register endpoint...', 'info');
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nombre: 'Test',
+                        apellido: 'User',
+                        email: 'test' + Date.now() + '@test.com',
+                        password: 'TestPassword123!',
+                        documentoIdentidad: '12345678'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Register successful: ${response.status}`, 'success', {
+                        status: response.status,
+                        user: data.user
+                    });
+                } else {
+                    addResult(`⚠️ Register failed: ${response.status} - ${data.message}`, 'warning', {
+                        status: response.status,
+                        error: data
+                    });
+                }
+            } catch (error) {
+                addResult(`❌ Register test error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message
+                });
+            }
+        }
+
+        async function testCORS() {
+            addResult('🌐 Testing CORS configuration...', 'info');
+            try {
+                const response = await fetch('http://localhost:3000/api/health', {
+                    method: 'OPTIONS'
+                });
+                
+                addResult(`✅ CORS preflight: ${response.status}`, 'success', {
+                    status: response.status,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
+            } catch (error) {
+                addResult(`❌ CORS test error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message
+                });
+            }
+        }
+
+        async function testTimeout() {
+            addResult('⏱️ Testing timeout configuration...', 'info');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/health', {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                addResult(`✅ Request completed within timeout: ${response.status}`, 'success');
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    addResult(`⚠️ Request timed out after 2 seconds`, 'warning');
+                } else {
+                    addResult(`❌ Timeout test error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        function testNetworkInfo() {
+            addResult('🔍 Network Information:', 'info', {
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                onLine: navigator.onLine,
+                cookieEnabled: navigator.cookieEnabled,
+                location: {
+                    href: window.location.href,
+                    origin: window.location.origin,
+                    protocol: window.location.protocol
+                },
+                apiBaseUrl: 'http://localhost:3000/api',
+                frontendUrl: window.location.origin
+            });
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            testResults = [];
+            addResult('🧹 Results cleared', 'info');
+        }
+
+        function exportResults() {
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                url: window.location.href,
+                results: testResults
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+                type: 'application/json'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `connectivity-debug-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            addResult('📁 Results exported to file', 'success');
+        }
+
+        // Auto-run basic tests on load
+        window.addEventListener('load', () => {
+            addResult('🚀 Debug page loaded - Running basic connectivity tests...', 'info');
+            setTimeout(testNetworkInfo, 500);
+            setTimeout(testHealth, 1000);
+            setTimeout(testPublicaciones, 1500);
+        });
+    </script>
+</body>
+</html>

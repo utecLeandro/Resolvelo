@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Axios vs Fetch - ReSolVelo</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result { 
+            margin: 10px 0; 
+            padding: 10px; 
+            border-radius: 5px; 
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .clear-btn {
+            background: #6c757d;
+        }
+        .clear-btn:hover { background: #545b62; }
+        .side-by-side {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test Axios vs Fetch - ReSolVelo</h1>
+        
+        <div class="test-section">
+            <h3>🌐 Comparación de Métodos HTTP</h3>
+            <button onclick="testBothMethods()">Test Ambos Métodos</button>
+            <button onclick="testAxiosOnly()">Test Solo Axios</button>
+            <button onclick="testFetchOnly()">Test Solo Fetch</button>
+            <button onclick="clearResults()" class="clear-btn">Limpiar</button>
+        </div>
+
+        <div class="side-by-side">
+            <div>
+                <h3>📡 Resultados Axios</h3>
+                <div id="axios-results"></div>
+            </div>
+            <div>
+                <h3>🌐 Resultados Fetch</h3>
+                <div id="fetch-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cargar Axios desde CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        function addResult(message, type = 'info', details = null, container = 'axios-results') {
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            
+            let content = `[${timestamp}] ${message}`;
+            if (details) {
+                content += `\n\nDetalles:\n${JSON.stringify(details, null, 2)}`;
+            }
+            
+            div.textContent = content;
+            document.getElementById(container).appendChild(div);
+            
+            // Scroll al final
+            div.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Configurar Axios igual que en la aplicación
+        const api = axios.create({
+            baseURL: API_BASE_URL,
+            timeout: 10000,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        // Interceptor para agregar token JWT (simulando la app real)
+        api.interceptors.request.use(
+            (config) => {
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
+                console.log('Axios Request Config:', config);
+                return config;
+            },
+            (error) => {
+                console.error('Axios Request Error:', error);
+                return Promise.reject(error);
+            }
+        );
+
+        // Interceptor para manejo de respuestas
+        api.interceptors.response.use(
+            (response) => {
+                console.log('Axios Response:', response);
+                return response;
+            },
+            (error) => {
+                console.error('Axios Response Error:', error);
+                if (error.response?.status === 401) {
+                    localStorage.removeItem('access_token');
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        async function testAxiosHealth() {
+            addResult('🏥 Testing health with Axios...', 'info', null, 'axios-results');
+            try {
+                const response = await api.get('/health');
+                addResult(`✅ Axios Health: ${response.status}`, 'success', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: response.data,
+                    headers: response.headers
+                }, 'axios-results');
+            } catch (error) {
+                addResult(`❌ Axios Health Error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message,
+                    code: error.code,
+                    config: error.config ? {
+                        url: error.config.url,
+                        method: error.config.method,
+                        baseURL: error.config.baseURL,
+                        timeout: error.config.timeout
+                    } : null,
+                    response: error.response ? {
+                        status: error.response.status,
+                        statusText: error.response.statusText,
+                        data: error.response.data
+                    } : null
+                }, 'axios-results');
+            }
+        }
+
+        async function testFetchHealth() {
+            addResult('🏥 Testing health with Fetch...', 'info', null, 'fetch-results');
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                addResult(`✅ Fetch Health: ${response.status}`, 'success', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data: data
+                }, 'fetch-results');
+            } catch (error) {
+                addResult(`❌ Fetch Health Error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                }, 'fetch-results');
+            }
+        }
+
+        async function testAxiosLogin() {
+            addResult('🔐 Testing login with Axios...', 'info', null, 'axios-results');
+            try {
+                const response = await api.post('/auth/login', {
+                    email: 'test@test.com',
+                    password: 'password123'
+                });
+                addResult(`✅ Axios Login: ${response.status}`, 'success', {
+                    status: response.status,
+                    data: response.data
+                }, 'axios-results');
+            } catch (error) {
+                addResult(`❌ Axios Login Error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message,
+                    code: error.code,
+                    response: error.response ? {
+                        status: error.response.status,
+                        data: error.response.data
+                    } : null
+                }, 'axios-results');
+            }
+        }
+
+        async function testFetchLogin() {
+            addResult('🔐 Testing login with Fetch...', 'info', null, 'fetch-results');
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@test.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                addResult(`✅ Fetch Login: ${response.status}`, 'success', {
+                    status: response.status,
+                    data: data
+                }, 'fetch-results');
+            } catch (error) {
+                addResult(`❌ Fetch Login Error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message
+                }, 'fetch-results');
+            }
+        }
+
+        async function testAxiosPublicaciones() {
+            addResult('📚 Testing publicaciones with Axios...', 'info', null, 'axios-results');
+            try {
+                const response = await api.get('/publicaciones');
+                addResult(`✅ Axios Publicaciones: ${response.status} - ${response.data.publicaciones?.length || 0} items`, 'success', {
+                    status: response.status,
+                    count: response.data.publicaciones?.length || 0
+                }, 'axios-results');
+            } catch (error) {
+                addResult(`❌ Axios Publicaciones Error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message,
+                    code: error.code
+                }, 'axios-results');
+            }
+        }
+
+        async function testFetchPublicaciones() {
+            addResult('📚 Testing publicaciones with Fetch...', 'info', null, 'fetch-results');
+            try {
+                const response = await fetch(`${API_BASE_URL}/publicaciones`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                addResult(`✅ Fetch Publicaciones: ${response.status} - ${data.publicaciones?.length || 0} items`, 'success', {
+                    status: response.status,
+                    count: data.publicaciones?.length || 0
+                }, 'fetch-results');
+            } catch (error) {
+                addResult(`❌ Fetch Publicaciones Error: ${error.message}`, 'error', {
+                    name: error.name,
+                    message: error.message
+                }, 'fetch-results');
+            }
+        }
+
+        async function testBothMethods() {
+            clearResults();
+            
+            addResult('🚀 Iniciando comparación Axios vs Fetch...', 'info', null, 'axios-results');
+            addResult('🚀 Iniciando comparación Axios vs Fetch...', 'info', null, 'fetch-results');
+            
+            // Test Health
+            await Promise.all([testAxiosHealth(), testFetchHealth()]);
+            
+            // Esperar un poco
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Test Login
+            await Promise.all([testAxiosLogin(), testFetchLogin()]);
+            
+            // Esperar un poco
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Test Publicaciones
+            await Promise.all([testAxiosPublicaciones(), testFetchPublicaciones()]);
+        }
+
+        async function testAxiosOnly() {
+            document.getElementById('axios-results').innerHTML = '';
+            addResult('🚀 Testing solo Axios...', 'info', null, 'axios-results');
+            
+            await testAxiosHealth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testAxiosLogin();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testAxiosPublicaciones();
+        }
+
+        async function testFetchOnly() {
+            document.getElementById('fetch-results').innerHTML = '';
+            addResult('🚀 Testing solo Fetch...', 'info', null, 'fetch-results');
+            
+            await testFetchHealth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testFetchLogin();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testFetchPublicaciones();
+        }
+
+        function clearResults() {
+            document.getElementById('axios-results').innerHTML = '';
+            document.getElementById('fetch-results').innerHTML = '';
+        }
+
+        // Auto-run test on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addResult('🔧 Página cargada. Ejecutando test automático...', 'info', null, 'axios-results');
+                addResult('🔧 Página cargada. Ejecutando test automático...', 'info', null, 'fetch-results');
+                testBothMethods();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

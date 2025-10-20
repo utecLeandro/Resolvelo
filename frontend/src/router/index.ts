@@ -14,6 +14,7 @@ import CrearPublicacionPage from '../views/CrearPublicacionPage.vue'
 import MisPublicacionesPage from '../views/MisPublicacionesPage.vue'
 import MisReservasPage from '../views/MisReservasPage.vue'
 import DebugPage from '../views/DebugPage.vue'
+import PaginaInformativa from '../views/PaginaInformativa.vue'
 
 // Definición de rutas de la aplicación
 const routes: RouteRecordRaw[] = [
@@ -104,6 +105,69 @@ const routes: RouteRecordRaw[] = [
     meta: {
       title: 'Debug - ReSolVelo',
       description: 'Página de debug temporal'
+    }
+  },
+  {
+    path: '/como-funciona',
+    name: 'ComoFunciona',
+    component: PaginaInformativa,
+    meta: {
+      title: 'Cómo funciona - ReSolVelo',
+      description: 'Descubre cómo funciona nuestra plataforma de alquiler de instrumentos musicales'
+    }
+  },
+  {
+    path: '/preguntas-frecuentes',
+    name: 'PreguntasFrecuentes',
+    component: PaginaInformativa,
+    meta: {
+      title: 'Preguntas Frecuentes - ReSolVelo',
+      description: 'Encuentra respuestas a las preguntas más comunes sobre ReSolVelo'
+    }
+  },
+  {
+    path: '/contacto',
+    name: 'Contacto',
+    component: PaginaInformativa,
+    meta: {
+      title: 'Contacto - ReSolVelo',
+      description: 'Ponte en contacto con nuestro equipo de soporte'
+    }
+  },
+  {
+    path: '/centro-ayuda',
+    name: 'CentroAyuda',
+    component: PaginaInformativa,
+    meta: {
+      title: 'Centro de Ayuda - ReSolVelo',
+      description: 'Recursos y guías para aprovechar al máximo ReSolVelo'
+    }
+  },
+  {
+    path: '/politicas-seguridad',
+    name: 'PoliticasSeguridad',
+    component: PaginaInformativa,
+    meta: {
+      title: 'Políticas de Seguridad - ReSolVelo',
+      description: 'Conoce nuestras medidas de seguridad y protección'
+    }
+  },
+  {
+    path: '/terminos-condiciones',
+    name: 'TerminosCondiciones',
+    component: PaginaInformativa,
+    meta: {
+      title: 'Términos y Condiciones - ReSolVelo',
+      description: 'Lee los términos y condiciones de uso de la plataforma'
+    }
+  },
+  {
+    path: '/politica-privacidad',
+    name: 'PoliticaPrivacidad',
+    component: PaginaInformativa,
+    meta: {
+      title: 'Política de Privacidad - ReSolVelo',
+      description: 'Información sobre cómo protegemos tu privacidad'
     }
   },
 

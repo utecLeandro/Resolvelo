@@ -2,9 +2,9 @@
   <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Mis Reservas</h1>
-        <p class="mt-2 text-gray-600">Gestiona tus reservas de instrumentos musicales</p>
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Mis Reservas</h1>
+        <p class="mt-1 text-sm text-gray-600">Gestiona tus reservas de instrumentos musicales</p>
       </div>
 
       <!-- Pestañas -->
@@ -63,6 +63,9 @@
               ]"
             >
               Completadas
+              <span v-if="reservasCompletadas.length > 0" class="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs font-medium">
+                {{ reservasCompletadas.length }}
+              </span>
             </button>
             <button
               @click="pestanaActiva = 'rechazadas'"
@@ -74,6 +77,9 @@
               ]"
             >
               Rechazadas
+              <span v-if="reservasRechazadas.length > 0" class="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs font-medium">
+                {{ reservasRechazadas.length }}
+              </span>
             </button>
           </nav>
         </div>
@@ -217,7 +223,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { reservasService } from '../services/api'
 import ReservaCard from '../components/ReservaCard.vue'
@@ -272,7 +278,7 @@ const reservasPendientes = computed(() =>
 )
 
 const reservasAprobadas = computed(() => 
-  (reservas.value || []).filter(r => r.estado === 'APROBADA')
+  (reservas.value || []).filter(r => r.estado === 'CONFIRMADA')
 )
 
 const reservasActivas = computed(() => 
@@ -287,9 +293,48 @@ const reservasRechazadas = computed(() =>
   (reservas.value || []).filter(r => r.estado === 'RECHAZADA')
 )
 
+// Actualización automática cada 30 segundos
+let intervalId: NodeJS.Timeout | null = null
+
+// Función para manejar actualizaciones de reservas en tiempo real
+const manejarActualizacionReserva = (event: CustomEvent) => {
+  console.log('Evento reserva-actualizada recibido:', event.detail)
+  
+  const { reservaId, nuevoEstado } = event.detail
+  
+  console.log('Buscando reserva con ID:', reservaId)
+  console.log('Reservas actuales:', reservas.value)
+  
+  // Actualizar el estado local de la reserva
+  if (reservas.value && Array.isArray(reservas.value)) {
+    const reserva = reservas.value.find(r => r.id === reservaId)
+    console.log('Reserva encontrada:', reserva)
+    
+    if (reserva) {
+      console.log(`Actualizando reserva ${reservaId} de ${reserva.estado} a ${nuevoEstado}`)
+      reserva.estado = nuevoEstado
+      console.log(`Reserva ${reservaId} actualizada a estado ${nuevoEstado}`)
+    } else {
+      console.log(`No se encontró la reserva con ID ${reservaId}`)
+    }
+  } else {
+    console.log('reservas.value no es un array válido:', reservas.value)
+  }
+}
+
 // Cargar datos al montar el componente
 onMounted(async () => {
   await cargarMisReservas()
+  
+  // Configurar actualización automática cada 30 segundos
+  intervalId = setInterval(async () => {
+    if (!cargando.value) {
+      await cargarMisReservas()
+    }
+  }, 30000)
+  
+  // Escuchar eventos de actualización de reservas
+  window.addEventListener('reserva-actualizada', manejarActualizacionReserva as EventListener)
 })
 
 // Métodos
@@ -366,6 +411,16 @@ const calificarReserva = (reservaId: string) => {
   // Implementar sistema de calificaciones
   router.push(`/calificar/${reservaId}`)
 }
+
+// Limpiar el intervalo y listeners cuando el componente se desmonte
+onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId)
+  }
+  
+  // Remover el listener de eventos
+  window.removeEventListener('reserva-actualizada', manejarActualizacionReserva as EventListener)
+})
 </script>
 
 <style scoped>

@@ -45,7 +45,7 @@
                 'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
               ]"
             >
-              Reservas Activas
+              Solicitudes Activas
               <span v-if="reservasActivas.length > 0" class="ml-2 bg-green-100 text-green-600 py-0.5 px-2 rounded-full text-xs font-medium">
                 {{ reservasActivas.length }}
               </span>
@@ -184,7 +184,7 @@
         <!-- Sin publicaciones -->
         <div v-else-if="publicaciones.length === 0" class="text-center py-12">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3-2-1.343-2-3-2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
           </svg>
           <h3 class="mt-2 text-sm font-medium text-gray-900">No tienes publicaciones</h3>
           <p class="mt-1 text-sm text-gray-500">Comienza publicando tu primer instrumento musical.</p>
@@ -231,7 +231,7 @@
                 </div>
 
                 <!-- Estado -->
-                <div class="flex items-center space-x-2 mb-4">
+                <div class="flex items-center space-x-2 mb-3">
                   <span
                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                     :class="{
@@ -252,6 +252,60 @@
                   >
                     {{ formatearEstadoModeracion(publicacion.estadoModeracion) }}
                   </span>
+                </div>
+
+                <!-- Estadísticas de Reservas -->
+                <div v-if="publicacion.estadisticasReservas" class="mb-4">
+                  <h4 class="text-xs font-medium text-gray-700 mb-2">Estadísticas de Reservas</h4>
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <!-- Total de reservas -->
+                    <div class="flex items-center justify-between bg-gray-50 px-2 py-1 rounded">
+                      <span class="text-gray-600">Total:</span>
+                      <span class="font-medium text-gray-900">{{ publicacion.estadisticasReservas.total }}</span>
+                    </div>
+                    
+                    <!-- Pendientes -->
+                    <div v-if="publicacion.estadisticasReservas.pendientes > 0" class="flex items-center justify-between bg-yellow-50 px-2 py-1 rounded">
+                      <span class="text-yellow-700">Pendientes:</span>
+                      <span class="font-medium text-yellow-800">{{ publicacion.estadisticasReservas.pendientes }}</span>
+                    </div>
+                    
+                    <!-- Aprobadas -->
+                    <div v-if="publicacion.estadisticasReservas.aprobadas > 0" class="flex items-center justify-between bg-blue-50 px-2 py-1 rounded">
+                      <span class="text-blue-700">Aprobadas:</span>
+                      <span class="font-medium text-blue-800">{{ publicacion.estadisticasReservas.aprobadas }}</span>
+                    </div>
+                    
+                    <!-- Confirmadas -->
+                    <div v-if="publicacion.estadisticasReservas.confirmadas > 0" class="flex items-center justify-between bg-green-50 px-2 py-1 rounded">
+                      <span class="text-green-700">Confirmadas:</span>
+                      <span class="font-medium text-green-800">{{ publicacion.estadisticasReservas.confirmadas }}</span>
+                    </div>
+                    
+                    <!-- Activas -->
+                    <div v-if="publicacion.estadisticasReservas.activas > 0" class="flex items-center justify-between bg-purple-50 px-2 py-1 rounded">
+                      <span class="text-purple-700">Activas:</span>
+                      <span class="font-medium text-purple-800">{{ publicacion.estadisticasReservas.activas }}</span>
+                    </div>
+                    
+                    <!-- Completadas -->
+                    <div v-if="publicacion.estadisticasReservas.completadas > 0" class="flex items-center justify-between bg-emerald-50 px-2 py-1 rounded">
+                      <span class="text-emerald-700">Completadas:</span>
+                      <span class="font-medium text-emerald-800">{{ publicacion.estadisticasReservas.completadas }}</span>
+                    </div>
+                    
+                    <!-- Rechazadas -->
+                    <div v-if="publicacion.estadisticasReservas.rechazadas > 0" class="flex items-center justify-between bg-red-50 px-2 py-1 rounded">
+                      <span class="text-red-700">Rechazadas:</span>
+                      <span class="font-medium text-red-800">{{ publicacion.estadisticasReservas.rechazadas }}</span>
+                    </div>
+                    
+                    <!-- Canceladas -->
+                    <div v-if="publicacion.estadisticasReservas.canceladas > 0" class="flex items-center justify-between bg-gray-50 px-2 py-1 rounded">
+                      <span class="text-gray-700">Canceladas:</span>
+                      <span class="font-medium text-gray-800">{{ publicacion.estadisticasReservas.canceladas }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -387,7 +441,7 @@
                       <!-- Botones de acción -->
                       <div class="flex space-x-3">
                         <button
-                          @click="aprobarSolicitud(solicitud.id)"
+                          @click="aprobarSolicitud(solicitud)"
                           :disabled="procesandoSolicitud === solicitud.id"
                           class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                         >
@@ -416,6 +470,21 @@
 
       <!-- Contenido de la pestaña Reservas Activas -->
       <div v-else-if="pestanaActiva === 'reservas-activas'">
+        <!-- Header con botón de actualización -->
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-lg font-medium text-gray-900">Reservas Activas</h3>
+          <button
+            @click="cargarReservasActivas"
+            :disabled="cargandoReservasActivas"
+            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            <svg class="h-4 w-4 mr-1" :class="{ 'animate-spin': cargandoReservasActivas }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {{ cargandoReservasActivas ? 'Actualizando...' : 'Actualizar' }}
+          </button>
+        </div>
+
         <!-- Estado de carga reservas activas -->
         <div v-if="cargandoReservasActivas" class="flex justify-center items-center py-12">
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -424,15 +493,26 @@
 
         <!-- Error reservas activas -->
         <div v-else-if="errorReservasActivas" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-          <div class="flex">
+          <div class="flex items-start">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
               </svg>
             </div>
-            <div class="ml-3">
+            <div class="ml-3 flex-1">
               <h3 class="text-sm font-medium text-red-800">Error al cargar reservas activas</h3>
               <p class="mt-1 text-sm text-red-700">{{ errorReservasActivas }}</p>
+              <div class="mt-3">
+                <button
+                  @click="cargarReservasActivas"
+                  class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+                >
+                  <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Reintentar
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -535,6 +615,21 @@
 
       <!-- Contenido de la pestaña Historial de Reservas -->
       <div v-else-if="pestanaActiva === 'historial'">
+        <!-- Header con botón de actualización -->
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-lg font-medium text-gray-900">Historial de Reservas</h3>
+          <button
+            @click="cargarHistorialReservas"
+            :disabled="cargandoHistorial"
+            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            <svg class="h-4 w-4 mr-1" :class="{ 'animate-spin': cargandoHistorial }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {{ cargandoHistorial ? 'Actualizando...' : 'Actualizar' }}
+          </button>
+        </div>
+
         <!-- Estado de carga historial -->
         <div v-if="cargandoHistorial" class="flex justify-center items-center py-12">
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -543,15 +638,26 @@
 
         <!-- Error historial -->
         <div v-else-if="errorHistorial" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-          <div class="flex">
+          <div class="flex items-start">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
               </svg>
             </div>
-            <div class="ml-3">
+            <div class="ml-3 flex-1">
               <h3 class="text-sm font-medium text-red-800">Error al cargar historial</h3>
               <p class="mt-1 text-sm text-red-700">{{ errorHistorial }}</p>
+              <div class="mt-3">
+                <button
+                  @click="cargarHistorialReservas"
+                  class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+                >
+                  <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Reintentar
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -713,10 +819,80 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal de calificación -->
+  <div v-if="modalCalificacionVisible" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div class="mt-3">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Calificar arrendatario</h3>
+        
+        <div v-if="reservaAcalificar" class="mb-4 p-3 bg-gray-50 rounded-md">
+          <p class="text-sm text-gray-600">
+            <strong>Arrendatario:</strong> {{ reservaAcalificar.usuario?.nombre }} {{ reservaAcalificar.usuario?.apellido }}
+          </p>
+          <p class="text-sm text-gray-600">
+            <strong>Equipo:</strong> {{ reservaAcalificar.publicacion?.titulo }}
+          </p>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Calificación
+          </label>
+          <div class="flex items-center space-x-1">
+            <button
+              v-for="star in 5"
+              :key="star"
+              @click="calificacion = star"
+              class="text-2xl focus:outline-none"
+              :class="star <= calificacion ? 'text-yellow-400' : 'text-gray-300'"
+            >
+              ★
+            </button>
+            <span class="ml-2 text-sm text-gray-600">({{ calificacion }}/5)</span>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="comentario" class="block text-sm font-medium text-gray-700 mb-2">
+            Comentario (opcional)
+          </label>
+          <textarea
+            id="comentario"
+            v-model="comentarioCalificacion"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Comparte tu experiencia con este arrendatario..."
+          ></textarea>
+        </div>
+
+        <div class="flex space-x-3">
+          <button
+            @click="enviarCalificacion"
+            :disabled="enviandoCalificacion"
+            class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span v-if="enviandoCalificacion" class="flex items-center justify-center">
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Enviando...
+            </span>
+            <span v-else>Enviar calificación</span>
+          </button>
+          <button
+            @click="cerrarModalCalificacion"
+            :disabled="enviandoCalificacion"
+            class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { publicacionesService, reservasService } from '../services/api'
 import type { Publicacion } from '../services/api'
@@ -745,7 +921,7 @@ interface SolicitudReserva {
 const router = useRouter()
 
 // Estado reactivo - Pestañas
-const pestanaActiva = ref<'publicaciones' | 'solicitudes'>('publicaciones')
+const pestanaActiva = ref<'publicaciones' | 'solicitudes' | 'reservas-activas' | 'historial'>('publicaciones')
 const subPestanaPublicaciones = ref<'todas' | 'activas' | 'pausadas' | 'revision'>('todas')
 const subPestanaSolicitudes = ref<'pendientes' | 'aprobadas' | 'rechazadas'>('pendientes')
 
@@ -760,6 +936,51 @@ const solicitudesPendientes = ref<SolicitudReserva[]>([])
 const cargandoSolicitudes = ref(false)
 const errorSolicitudes = ref<string | null>(null)
 const procesandoSolicitud = ref<string | null>(null)
+
+// Función de notificación nativa
+const mostrarNotificacion = (mensaje: string, tipo: 'success' | 'error' = 'success') => {
+  try {
+    // Crear elemento de notificación
+    const notificacion = document.createElement('div')
+    notificacion.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-all duration-300 ${
+      tipo === 'success' ? 'bg-green-500' : 'bg-red-500'
+    }`
+    notificacion.textContent = mensaje
+    
+    // Estilos iniciales para animación
+    notificacion.style.transform = 'translateX(100%)'
+    notificacion.style.opacity = '0'
+    
+    // Agregar al DOM
+    document.body.appendChild(notificacion)
+    
+    // Animar entrada
+    setTimeout(() => {
+      notificacion.style.transform = 'translateX(0)'
+      notificacion.style.opacity = '1'
+    }, 10)
+    
+    // Remover después de 3 segundos
+    setTimeout(() => {
+      notificacion.style.transform = 'translateX(100%)'
+      notificacion.style.opacity = '0'
+      setTimeout(() => {
+        if (document.body.contains(notificacion)) {
+          document.body.removeChild(notificacion)
+        }
+      }, 300)
+    }, 3000)
+  } catch (error) {
+    console.error('Error en mostrarNotificacion:', error)
+    // Fallback: usar alert nativo
+    alert(`${tipo === 'success' ? '✅' : '❌'} ${mensaje}`)
+  }
+}
+
+// Watcher temporal para debug
+watch(procesandoSolicitud, (newVal, oldVal) => {
+  console.log('🔍 procesandoSolicitud cambió:', { oldVal, newVal })
+})
 
 // Estado reactivo - Modal de rechazo
 const modalRechazoVisible = ref(false)
@@ -776,16 +997,23 @@ const historialReservas = ref<any[]>([])
 const cargandoHistorial = ref(false)
 const errorHistorial = ref<string | null>(null)
 
+// Estado reactivo - Modal de calificación
+const modalCalificacionVisible = ref(false)
+const reservaAcalificar = ref<any | null>(null)
+const calificacion = ref(5)
+const comentarioCalificacion = ref('')
+const enviandoCalificacion = ref(false)
+
 // Computed
 const contadorSolicitudes = computed(() => (solicitudesPendientes.value || []).length)
 
 // Computed properties para publicaciones
-const publicacionesActivas = computed(() => (publicaciones.value || []).filter(p => p.estado === 'ACTIVA'))
+const publicacionesActivas = computed(() => (publicaciones.value || []).filter(p => p.estado === 'ACTIVA' && p.estadoModeracion === 'APROBADA'))
 const publicacionesPausadas = computed(() => (publicaciones.value || []).filter(p => p.estado === 'PAUSADA'))
 const publicacionesEnRevision = computed(() => (publicaciones.value || []).filter(p => p.estadoModeracion === 'PENDIENTE_REVISION'))
 
 // Computed properties para solicitudes
-const solicitudesAprobadas = computed(() => (solicitudesPendientes.value || []).filter(s => s.estado === 'APROBADA'))
+const solicitudesAprobadas = computed(() => (solicitudesPendientes.value || []).filter(s => s.estado === 'CONFIRMADA'))
 const solicitudesRechazadas = computed(() => (solicitudesPendientes.value || []).filter(s => s.estado === 'RECHAZADA'))
 
 const publicacionesFiltradas = computed(() => {
@@ -797,7 +1025,7 @@ const publicacionesFiltradas = computed(() => {
     case 'todas':
       return pubs
     case 'activas':
-      return pubs.filter(p => p.estado === 'ACTIVA')
+      return pubs.filter(p => p.estado === 'ACTIVA' && p.estadoModeracion === 'APROBADA')
     case 'pausadas':
       return pubs.filter(p => p.estado === 'PAUSADA')
     case 'revision':
@@ -816,7 +1044,7 @@ const solicitudesFiltradas = computed(() => {
     case 'pendientes':
       return solicitudes.filter(s => s.estado === 'PENDIENTE')
     case 'aprobadas':
-      return solicitudes.filter(s => s.estado === 'APROBADA')
+      return solicitudes.filter(s => s.estado === 'CONFIRMADA')
     case 'rechazadas':
       return solicitudes.filter(s => s.estado === 'RECHAZADA')
     default:
@@ -826,6 +1054,8 @@ const solicitudesFiltradas = computed(() => {
 
 // Cargar datos al montar el componente
 onMounted(async () => {
+  console.log('🚀 MisPublicacionesPage montado')
+  console.log('🔍 Estado inicial procesandoSolicitud:', procesandoSolicitud.value)
   await cargarPublicaciones()
   await cargarSolicitudesPendientes()
 })
@@ -863,7 +1093,7 @@ const cargarSolicitudesPendientes = async () => {
   try {
     cargandoSolicitudes.value = true
     errorSolicitudes.value = null
-    const response = await reservasService.obtenerSolicitudesPendientes()
+    const response = await reservasService.obtenerTodasLasSolicitudes()
     solicitudesPendientes.value = Array.isArray(response) ? response : []
   } catch (err: any) {
     console.error('Error al cargar solicitudes:', err)
@@ -874,22 +1104,41 @@ const cargarSolicitudesPendientes = async () => {
   }
 }
 
-const aprobarSolicitud = async (solicitudId: string) => {
+const aprobarSolicitud = async (solicitud: SolicitudReserva) => {
+  // Establecer estado de procesamiento
+  procesandoSolicitud.value = solicitud.id
+  
   try {
-    procesandoSolicitud.value = solicitudId
-    await reservasService.aprobarReserva(solicitudId, {})
+    const response = await reservasService.aprobarReserva(solicitud.id, {})
     
-    // Remover la solicitud de la lista
-    if (Array.isArray(solicitudesPendientes.value)) {
-      solicitudesPendientes.value = solicitudesPendientes.value.filter(s => s.id !== solicitudId)
+    if (response.success) {
+       // Actualizar el estado local
+       solicitud.estado = 'CONFIRMADA'
+       
+       // Emitir evento para actualización en tiempo real
+       const evento = new CustomEvent('reserva-actualizada', {
+         detail: {
+           reservaId: solicitud.id,
+           nuevoEstado: 'CONFIRMADA',
+           accion: 'aprobada'
+         }
+       })
+      window.dispatchEvent(evento)
+      
+      // Mostrar mensaje de éxito
+      mostrarNotificacion('Solicitud aprobada exitosamente', 'success')
+      
+      // Recargar las publicaciones y solicitudes para reflejar los cambios
+      await cargarPublicaciones()
+      await cargarSolicitudesPendientes()
+    } else {
+      throw new Error(response.message || 'Error al aprobar la solicitud')
     }
-    
-    // Mostrar mensaje de éxito
-    alert('Solicitud aprobada exitosamente')
-  } catch (err: any) {
-    console.error('Error al aprobar solicitud:', err)
-    alert(err.response?.data?.message || 'Error al aprobar la solicitud')
+  } catch (error: any) {
+    console.error('Error al aprobar solicitud:', error)
+    mostrarNotificacion(error.message || 'Error al aprobar la solicitud', 'error')
   } finally {
+    // Limpiar estado de procesamiento
     procesandoSolicitud.value = null
   }
 }
@@ -910,24 +1159,38 @@ const confirmarRechazo = async () => {
   if (!solicitudArechazar.value) return
   
   try {
-    procesandoSolicitud.value = solicitudArechazar.value.id
-    await reservasService.rechazarReserva(solicitudArechazar.value.id, {
+    
+    const response = await reservasService.rechazarReserva(solicitudArechazar.value.id, {
       motivo: motivoRechazo.value || undefined
     })
     
-    // Remover la solicitud de la lista
-    if (Array.isArray(solicitudesPendientes.value)) {
-      solicitudesPendientes.value = solicitudesPendientes.value.filter(s => s.id !== solicitudArechazar.value!.id)
+    if (response.success) {
+      // Actualizar el estado local
+      solicitudArechazar.value.estado = 'RECHAZADA'
+      
+      // Emitir evento para actualización en tiempo real
+      const evento = new CustomEvent('reserva-actualizada', {
+        detail: {
+          reservaId: solicitudArechazar.value.id,
+          nuevoEstado: 'RECHAZADA',
+          accion: 'rechazada'
+        }
+      })
+      window.dispatchEvent(evento)
+      
+      // Cerrar modal y mostrar mensaje de éxito
+      cerrarModalRechazo()
+      mostrarNotificacion('Solicitud rechazada exitosamente', 'success')
+      
+      // Recargar las publicaciones y solicitudes para reflejar los cambios
+      await cargarPublicaciones()
+      await cargarSolicitudesPendientes()
+    } else {
+      throw new Error(response.message || 'Error al rechazar la solicitud')
     }
-    
-    // Cerrar modal y mostrar mensaje de éxito
-    cerrarModalRechazo()
-    alert('Solicitud rechazada exitosamente')
-  } catch (err: any) {
-    console.error('Error al rechazar solicitud:', err)
-    alert(err.response?.data?.message || 'Error al rechazar la solicitud')
-  } finally {
-    procesandoSolicitud.value = null
+  } catch (error: any) {
+    console.error('Error al rechazar solicitud:', error)
+    mostrarNotificacion(error.message || 'Error al rechazar la solicitud', 'error')
   }
 }
 
@@ -944,11 +1207,20 @@ const cargarReservasActivas = async () => {
   try {
     cargandoReservasActivas.value = true
     errorReservasActivas.value = null
-    // TODO: Implementar servicio para obtener reservas activas del propietario
-    reservasActivas.value = []
+    
+    console.log('🔄 Cargando reservas activas del propietario...')
+    const response = await reservasService.obtenerReservasActivasPropietario()
+    
+    if (response.success) {
+      reservasActivas.value = response.data || []
+      console.log('✅ Reservas activas cargadas:', reservasActivas.value.length)
+    } else {
+      throw new Error(response.message || 'Error al obtener reservas activas')
+    }
   } catch (err: any) {
-    console.error('Error al cargar reservas activas:', err)
+    console.error('❌ Error al cargar reservas activas:', err)
     errorReservasActivas.value = err.message || 'Error al cargar las reservas activas'
+    reservasActivas.value = []
   } finally {
     cargandoReservasActivas.value = false
   }
@@ -959,11 +1231,20 @@ const cargarHistorialReservas = async () => {
   try {
     cargandoHistorial.value = true
     errorHistorial.value = null
-    // TODO: Implementar servicio para obtener historial de reservas del propietario
-    historialReservas.value = []
+    
+    console.log('🔄 Cargando historial de reservas del propietario...')
+    const response = await reservasService.obtenerHistorialReservasPropietario()
+    
+    if (response.success) {
+      historialReservas.value = response.data || []
+      console.log('✅ Historial de reservas cargado:', historialReservas.value.length)
+    } else {
+      throw new Error(response.message || 'Error al obtener historial de reservas')
+    }
   } catch (err: any) {
-    console.error('Error al cargar historial:', err)
+    console.error('❌ Error al cargar historial:', err)
     errorHistorial.value = err.message || 'Error al cargar el historial'
+    historialReservas.value = []
   } finally {
     cargandoHistorial.value = false
   }
@@ -971,17 +1252,67 @@ const cargarHistorialReservas = async () => {
 
 // Métodos - Acciones de Reservas
 const contactarArrendatario = (email: string) => {
-  window.location.href = `mailto:${email}`
+  const asunto = encodeURIComponent('Consulta sobre reserva - ReSolVelo')
+  const cuerpo = encodeURIComponent('Hola,\n\nMe pongo en contacto contigo respecto a la reserva de mi equipo.\n\nSaludos.')
+  window.location.href = `mailto:${email}?subject=${asunto}&body=${cuerpo}`
 }
 
 const verDetalleReserva = (reservaId: string) => {
   console.log('Ver detalle de reserva:', reservaId)
-  // TODO: Implementar navegación a detalle de reserva
+  // Navegar a la página de detalle de reserva
+  router.push(`/reservas/${reservaId}`)
 }
 
 const calificarArrendatario = (reservaId: string) => {
   console.log('Calificar arrendatario:', reservaId)
-  // TODO: Implementar modal de calificación
+  
+  // Buscar la reserva en el historial
+  const reserva = historialReservas.value.find(r => r.id === reservaId)
+  if (!reserva) {
+    console.error('Reserva no encontrada:', reservaId)
+    return
+  }
+  
+  // Configurar el modal de calificación
+  reservaAcalificar.value = reserva
+  calificacion.value = 5
+  comentarioCalificacion.value = ''
+  modalCalificacionVisible.value = true
+}
+
+const cerrarModalCalificacion = () => {
+  modalCalificacionVisible.value = false
+  reservaAcalificar.value = null
+  calificacion.value = 5
+  comentarioCalificacion.value = ''
+}
+
+const enviarCalificacion = async () => {
+  if (!reservaAcalificar.value) return
+  
+  try {
+    enviandoCalificacion.value = true
+    
+    // TODO: Implementar servicio de calificaciones
+    console.log('Enviando calificación:', {
+      reservaId: reservaAcalificar.value.id,
+      calificacion: calificacion.value,
+      comentario: comentarioCalificacion.value
+    })
+    
+    // Simular envío exitoso
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    cerrarModalCalificacion()
+    
+    // Mostrar mensaje de éxito
+    console.log('Calificación enviada exitosamente')
+    
+  } catch (error) {
+    console.error('Error al enviar calificación:', error)
+  } finally {
+    enviandoCalificacion.value = false
+  }
 }
 
 const formatearEstadoReserva = (estado: string) => {

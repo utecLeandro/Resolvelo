@@ -13,19 +13,7 @@ export class UsuariosController {
     private readonly reservasService: ReservasService
   ) {}
 
-  @Get(':id')
-  async obtenerPorId(@Param('id') id: string) {
-    return this.usuariosService.obtenerPorId(id)
-  }
 
-  @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  async actualizarPerfil(
-    @Param('id') id: string,
-    @Body() body: ActualizarPerfilDto,
-  ) {
-    return this.usuariosService.actualizarPerfil(id, body)
-  }
 
   @Get('test/reservas')
   async testReservas() {
@@ -36,22 +24,20 @@ export class UsuariosController {
     }
   }
 
-  // Rutas de reservas con autenticación JWT
-  @Get('reservas/listar')
-  @UseGuards(JwtAuthGuard)
-  async listarReservas(@Request() req: any) {
-    const resultado = await this.reservasService.obtenerReservas();
-    return {
-      ...resultado,
-      timestamp: new Date().toISOString()
-    };
-  }
-
   @Get('reservas/mis-solicitudes')
   @UseGuards(JwtAuthGuard)
   async obtenerMisSolicitudes(@Request() req: any) {
-    const propietarioId = req.user.sub; // El ID del usuario autenticado
+    const propietarioId = req.user.id; // El ID del usuario autenticado
+    console.log('🔍 [MIS-SOLICITUDES] Usuario autenticado:', {
+      propietarioId,
+      userObject: req.user,
+      email: req.user?.email
+    });
     const resultado = await this.reservasService.obtenerSolicitudesPendientes(propietarioId);
+    console.log('📋 [MIS-SOLICITUDES] Resultado:', {
+      propietarioId,
+      cantidadSolicitudes: resultado.data?.length || 0
+    });
     return {
       ...resultado,
       timestamp: new Date().toISOString()
@@ -61,18 +47,17 @@ export class UsuariosController {
   @Get('reservas/mis-reservas')
   @UseGuards(JwtAuthGuard)
   async obtenerMisReservas(@Request() req: any) {
-    const arrendatarioId = req.user.sub; // El ID del usuario autenticado
+    const arrendatarioId = req.user.id; // El ID del usuario autenticado
+    console.log('🔍 [MIS-RESERVAS] Usuario autenticado:', {
+      arrendatarioId,
+      userObject: req.user,
+      email: req.user?.email
+    });
     const resultado = await this.reservasService.obtenerReservasArrendatario(arrendatarioId);
-    return {
-      ...resultado,
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  @Get('reservas/:id')
-  @UseGuards(JwtAuthGuard)
-  async obtenerReserva(@Param('id') id: string, @Request() req: any) {
-    const resultado = await this.reservasService.obtenerReservaPorId(id);
+    console.log('📋 [MIS-RESERVAS] Resultado:', {
+      arrendatarioId,
+      cantidadReservas: resultado.data?.length || 0
+    });
     return {
       ...resultado,
       timestamp: new Date().toISOString()
@@ -124,5 +109,102 @@ export class UsuariosController {
       ...resultado,
       timestamp: new Date().toISOString()
     };
+  }
+
+  @Patch('reservas/:id/aceptar')
+  @UseGuards(JwtAuthGuard)
+  async aceptarReserva(@Param('id') id: string, @Request() req: any) {
+    const resultado = await this.reservasService.aceptarReserva(id);
+    return {
+      ...resultado,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  @Patch('reservas/:id/rechazar')
+  @UseGuards(JwtAuthGuard)
+  async rechazarReserva(@Param('id') id: string, @Request() req: any) {
+    const resultado = await this.reservasService.rechazarReserva(id);
+    return {
+      ...resultado,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  @Get('reservas/mis-reservas-activas')
+  @UseGuards(JwtAuthGuard)
+  async obtenerMisReservasActivas(@Request() req: any) {
+    const propietarioId = req.user.id;
+    console.log('🔍 [USUARIOS-CONTROLLER] Obteniendo reservas activas para propietario:', propietarioId);
+    const resultado = await this.reservasService.obtenerReservasActivasPropietario(propietarioId);
+    return {
+      ...resultado,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  @Get('reservas/mi-historial-reservas')
+  @UseGuards(JwtAuthGuard)
+  async obtenerMiHistorialReservas(@Request() req: any) {
+    const propietarioId = req.user.id;
+    console.log('🔍 [USUARIOS-CONTROLLER] Obteniendo historial de reservas para propietario:', propietarioId);
+    const resultado = await this.reservasService.obtenerHistorialReservasPropietario(propietarioId);
+    return {
+      ...resultado,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  @Get('reservas/test-simple')
+  async testSimple() {
+    console.log('🎯 [USUARIOS-CONTROLLER] Test simple ejecutado');
+    return { message: 'Test simple funcionando', timestamp: new Date().toISOString() };
+  }
+
+  @Get('reservas/todas-mis-solicitudes')
+  @UseGuards(JwtAuthGuard)
+  async obtenerTodasMisSolicitudes(@Request() req: any) {
+    console.log('🚀🚀🚀 [USUARIOS-CONTROLLER] obtenerTodasMisSolicitudes - MÉTODO EJECUTÁNDOSE 🚀🚀🚀');
+    console.log('🎯 [USUARIOS-CONTROLLER] obtenerTodasMisSolicitudes - Iniciando');
+    console.log('🎯 [USUARIOS-CONTROLLER] Usuario autenticado:', req.user);
+    const propietarioId = req.user.id;
+    console.log('🎯 [USUARIOS-CONTROLLER] PropietarioId extraído:', propietarioId);
+    
+    try {
+      const resultado = await this.reservasService.obtenerTodasLasSolicitudes(propietarioId);
+      console.log('🎯 [USUARIOS-CONTROLLER] Resultado del servicio:', resultado);
+      return {
+        ...resultado,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('🎯 [USUARIOS-CONTROLLER] Error en obtenerTodasMisSolicitudes:', error);
+      throw error;
+    }
+  }
+
+  // Rutas con parámetros deben ir al final para evitar conflictos
+  @Get('reservas/:id')
+  @UseGuards(JwtAuthGuard)
+  async obtenerReserva(@Param('id') id: string, @Request() req: any) {
+    const resultado = await this.reservasService.obtenerReservaPorId(id);
+    return {
+      ...resultado,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  @Get(':id')
+  async obtenerPorId(@Param('id') id: string) {
+    return this.usuariosService.obtenerPorId(id)
+  }
+
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  async actualizarPerfil(
+    @Param('id') id: string,
+    @Body() body: ActualizarPerfilDto,
+  ) {
+    return this.usuariosService.actualizarPerfil(id, body)
   }
 }

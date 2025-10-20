@@ -129,8 +129,8 @@ export function extraerPalabrasClave(textoBusqueda: string): string[] {
  * @param palabrasClave Array de palabras clave normalizadas
  * @returns Array de condiciones OR para Prisma
  */
-export function crearCondicionesBusqueda(campo: string, palabrasClave: string[]) {
-  const condiciones = [];
+export function crearCondicionesBusqueda(campo: string, palabrasClave: string[]): any[] {
+  const condiciones: any[] = [];
   
   // Para cada palabra clave, crear condiciones tanto para la versión normalizada
   // como para versiones con acentos comunes

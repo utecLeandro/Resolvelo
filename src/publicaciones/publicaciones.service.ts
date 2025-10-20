@@ -359,7 +359,7 @@ export class PublicacionesService {
   async obtenerPublicacionesUsuario(usuarioId: string, filtros: FiltrosPublicacionDto) {
     // Para "Mis publicaciones", no aplicamos filtros de moderación
     // El usuario debe ver todas sus publicaciones independientemente del estado
-    const condiciones = {
+    const condiciones: any = {
       propietarioId: usuarioId,
       estado: EstadoPublicacion.ACTIVA, // Solo publicaciones activas (no eliminadas)
       // No filtramos por estadoModeracion para que vea todas sus publicaciones
@@ -429,19 +429,43 @@ export class PublicacionesService {
               reservas: true,
               calificaciones: true,
             }
+          },
+          reservas: {
+            select: {
+              id: true,
+              estado: true,
+            }
           }
         },
         orderBy: { fechaCreacion: 'desc' }
       });
 
-      // Convertir precios Decimal a números para el frontend
-      const publicacionesConPreciosNumericos = publicaciones.map(publicacion => ({
-        ...publicacion,
-        precioPorDia: Number(publicacion.precioPorDia),
-        precioPorSemana: publicacion.precioPorSemana ? Number(publicacion.precioPorSemana) : null,
-        precioPorMes: publicacion.precioPorMes ? Number(publicacion.precioPorMes) : null,
-        deposito: publicacion.deposito ? Number(publicacion.deposito) : null,
-      }));
+      // Convertir precios Decimal a números para el frontend y agregar estadísticas de reservas
+      const publicacionesConPreciosNumericos = publicaciones.map(publicacion => {
+        // Calcular estadísticas de reservas por estado
+        const estadisticasReservas = {
+          total: publicacion.reservas.length,
+          pendientes: publicacion.reservas.filter(r => r.estado === 'PENDIENTE').length,
+          aprobadas: publicacion.reservas.filter(r => r.estado === 'APROBADA').length,
+          confirmadas: publicacion.reservas.filter(r => r.estado === 'CONFIRMADA').length,
+          activas: publicacion.reservas.filter(r => r.estado === 'EN_CURSO').length,
+          completadas: publicacion.reservas.filter(r => r.estado === 'COMPLETADA').length,
+          rechazadas: publicacion.reservas.filter(r => r.estado === 'RECHAZADA').length,
+          canceladas: publicacion.reservas.filter(r => r.estado === 'CANCELADA').length,
+        };
+
+        // Remover el array de reservas para no enviarlo al frontend (solo necesitamos las estadísticas)
+        const { reservas, ...publicacionSinReservas } = publicacion;
+
+        return {
+          ...publicacionSinReservas,
+          precioPorDia: Number(publicacion.precioPorDia),
+          precioPorSemana: publicacion.precioPorSemana ? Number(publicacion.precioPorSemana) : null,
+          precioPorMes: publicacion.precioPorMes ? Number(publicacion.precioPorMes) : null,
+          deposito: publicacion.deposito ? Number(publicacion.deposito) : null,
+          estadisticasReservas,
+        };
+      });
 
       return publicacionesConPreciosNumericos;
     } catch (error) {
@@ -529,7 +553,7 @@ export class PublicacionesService {
   /**
    * Construir condiciones de filtrado para Prisma
    */
-  private construirCondicionesFiltrado(filtros: FiltrosPublicacionDto) {
+  private construirCondicionesFiltrado(filtros: FiltrosPublicacionDto): any {
     const condiciones: any = {
       estado: EstadoPublicacion.ACTIVA,
       estadoModeracion: EstadoModeracion.APROBADA,
@@ -638,7 +662,7 @@ export class PublicacionesService {
   /**
    * Construir ordenamiento para Prisma
    */
-  private construirOrdenamiento(ordenarPor: string, direccionOrden: 'asc' | 'desc') {
+  private construirOrdenamiento(ordenarPor: string, direccionOrden: 'asc' | 'desc'): any {
     const camposValidos = [
       'fechaCreacion', 'fechaActualizacion', 'precioPorDia', 
       'calificacionPromedio', 'visualizaciones', 'totalReservas'
