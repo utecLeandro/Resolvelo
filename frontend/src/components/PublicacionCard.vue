@@ -8,16 +8,11 @@
     @keydown.space.prevent="navegarADetalle"
     :aria-label="`Ver detalles de ${publicacion.titulo}`"
   >
-    <!-- Contenedor de imagen placeholder -->
+    <!-- Contenedor de icono musical -->
     <div class="relative aspect-square overflow-hidden rounded-t-xl bg-gradient-to-br from-blue-50 to-indigo-100">
-      <!-- Placeholder con nota musical -->
+      <!-- Icono musical -->
       <div class="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-        <svg 
-          class="w-16 h-16 text-blue-400 opacity-60" 
-          fill="currentColor" 
-          viewBox="0 0 24 24"
-          :aria-label="`Imagen de ${publicacion.titulo}`"
-        >
+        <svg class="h-16 w-16 text-blue-400" fill="currentColor" viewBox="0 0 24 24" :aria-label="`Icono de ${publicacion.titulo}`">
           <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
         </svg>
       </div>
@@ -42,14 +37,7 @@
           {{ publicacion.disponible ? 'Disponible' : 'No disponible' }}
         </span>
       </div>
-      
-      <!-- Indicador de múltiples imágenes (simulado) -->
-      <div 
-        v-if="totalImagenes > 1" 
-        class="absolute bottom-3 right-3 bg-black/50 text-white px-2 py-1 rounded-full text-xs"
-      >
-        +{{ totalImagenes - 1 }}
-      </div>
+
     </div>
     
     <!-- Contenido de la tarjeta -->
@@ -141,11 +129,7 @@ const props = defineProps<Props>()
 // Composables
 const router = useRouter()
 
-// Computed properties
-const totalImagenes = computed(() => {
-  // Simular que hay imágenes para mostrar el indicador
-  return props.publicacion.imagenes?.length || 1
-})
+// Computed properties eliminadas: imagenPrincipal, totalImagenes
 
 const ubicacionCompleta = computed(() => {
   const partes = [props.publicacion.ciudad, props.publicacion.departamento].filter(Boolean)
@@ -156,6 +140,8 @@ const ubicacionCompleta = computed(() => {
 const navegarADetalle = () => {
   router.push(`/publicacion/${props.publicacion.id}`)
 }
+
+// Método eliminado: manejarErrorImagen
 
 const formatearCategoria = (categoria: string): string => {
   // Convertir categorías del enum a texto legible

@@ -1,16 +1,14 @@
 <!-- App.vue - Layout principal con navegación condicional -->
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import NavegacionPrincipal from './components/NavegacionPrincipal.vue'
 import PiePagina from './components/PiePagina.vue'
+import { useAuth } from './composables/useAuth'
 
 // Composables
 const route = useRoute()
-
-// Estado reactivo para autenticación
-const usuarioAutenticado = ref(false)
-const nombreUsuario = ref('')
+const { usuarioAutenticado, nombreCompleto, verificarAutenticacion } = useAuth()
 
 // Rutas que no deben mostrar navegación y pie de página
 // Mostramos la navegación también en /login y /registro para mantener estilos consistentes con el catálogo
@@ -33,31 +31,6 @@ const actualizarEstadoAutenticacion = () => {
 
 // Exponer la función globalmente para que otros componentes puedan usarla
 ;(window as any).actualizarEstadoAutenticacion = actualizarEstadoAutenticacion
-
-// Función para verificar si el usuario está autenticado
-const verificarAutenticacion = () => {
-  const token = localStorage.getItem('access_token')
-  if (token) {
-    // Aquí podrías verificar el token con el backend
-    usuarioAutenticado.value = true
-    // Obtener información del usuario del token o localStorage
-    const userData = localStorage.getItem('userData')
-    if (userData) {
-      try {
-        const user = JSON.parse(userData)
-        nombreUsuario.value = `${user.nombre} ${user.apellido}`
-      } catch (error) {
-        console.error('Error al parsear datos del usuario:', error)
-        // Si hay error, limpiar datos corruptos
-        localStorage.removeItem('userData')
-        usuarioAutenticado.value = false
-      }
-    }
-  } else {
-    usuarioAutenticado.value = false
-    nombreUsuario.value = ''
-  }
-}
 </script>
 
 <template>
@@ -66,7 +39,7 @@ const verificarAutenticacion = () => {
     <NavegacionPrincipal 
       v-if="mostrarLayoutCompleto"
       :usuario-autenticado="usuarioAutenticado"
-      :nombre-usuario="nombreUsuario"
+      :nombre-usuario="nombreCompleto"
     />
     
     <!-- Contenido principal -->

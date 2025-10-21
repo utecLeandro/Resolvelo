@@ -551,19 +551,64 @@ export const reservasService = {
     return response.data.data || []
   },
 
+  // Obtener todas las solicitudes de alquiler para el propietario
+  async obtenerTodasLasSolicitudes(): Promise<SolicitudReserva[]> {
+    const response = await api.get('/usuarios/reservas/todas-mis-solicitudes')
+    return response.data.data || []
+  },
+
   // Aprobar una reserva
-  async aprobarReserva(reservaId: string, datos: AprobarReservaRequest): Promise<void> {
-    await api.patch(`/reservas/${reservaId}/aprobar`, datos)
+  async aprobarReserva(reservaId: string, datos: AprobarReservaRequest): Promise<any> {
+    const response = await api.patch(`/usuarios/reservas/${reservaId}/aceptar`, datos)
+    return response.data
   },
 
   // Rechazar una reserva
-  async rechazarReserva(reservaId: string, datos: RechazarReservaRequest): Promise<void> {
-    await api.patch(`/reservas/${reservaId}/rechazar`, datos)
+  async rechazarReserva(reservaId: string, datos: RechazarReservaRequest): Promise<any> {
+    const response = await api.patch(`/usuarios/reservas/${reservaId}/rechazar`, datos)
+    return response.data
   },
 
   // Obtener mis reservas como arrendatario
   async obtenerMisReservas(): Promise<any> {
     const response = await api.get('/usuarios/reservas/mis-reservas')
+    return response.data
+  },
+
+  // Obtener reservas activas del propietario
+  async obtenerReservasActivasPropietario(): Promise<any> {
+    const response = await api.get('/usuarios/reservas/mis-reservas-activas')
+    return response.data
+  },
+
+  // Obtener historial de reservas del propietario
+  async obtenerHistorialReservasPropietario(): Promise<any> {
+    const response = await api.get('/usuarios/reservas/mi-historial-reservas')
+    return response.data
+  },
+
+  // Obtener una reserva específica por ID
+  async obtenerReservaPorId(reservaId: string): Promise<any> {
+    console.log('🌐 Llamando API para reserva:', reservaId)
+    try {
+      const response = await api.get(`/usuarios/reservas/${reservaId}`)
+      console.log('📡 Respuesta completa de axios:', response)
+      console.log('📊 Status:', response.status)
+      console.log('📋 Headers:', response.headers)
+      console.log('💾 Data:', response.data)
+      
+      // El backend devuelve {success: true, data: {...}, timestamp: "..."}
+      // Devolvemos response.data que ya contiene esa estructura
+      return response.data
+    } catch (error) {
+      console.error('🚨 Error en obtenerReservaPorId:', error)
+      throw error
+    }
+  },
+
+  // Activar una reserva (cambiar estado de CONFIRMADA a EN_CURSO)
+  async activarReserva(reservaId: string): Promise<any> {
+    const response = await api.post(`/usuarios/reservas/${reservaId}/activar`)
     return response.data
   },
 }

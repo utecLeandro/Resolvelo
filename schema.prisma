@@ -1,7 +1,3 @@
-// Schema.prisma optimizado para ReSolVelo
-// Generado como Ingeniero de Software Senior especializado en NestJS y Prisma
-// Cumple con OWASP Top 10, PCI DSS y mejores prácticas de seguridad
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,154 +7,99 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================================================
-// ÉPICA 1: GESTIÓN DE USUARIOS
-// ============================================================================
-
 model Usuario {
-  id                      String             @id @default(cuid())
-  
-  // Información personal básica
-  nombre                  String             @db.VarChar(100)
-  apellido                String             @db.VarChar(100)
-  email                   String             @unique @db.VarChar(255)
-  telefono                String?            @db.VarChar(20)
-  documentoIdentidad      String             @unique @db.VarChar(12)
-  
-  // SEGURIDAD POR DISEÑO - Hash + Salt para contraseñas (OWASP Top 10)
-  passwordHash            String             @db.VarChar(255)
-  passwordSalt            String             @db.VarChar(255)
-  
-  // Verificación y estados de seguridad
-  emailVerificado         Boolean            @default(false)
-  telefonoVerificado      Boolean            @default(false)
-  estadoVerificacion      EstadoVerificacion @default(PENDIENTE)
-  
-  // Protección contra ataques de fuerza bruta (OWASP Top 10)
-  fechaUltimoAcceso       DateTime?
-  intentosFallidos        Int                @default(0)
-  bloqueadoHasta          DateTime?
-  
-  // Gestión de roles y permisos
-  rol                     RolUsuario         @default(USUARIO)
-  fechaAsignacionRol      DateTime?
-  asignadoPor             String?            @db.VarChar(36)
-  motivoRol               String?
-  permisosSuspendidos     Boolean            @default(false)
-  
-  // Información de perfil
-  fechaNacimiento         DateTime?
-  biografia               String?            @db.Text
-  avatarUrl               String?            @db.VarChar(500)
-  direccion               String?            @db.VarChar(255)
-  ciudad                  String?            @db.VarChar(100)
-  departamento            String?            @db.VarChar(100)
-  codigoPostal            String?            @db.VarChar(10)
-  
-  // Configuraciones de privacidad y notificaciones
-  perfilPublico           Boolean            @default(true)
-  notificacionesEmail     Boolean            @default(true)
-  notificacionesSms       Boolean            @default(false)
-  
-  // Sistema de calificaciones
-  calificacionPromedio    Decimal?           @db.Decimal(3, 2)
-  totalCalificaciones     Int                @default(0)
-  
-  // Auditoría y control
-  fechaCreacion           DateTime           @default(now())
-  fechaActualizacion      DateTime           @updatedAt
-  ultimoAcceso            DateTime?
-  activo                  Boolean            @default(true)
-  
-  // Tokens de seguridad para verificación y recuperación
-  tokenVerificacion       String?            @db.VarChar(255)
-  tokenRecuperacion       String?            @db.VarChar(255)
-  fechaExpiracionToken    DateTime?
-  
-  // Campos adicionales para auditoría de seguridad
-  ipUltimoAcceso          String?            @db.VarChar(45) // IPv6 compatible
-  userAgentUltimoAcceso   String?            @db.VarChar(500)
-  sesionesActivas         Int                @default(0)
-  
-  // Relaciones - ÉPICAS 2, 3, 4
-  publicaciones           Publicacion[]
-  reservasRealizadas      Reserva[]          @relation("UsuarioReserva")
-  reservasRecibidas       Reserva[]          @relation("PropietarioReserva")
-  transacciones           Transaccion[]
-  calificacionesRecibidas Calificacion[]     @relation("UsuarioCalificado")
-  calificacionesDadas     Calificacion[]     @relation("UsuarioCalificador")
-  mensajesEnviados        Mensaje[]          @relation("UsuarioEmisor")
-  mensajesRecibidos       Mensaje[]          @relation("UsuarioReceptor")
-  reportesRecibidos       Reporte[]          @relation("UsuarioReportado")
-  reportesRealizados      Reporte[]          @relation("UsuarioReportador")
-  disputasComoDemandado   Disputa[]          @relation("UsuarioDemandado")
-  disputasComoDemandante  Disputa[]          @relation("UsuarioDemandante")
-  evidenciasDisputa       EvidenciaDisputa[] @relation("UsuarioEvidencia")
-  mensajesDisputa         MensajeDisputa[]   @relation("AutorMensajeDisputa")
-  administrador           Administrador?
+  id                                              String             @id @default(cuid())
+  nombre                                          String             @db.VarChar(100)
+  apellido                                        String             @db.VarChar(100)
+  email                                           String             @unique @db.VarChar(255)
+  telefono                                        String?            @db.VarChar(20)
+  documentoIdentidad                              String             @unique @db.VarChar(12)
+  passwordHash                                    String             @db.VarChar(255)
+  passwordSalt                                    String             @db.VarChar(255)
+  emailVerificado                                 Boolean            @default(false)
+  telefonoVerificado                              Boolean            @default(false)
+  estadoVerificacion                              EstadoVerificacion @default(PENDIENTE)
+  fechaUltimoAcceso                               DateTime?
+  intentosFallidos                                Int                @default(0)
+  bloqueadoHasta                                  DateTime?
+  rol                                             RolUsuario         @default(USUARIO)
+  fechaAsignacionRol                              DateTime?
+  asignadoPor                                     String?            @db.VarChar(36)
+  motivoRol                                       String?
+  permisosSuspendidos                             Boolean            @default(false)
+  fechaNacimiento                                 DateTime?
+  biografia                                       String?
+  avatarUrl                                       String?            @db.VarChar(500)
+  direccion                                       String?            @db.VarChar(255)
+  ciudad                                          String?            @db.VarChar(100)
+  departamento                                    String?            @db.VarChar(100)
+  codigoPostal                                    String?            @db.VarChar(10)
+  perfilPublico                                   Boolean            @default(true)
+  notificacionesEmail                             Boolean            @default(true)
+  notificacionesSms                               Boolean            @default(false)
+  calificacionPromedio                            Decimal?           @db.Decimal(3, 2)
+  totalCalificaciones                             Int                @default(0)
+  fechaCreacion                                   DateTime           @default(now())
+  fechaActualizacion                              DateTime           @updatedAt
+  ultimoAcceso                                    DateTime?
+  activo                                          Boolean            @default(true)
+  tokenVerificacion                               String?            @db.VarChar(255)
+  tokenRecuperacion                               String?            @db.VarChar(255)
+  fechaExpiracionToken                            DateTime?
+  administrador                                   Administrador?
+  calificacionesRecibidas                         Calificacion[]     @relation("UsuarioCalificado")
+  calificacionesDadas                             Calificacion[]     @relation("UsuarioCalificador")
+  disputasComoDemandado                           Disputa[]          @relation("UsuarioDemandado")
+  disputasComoDemandante                          Disputa[]          @relation("UsuarioDemandante")
+  evidencias_disputa                              EvidenciaDisputa[]
+  mensajesEnviados                                Mensaje[]          @relation("UsuarioEmisor")
+  mensajesRecibidos                               Mensaje[]          @relation("UsuarioReceptor")
+  mensajesDisputa                                 MensajeDisputa[]   @relation("AutorMensajeDisputa")
+  publicaciones                                   Publicacion[]
+  reportes_reportes_usuarioReportadoIdTousuarios  Reporte[]          @relation("reportes_usuarioReportadoIdTousuarios")
+  reportes_reportes_usuarioReportadorIdTousuarios Reporte[]          @relation("reportes_usuarioReportadorIdTousuarios")
+  reservasRecibidas                               Reserva[]          @relation("PropietarioReserva")
+  reservasRealizadas                              Reserva[]          @relation("UsuarioReserva")
+  transacciones                                   Transaccion[]
 
-  // Índices optimizados para rendimiento y seguridad
   @@index([email])
   @@index([documentoIdentidad])
   @@index([estadoVerificacion])
   @@index([fechaCreacion])
   @@index([calificacionPromedio])
-  @@index([activo])
-  @@index([bloqueadoHasta])
-  @@index([ipUltimoAcceso])
   @@map("usuarios")
 }
 
-// ============================================================================
-// ÉPICA 2: PUBLICACIÓN DE EQUIPOS
-// ============================================================================
-
 model Publicacion {
   id                   String                   @id @default(cuid())
-  
-  // Información básica del equipo
   titulo               String                   @db.VarChar(200)
-  descripcion          String                   @db.Text
+  descripcion          String
   categoria            CategoriaEquipo
   marca                String?                  @db.VarChar(100)
   modelo               String?                  @db.VarChar(100)
   anioFabricacion      Int?
-  
-  // Precios y condiciones económicas
   precioPorDia         Decimal                  @db.Decimal(10, 2)
   precioPorSemana      Decimal?                 @db.Decimal(10, 2)
   precioPorMes         Decimal?                 @db.Decimal(10, 2)
   deposito             Decimal?                 @db.Decimal(10, 2)
-  
-  // Disponibilidad y condiciones de alquiler
   disponible           Boolean                  @default(true)
   diasMinimoAlquiler   Int                      @default(1)
   diasMaximoAlquiler   Int?
-  
-  // Ubicación geográfica
   direccion            String                   @db.VarChar(255)
   ciudad               String                   @db.VarChar(100)
   departamento         String                   @db.VarChar(100)
   codigoPostal         String?                  @db.VarChar(10)
   latitud              Decimal?                 @db.Decimal(10, 8)
   longitud             Decimal?                 @db.Decimal(11, 8)
-  
-  // Estados y moderación
   estado               EstadoPublicacion        @default(ACTIVA)
   estadoModeracion     EstadoModeracion         @default(PENDIENTE_REVISION)
-  fechaModeracion      DateTime?
-  moderadoPor          String?                  @db.VarChar(36)
-  comentarioModeracion String?                  @db.Text
-  
-  // Opciones de entrega
   entregaDomicilio     Boolean                  @default(false)
   retiroLocal          Boolean                  @default(true)
-  
-  // Información adicional del equipo
+  fechaModeracion      DateTime?
+  moderadoPor          String?                  @db.VarChar(36)
+  comentarioModeracion String?
   estadoEquipo         String                   @db.VarChar(50)
-  instrucciones        String?                  @db.Text
-  
-  // Auditoría y métricas
+  instrucciones        String?
   fechaCreacion        DateTime                 @default(now())
   fechaActualizacion   DateTime                 @updatedAt
   fechaPublicacion     DateTime?
@@ -167,183 +108,109 @@ model Publicacion {
   totalReservas        Int                      @default(0)
   calificacionPromedio Decimal?                 @db.Decimal(3, 2)
   totalCalificaciones  Int                      @default(0)
-  
-  // Validación de entrada para prevenir inyección (OWASP Top 10)
-  contenidoValidado    Boolean                  @default(false)
-  fechaValidacion      DateTime?
-  
-  // Relación con propietario
   propietarioId        String
-  propietario          Usuario                  @relation(fields: [propietarioId], references: [id], onDelete: Cascade)
-  
-  // Relaciones con otros modelos
-  imagenes             ImagenPublicacion[]
-  disponibilidades     DisponibilidadFecha[]
-  reservas             Reserva[]
   calificaciones       Calificacion[]
-  reportes             Reporte[]
+  disponibilidades     DisponibilidadFecha[]
+  imagenes             ImagenPublicacion[]
   moderaciones         ModeraccionPublicacion[]
+  propietario          Usuario                  @relation(fields: [propietarioId], references: [id], onDelete: Cascade)
+  reportes             Reporte[]
+  reservas             Reserva[]
 
-  // Índices optimizados
   @@index([propietarioId])
   @@index([categoria])
   @@index([estado])
-  @@index([estadoModeracion])
   @@index([ciudad, departamento])
   @@index([precioPorDia])
   @@index([fechaCreacion])
   @@index([calificacionPromedio])
   @@index([disponible])
-  @@index([contenidoValidado])
   @@map("publicaciones")
 }
 
-// ============================================================================
-// ÉPICA 3: GESTIÓN DE RESERVAS
-// ============================================================================
-
 model Reserva {
   id                 String         @id @default(cuid())
-  
-  // Fechas de la reserva
   fechaInicio        DateTime
   fechaFin           DateTime
   fechaCreacion      DateTime       @default(now())
   fechaActualizacion DateTime       @updatedAt
-  
-  // Estado y flujo de aprobación
   estado             EstadoReserva  @default(PENDIENTE)
-  fechaAprobacion    DateTime?
-  fechaRechazo       DateTime?
-  motivoRechazo      String?        @db.Text
-  
-  // Información económica
   precioTotal        Decimal        @db.Decimal(10, 2)
   deposito           Decimal?       @db.Decimal(10, 2)
   comisionPlataforma Decimal        @db.Decimal(10, 2)
-  
-  // Logística de entrega
   tipoEntrega        String         @db.VarChar(50)
   direccionEntrega   String?        @db.VarChar(255)
   fechaEntrega       DateTime?
   fechaDevolucion    DateTime?
-  
-  // Notas y comunicación
-  notasUsuario       String?        @db.Text
-  notasPropietario   String?        @db.Text
-  notasInternas      String?        @db.Text
+  notasUsuario       String?
+  notasPropietario   String?
+  notasInternas      String?
   telefonoContacto   String?        @db.VarChar(20)
-  
-  // Validación y seguridad
-  validacionRealizada Boolean       @default(false)
-  ipCreacion         String?        @db.VarChar(45)
-  
-  // Relaciones principales
   usuarioId          String
   publicacionId      String
   propietarioId      String
-  
-  usuario            Usuario        @relation("UsuarioReserva", fields: [usuarioId], references: [id], onDelete: Cascade)
-  publicacion        Publicacion    @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
-  propietario        Usuario        @relation("PropietarioReserva", fields: [propietarioId], references: [id], onDelete: Cascade)
-  
-  // Relaciones secundarias
-  transacciones      Transaccion[]
   calificaciones     Calificacion[]
-  mensajes           Mensaje[]
   disputas           Disputa[]
+  mensajes           Mensaje[]
+  propietario        Usuario        @relation("PropietarioReserva", fields: [propietarioId], references: [id], onDelete: Cascade)
+  publicacion        Publicacion    @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
+  usuario            Usuario        @relation("UsuarioReserva", fields: [usuarioId], references: [id], onDelete: Cascade)
+  transacciones      Transaccion[]
 
-  // Índices para rendimiento
   @@index([usuarioId])
   @@index([publicacionId])
   @@index([propietarioId])
   @@index([estado])
   @@index([fechaInicio, fechaFin])
   @@index([fechaCreacion])
-  @@index([validacionRealizada])
   @@map("reservas")
 }
 
-// ============================================================================
-// ÉPICA 4: PAGOS Y TRANSACCIONES
-// ============================================================================
-
 model Transaccion {
   id                 String            @id @default(cuid())
-  
-  // Información básica de la transacción
   tipo               TipoTransaccion
   estado             EstadoTransaccion @default(PENDIENTE)
   monto              Decimal           @db.Decimal(10, 2)
   moneda             String            @default("UYU") @db.VarChar(3)
-  
-  // Información de pago (PCI DSS compliance)
   metodoPago         String?           @db.VarChar(50)
   referenciaExterna  String?           @db.VarChar(255)
-  tokenPago          String?           @db.VarChar(255) // Token seguro, no datos de tarjeta
-  
-  // Fechas del ciclo de vida
   fechaCreacion      DateTime          @default(now())
   fechaProcesamiento DateTime?
   fechaCompletado    DateTime?
   fechaVencimiento   DateTime?
-  
-  // Información descriptiva
   descripcion        String?           @db.VarChar(500)
-  notasInternas      String?           @db.Text
-  
-  // Cálculos financieros
+  notasInternas      String?
   comisionPlataforma Decimal?          @db.Decimal(10, 2)
   comisionPasarela   Decimal?          @db.Decimal(10, 2)
   montoNeto          Decimal?          @db.Decimal(10, 2)
-  
-  // Seguridad y auditoría
-  ipTransaccion      String?           @db.VarChar(45)
-  hashVerificacion   String?           @db.VarChar(255)
-  validacionSeguridad Boolean          @default(false)
-  
-  // Relaciones
   usuarioId          String
   reservaId          String?
-  
-  usuario            Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   reserva            Reserva?          @relation(fields: [reservaId], references: [id])
+  usuario            Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
-  // Índices para auditoría y rendimiento
   @@index([usuarioId])
   @@index([reservaId])
   @@index([estado])
   @@index([tipo])
   @@index([fechaCreacion])
   @@index([referenciaExterna])
-  @@index([validacionSeguridad])
   @@map("transacciones")
 }
 
-// ============================================================================
-// MODELOS DE SOPORTE Y FUNCIONALIDADES ADICIONALES
-// ============================================================================
-
 model Calificacion {
   id                   String      @id @default(cuid())
-  puntuacion           Int         @db.SmallInt // 1-5
-  comentario           String?     @db.Text
+  puntuacion           Int
+  comentario           String?
   fechaCreacion        DateTime    @default(now())
   fechaActualizacion   DateTime    @updatedAt
-  
-  // Validación de contenido
-  contenidoValidado    Boolean     @default(false)
-  
-  // Relaciones
   usuarioCalificadorId String
   usuarioCalificadoId  String
   reservaId            String
   publicacionId        String
-  
-  usuarioCalificador   Usuario     @relation("UsuarioCalificador", fields: [usuarioCalificadorId], references: [id], onDelete: Cascade)
-  usuarioCalificado    Usuario     @relation("UsuarioCalificado", fields: [usuarioCalificadoId], references: [id], onDelete: Cascade)
-  reserva              Reserva     @relation(fields: [reservaId], references: [id], onDelete: Cascade)
   publicacion          Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
+  reserva              Reserva     @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  usuarioCalificado    Usuario     @relation("UsuarioCalificado", fields: [usuarioCalificadoId], references: [id], onDelete: Cascade)
+  usuarioCalificador   Usuario     @relation("UsuarioCalificador", fields: [usuarioCalificadorId], references: [id], onDelete: Cascade)
 
   @@unique([usuarioCalificadorId, reservaId])
   @@index([usuarioCalificadorId])
@@ -351,7 +218,6 @@ model Calificacion {
   @@index([reservaId])
   @@index([publicacionId])
   @@index([puntuacion])
-  @@index([contenidoValidado])
   @@map("calificaciones")
 }
 
@@ -362,18 +228,11 @@ model ImagenPublicacion {
   orden         Int         @default(0)
   esPrincipal   Boolean     @default(false)
   fechaCreacion DateTime    @default(now())
-  
-  // Validación de seguridad para imágenes
-  validada      Boolean     @default(false)
-  tipoMime      String?     @db.VarChar(50)
-  tamanoBytes   Int?
-  
   publicacionId String
   publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
 
   @@index([publicacionId])
   @@index([orden])
-  @@index([validada])
   @@map("imagenes_publicacion")
 }
 
@@ -388,257 +247,271 @@ model DisponibilidadFecha {
   @@unique([publicacionId, fecha])
   @@index([publicacionId])
   @@index([fecha])
-  @@index([disponible])
   @@map("disponibilidad_fechas")
 }
 
 model Mensaje {
-  id            String   @id @default(cuid())
-  contenido     String   @db.Text
-  fechaCreacion DateTime @default(now())
-  leido         Boolean  @default(false)
+  id            String    @id @default(cuid())
+  contenido     String
+  leido         Boolean   @default(false)
+  fechaCreacion DateTime  @default(now())
   fechaLectura  DateTime?
-  
-  // Validación anti-XSS
-  contenidoValidado Boolean @default(false)
-  
   emisorId      String
   receptorId    String
   reservaId     String?
-  
-  emisor        Usuario  @relation("UsuarioEmisor", fields: [emisorId], references: [id], onDelete: Cascade)
-  receptor      Usuario  @relation("UsuarioReceptor", fields: [receptorId], references: [id], onDelete: Cascade)
-  reserva       Reserva? @relation(fields: [reservaId], references: [id])
+  emisor        Usuario   @relation("UsuarioEmisor", fields: [emisorId], references: [id], onDelete: Cascade)
+  receptor      Usuario   @relation("UsuarioReceptor", fields: [receptorId], references: [id], onDelete: Cascade)
+  reserva       Reserva?  @relation(fields: [reservaId], references: [id])
 
   @@index([emisorId])
   @@index([receptorId])
   @@index([reservaId])
   @@index([fechaCreacion])
-  @@index([contenidoValidado])
+  @@index([leido])
   @@map("mensajes")
 }
 
-// ============================================================================
-// MODELOS DE ADMINISTRACIÓN Y SEGURIDAD
-// ============================================================================
-
 model Administrador {
-  id                String                   @id @default(cuid())
-  usuarioId         String                   @unique
-  fechaAsignacion   DateTime                 @default(now())
-  asignadoPor       String?                  @db.VarChar(36)
-  activo            Boolean                  @default(true)
-  
-  usuario           Usuario                  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  permisos          PermisoAdministrador[]
-  acciones          AccionAdministrativa[]
+  id                       String                   @id @default(cuid())
+  usuarioId                String                   @unique
+  fechaAsignacion          DateTime                 @default(now())
+  asignadoPor              String?                  @db.VarChar(36)
+  motivoAsignacion         String?
+  activo                   Boolean                  @default(true)
+  totalAcciones            Int                      @default(0)
+  ultimaActividad          DateTime?
+  fechaCreacion            DateTime                 @default(now())
+  fechaActualizacion       DateTime
+  acciones                 AccionAdministrativa[]
+  usuario                  Usuario                  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  disputas                 Disputa[]
+  moderaciones_publicacion ModeraccionPublicacion[]
+  permisos                 PermisoAdministrador[]
 
+  @@index([activo])
+  @@index([fechaAsignacion])
+  @@index([usuarioId])
   @@map("administradores")
 }
 
 model PermisoAdministrador {
-  id              String        @id @default(cuid())
-  tipo            TipoPermiso
-  fechaAsignacion DateTime      @default(now())
-  fechaExpiracion DateTime?
-  activo          Boolean       @default(true)
-  
-  administradorId String
-  administrador   Administrador @relation(fields: [administradorId], references: [id], onDelete: Cascade)
+  id                 String        @id @default(cuid())
+  tipo               TipoPermiso
+  activo             Boolean       @default(true)
+  fechaAsignacion    DateTime      @default(now())
+  fechaExpiracion    DateTime?
+  administradorId    String
+  fechaCreacion      DateTime      @default(now())
+  fechaActualizacion DateTime
+  administrador      Administrador @relation(fields: [administradorId], references: [id], onDelete: Cascade)
 
+  @@unique([administradorId, tipo])
   @@index([administradorId])
   @@index([tipo])
+  @@index([activo])
   @@map("permisos_administrador")
 }
 
 model AccionAdministrativa {
-  id              String        @id @default(cuid())
-  tipo            TipoAccionAdmin
-  descripcion     String        @db.Text
-  fechaAccion     DateTime      @default(now())
-  ipAccion        String?       @db.VarChar(45)
-  
-  administradorId String
-  usuarioAfectado String?
-  
-  administrador   Administrador @relation(fields: [administradorId], references: [id], onDelete: Cascade)
+  id                    String          @id @default(cuid())
+  tipo                  TipoAccionAdmin
+  descripcion           String
+  detalles              String?
+  usuarioObjetivoId     String?         @db.VarChar(36)
+  publicacionObjetivoId String?         @db.VarChar(36)
+  disputaObjetivoId     String?         @db.VarChar(36)
+  exitosa               Boolean         @default(true)
+  motivoFallo           String?
+  fechaCreacion         DateTime        @default(now())
+  direccionIp           String?         @db.VarChar(45)
+  userAgent             String?
+  administradorId       String
+  administrador         Administrador   @relation(fields: [administradorId], references: [id], onDelete: Cascade)
 
   @@index([administradorId])
   @@index([tipo])
-  @@index([fechaAccion])
+  @@index([exitosa])
+  @@index([fechaCreacion])
+  @@index([publicacionObjetivoId])
+  @@index([usuarioObjetivoId])
   @@map("acciones_administrativas")
 }
 
-// ============================================================================
-// MODELOS DE REPORTES Y DISPUTAS
-// ============================================================================
-
 model Reporte {
-  id                String           @id @default(cuid())
-  motivo            String           @db.VarChar(255)
-  descripcion       String           @db.Text
-  severidad         SeveridadReporte @default(MEDIA)
-  estado            String           @default("PENDIENTE") @db.VarChar(50)
-  fechaCreacion     DateTime         @default(now())
-  fechaResolucion   DateTime?
-  
-  reportadorId      String
-  reportadoId       String
-  publicacionId     String?
-  
-  reportador        Usuario          @relation("UsuarioReportador", fields: [reportadorId], references: [id], onDelete: Cascade)
-  reportado         Usuario          @relation("UsuarioReportado", fields: [reportadoId], references: [id], onDelete: Cascade)
-  publicacion       Publicacion?     @relation(fields: [publicacionId], references: [id])
+  id                                              String       @id @default(cuid())
+  motivo                                          String       @db.VarChar(100)
+  descripcion                                     String
+  estado                                          String       @default("PENDIENTE") @db.VarChar(50)
+  fechaCreacion                                   DateTime     @default(now())
+  fechaResolucion                                 DateTime?
+  usuarioReportadorId                             String
+  usuarioReportadoId                              String?
+  publicacionId                                   String?
+  publicacion                                     Publicacion? @relation(fields: [publicacionId], references: [id])
+  usuarios_reportes_usuarioReportadoIdTousuarios  Usuario?     @relation("reportes_usuarioReportadoIdTousuarios", fields: [usuarioReportadoId], references: [id])
+  usuarios_reportes_usuarioReportadorIdTousuarios Usuario      @relation("reportes_usuarioReportadorIdTousuarios", fields: [usuarioReportadorId], references: [id], onDelete: Cascade)
 
-  @@index([reportadorId])
-  @@index([reportadoId])
   @@index([publicacionId])
   @@index([estado])
-  @@index([severidad])
+  @@index([fechaCreacion])
+  @@index([usuarioReportadoId])
+  @@index([usuarioReportadorId])
   @@map("reportes")
 }
 
 model Disputa {
-  id                String             @id @default(cuid())
-  tipo              TipoDisputa
-  estado            EstadoDisputa      @default(ABIERTA)
-  descripcion       String             @db.Text
-  fechaCreacion     DateTime           @default(now())
-  fechaResolucion   DateTime?
-  resolucion        String?            @db.Text
-  
-  demandanteId      String
-  demandadoId       String
-  reservaId         String
-  
-  demandante        Usuario            @relation("UsuarioDemandante", fields: [demandanteId], references: [id], onDelete: Cascade)
-  demandado         Usuario            @relation("UsuarioDemandado", fields: [demandadoId], references: [id], onDelete: Cascade)
-  reserva           Reserva            @relation(fields: [reservaId], references: [id], onDelete: Cascade)
-  
-  mensajes          MensajeDisputa[]
-  evidencias        EvidenciaDisputa[]
+  id                   String             @id @default(cuid())
+  tipo                 TipoDisputa
+  titulo               String             @db.VarChar(200)
+  descripcion          String
+  estado               EstadoDisputa      @default(ABIERTA)
+  severidad            SeveridadReporte   @default(MEDIA)
+  demandanteId         String
+  demandadoId          String
+  reservaId            String?
+  resolucion           String?
+  compensacion         Decimal?           @db.Decimal(10, 2)
+  fechaResolucion      DateTime?
+  administradorId      String?
+  fechaCreacion        DateTime           @default(now())
+  fechaActualizacion   DateTime
+  fechaLimiteRespuesta DateTime?
+  administradores      Administrador?     @relation(fields: [administradorId], references: [id])
+  demandado            Usuario            @relation("UsuarioDemandado", fields: [demandadoId], references: [id], onDelete: Cascade)
+  demandante           Usuario            @relation("UsuarioDemandante", fields: [demandanteId], references: [id], onDelete: Cascade)
+  reserva              Reserva?           @relation(fields: [reservaId], references: [id])
+  evidencias           EvidenciaDisputa[]
+  mensajes             MensajeDisputa[]
 
   @@index([demandanteId])
   @@index([demandadoId])
   @@index([reservaId])
   @@index([estado])
   @@index([tipo])
+  @@index([administradorId])
+  @@index([fechaCreacion])
+  @@index([severidad])
   @@map("disputas")
 }
 
 model MensajeDisputa {
-  id            String   @id @default(cuid())
-  contenido     String   @db.Text
-  fechaCreacion DateTime @default(now())
-  
-  autorId       String
+  id            String    @id @default(cuid())
+  contenido     String
+  esInterno     Boolean   @default(false)
   disputaId     String
-  
-  autor         Usuario  @relation("AutorMensajeDisputa", fields: [autorId], references: [id], onDelete: Cascade)
-  disputa       Disputa  @relation(fields: [disputaId], references: [id], onDelete: Cascade)
+  autorId       String
+  fechaCreacion DateTime  @default(now())
+  editado       Boolean   @default(false)
+  fechaEdicion  DateTime?
+  autor         Usuario   @relation("AutorMensajeDisputa", fields: [autorId], references: [id], onDelete: Cascade)
+  disputa       Disputa   @relation(fields: [disputaId], references: [id], onDelete: Cascade)
 
   @@index([autorId])
   @@index([disputaId])
   @@index([fechaCreacion])
+  @@index([esInterno])
   @@map("mensajes_disputa")
 }
 
 model EvidenciaDisputa {
   id            String   @id @default(cuid())
   tipo          String   @db.VarChar(50)
+  nombre        String   @db.VarChar(255)
   url           String   @db.VarChar(500)
-  descripcion   String?  @db.Text
-  fechaCreacion DateTime @default(now())
-  
-  usuarioId     String
+  tamano        Int?
+  descripcion   String?
   disputaId     String
-  
-  usuario       Usuario  @relation("UsuarioEvidencia", fields: [usuarioId], references: [id], onDelete: Cascade)
+  subidoPor     String
+  fechaCreacion DateTime @default(now())
   disputa       Disputa  @relation(fields: [disputaId], references: [id], onDelete: Cascade)
+  usuarios      Usuario  @relation(fields: [subidoPor], references: [id], onDelete: Cascade)
 
-  @@index([usuarioId])
   @@index([disputaId])
+  @@index([fechaCreacion])
+  @@index([subidoPor])
+  @@index([tipo])
   @@map("evidencias_disputa")
 }
 
 model ModeraccionPublicacion {
-  id              String      @id @default(cuid())
-  accion          String      @db.VarChar(100)
-  motivo          String      @db.Text
-  fechaAccion     DateTime    @default(now())
-  
+  id              String           @id @default(cuid())
+  accion          String           @db.VarChar(50)
+  motivo          String?          @db.VarChar(200)
+  comentarios     String?
+  estadoAnterior  EstadoModeracion
+  estadoNuevo     EstadoModeracion
   publicacionId   String
-  moderadorId     String?
-  
-  publicacion     Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
+  moderadorId     String
+  fechaCreacion   DateTime         @default(now())
+  administradores Administrador    @relation(fields: [moderadorId], references: [id], onDelete: Cascade)
+  publicacion     Publicacion      @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
 
   @@index([publicacionId])
   @@index([moderadorId])
-  @@index([fechaAccion])
+  @@index([accion])
+  @@index([estadoNuevo])
+  @@index([fechaCreacion])
   @@map("moderaciones_publicacion")
 }
 
-// ============================================================================
-// MODELO DE ESTADÍSTICAS DEL SISTEMA
-// ============================================================================
-
 model EstadisticaSistema {
-  id                    String   @id @default(cuid())
-  fecha                 DateTime @db.Date
-  usuariosRegistrados   Int      @default(0)
-  publicacionesActivas  Int      @default(0)
-  reservasCompletadas   Int      @default(0)
-  transaccionesTotales  Decimal  @default(0) @db.Decimal(15, 2)
-  fechaActualizacion    DateTime @updatedAt
+  id            String   @id @default(cuid())
+  nombre        String   @db.VarChar(100)
+  valor         Decimal  @db.Decimal(15, 2)
+  unidad        String?  @db.VarChar(50)
+  descripcion   String?
+  categoria     String   @db.VarChar(50)
+  subcategoria  String?  @db.VarChar(50)
+  fechaInicio   DateTime
+  fechaFin      DateTime
+  fechaCreacion DateTime @default(now())
+  calculadoPor  String?  @db.VarChar(36)
 
-  @@unique([fecha])
-  @@index([fecha])
+  @@index([categoria])
+  @@index([fechaCreacion])
+  @@index([fechaFin])
+  @@index([fechaInicio])
+  @@index([nombre])
   @@map("estadisticas_sistema")
 }
 
-// ============================================================================
-// ENUMERACIONES
-// ============================================================================
-
 enum EstadoVerificacion {
   PENDIENTE
-  VERIFICADO
-  RECHAZADO
-  SUSPENDIDO
+  VERIFICADA
+  RECHAZADA
+  SUSPENDIDA
 }
 
 enum RolUsuario {
   USUARIO
-  ADMINISTRADOR
   MODERADOR
+  ADMINISTRADOR
   SUPER_ADMIN
 }
 
 enum EstadoPublicacion {
-  BORRADOR
   ACTIVA
   PAUSADA
+  INACTIVA
   ELIMINADA
-  SUSPENDIDA
 }
 
 enum EstadoModeracion {
   PENDIENTE_REVISION
   APROBADA
   RECHAZADA
-  REQUIERE_CAMBIOS
+  REPORTADA
+  SUSPENDIDA
+  ELIMINADA
 }
 
 enum EstadoReserva {
   PENDIENTE
-  APROBADA
-  RECHAZADA
   CONFIRMADA
   EN_CURSO
   COMPLETADA
-  CANCELADA_USUARIO
-  CANCELADA_PROPIETARIO
-  DISPUTADA
+  CANCELADA
+  RECHAZADA
 }
 
 enum EstadoTransaccion {
@@ -646,8 +519,8 @@ enum EstadoTransaccion {
   PROCESANDO
   COMPLETADA
   FALLIDA
-  CANCELADA
   REEMBOLSADA
+  CANCELADA
 }
 
 enum TipoTransaccion {
@@ -655,7 +528,6 @@ enum TipoTransaccion {
   DEPOSITO
   REEMBOLSO
   COMISION
-  PENALIZACION
 }
 
 enum CategoriaEquipo {
@@ -675,30 +547,39 @@ enum CategoriaEquipo {
 }
 
 enum TipoPermiso {
-  GESTIONAR_USUARIOS
   MODERAR_PUBLICACIONES
+  GESTIONAR_USUARIOS
   RESOLVER_DISPUTAS
-  VER_ESTADISTICAS
-  GESTIONAR_TRANSACCIONES
-  ACCESO_TOTAL
+  ACCEDER_REPORTES
+  CONFIGURAR_SISTEMA
+  GESTIONAR_PAGOS
+  ELIMINAR_CONTENIDO
+  BANEAR_USUARIOS
+  GESTIONAR_ADMINISTRADORES
+  ACCESO_COMPLETO
 }
 
 enum TipoAccionAdmin {
   CREAR_USUARIO
+  MODIFICAR_USUARIO
   SUSPENDER_USUARIO
-  ELIMINAR_PUBLICACION
+  BLOQUEAR_USUARIO
+  CAMBIAR_ROL
+  MODERAR_PUBLICACION
   RESOLVER_DISPUTA
-  PROCESAR_REEMBOLSO
-  CAMBIAR_PERMISOS
+  ELIMINAR_CONTENIDO
+  CONFIGURAR_SISTEMA
+  GENERAR_REPORTE
 }
 
 enum TipoDisputa {
+  EQUIPO_NO_ENTREGADO
   EQUIPO_DANADO
-  NO_ENTREGA
   DESCRIPCION_INCORRECTA
   PROBLEMA_PAGO
-  COMPORTAMIENTO_INADECUADO
-  OTROS
+  COMPORTAMIENTO_USUARIO
+  CANCELACION_INDEBIDA
+  OTRO
 }
 
 enum EstadoDisputa {

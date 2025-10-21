@@ -41,7 +41,7 @@ export class CrearPublicacionDto {
   @IsNumber({}, { message: 'El precio por día debe ser un número válido' })
   @Min(0.01, { message: 'El precio por día debe ser mayor a 0' })
   @Transform(({ value }) => parseFloat(value))
-  precioPorDia: number;
+  precioPorDia!: number;
 
   @IsOptional()
   @IsNumber({}, { message: 'El precio por semana debe ser un número válido' })

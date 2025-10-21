@@ -86,14 +86,6 @@
                 <span class="ml-1 text-gray-900">{{ reserva.publicacion.propietario.nombre }} {{ reserva.publicacion.propietario.apellido }}</span>
               </div>
               <div>
-                <span class="text-gray-500">Email:</span>
-                <span class="ml-1 text-gray-900">{{ reserva.publicacion.propietario.email }}</span>
-              </div>
-              <div v-if="reserva.publicacion.propietario.telefono">
-                <span class="text-gray-500">Teléfono:</span>
-                <span class="ml-1 text-gray-900">{{ reserva.publicacion.propietario.telefono }}</span>
-              </div>
-              <div>
                 <span class="text-gray-500">Fecha solicitud:</span>
                 <span class="ml-1 text-gray-900">{{ formatearFecha(reserva.fechaCreacion) }}</span>
               </div>
@@ -279,7 +271,9 @@ const mostrarMotivoRechazo = ref(false)
 const estadoClases = {
   'PENDIENTE': 'bg-yellow-100 text-yellow-800',
   'APROBADA': 'bg-green-100 text-green-800',
+  'CONFIRMADA': 'bg-green-100 text-green-800',
   'ACTIVA': 'bg-blue-100 text-blue-800',
+  'EN_CURSO': 'bg-blue-100 text-blue-800',
   'COMPLETADA': 'bg-gray-100 text-gray-800',
   'RECHAZADA': 'bg-red-100 text-red-800',
   'CANCELADA': 'bg-gray-100 text-gray-600'
@@ -290,7 +284,9 @@ const formatearEstado = (estado: string): string => {
   const estados: Record<string, string> = {
     'PENDIENTE': 'Pendiente de aprobación',
     'APROBADA': 'Aprobada - Pendiente de pago',
+    'CONFIRMADA': 'Confirmada - Pendiente de pago',
     'ACTIVA': 'Activa',
+    'EN_CURSO': 'Activa',
     'COMPLETADA': 'Completada',
     'RECHAZADA': 'Rechazada',
     'CANCELADA': 'Cancelada'

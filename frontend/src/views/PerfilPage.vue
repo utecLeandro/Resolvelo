@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { usuarioService, authService, publicacionesService } from '../services/api'
 import type { Publicacion } from '../services/api'
+import { useAuth } from '../composables/useAuth'
 
 interface UsuarioPerfil {
   id: string
@@ -28,6 +29,9 @@ const misPublicaciones = ref<Publicacion[]>([])
 const cargandoPublicaciones = ref(false)
 const errorPublicaciones = ref('')
 const pestanaActiva = ref<'perfil' | 'publicaciones'>('perfil')
+
+// Composable para manejar estado global del usuario
+const { actualizarDatosUsuario } = useAuth()
 
 onMounted(async () => {
   const token = localStorage.getItem('access_token')
@@ -79,14 +83,14 @@ const guardarCambios = async () => {
       direccion: direccion.value || undefined,
     })
     mensaje.value = res.message || 'Perfil actualizado correctamente.'
-    // Actualizar nombre y apellido en localStorage si cambian
-    const userDataRaw = localStorage.getItem('userData')
-    if (userDataRaw) {
-      const userData = JSON.parse(userDataRaw)
-      userData.nombre = nombre.value
-      userData.apellido = apellido.value
-      localStorage.setItem('userData', JSON.stringify(userData))
-    }
+    
+    // Actualizar el estado global reactivo del usuario
+    actualizarDatosUsuario({
+      nombre: nombre.value,
+      apellido: apellido.value,
+      direccion: direccion.value
+    })
+    
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'No se pudo actualizar el perfil.'
   } finally {
