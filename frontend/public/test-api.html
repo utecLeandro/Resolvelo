@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API Frontend</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Test API Frontend</h1>
+    <button onclick="testAPI()">Test API Call</button>
+    <div id="results"></div>
+    
+    <script>
+        async function testAPI() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Probando...</p>';
+            
+            try {
+                // Configurar axios igual que en el frontend
+                const api = axios.create({
+                    baseURL: '/api',
+                    timeout: 15000,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    withCredentials: false,
+                    validateStatus: function (status) {
+                        return status >= 200 && status < 500;
+                    }
+                });
+                
+                // Agregar token
+                const token = localStorage.getItem('access_token');
+                console.log('Token:', token);
+                
+                if (token) {
+                    api.defaults.headers.Authorization = `Bearer ${token}`;
+                }
+                
+                // Hacer la llamada
+                const reservaId = 'cmh05wkgs0005umr85c4qfjom';
+                console.log('Llamando API para reserva:', reservaId);
+                
+                const response = await api.get(`/usuarios/reservas/${reservaId}`);
+                
+                console.log('Respuesta completa:', response);
+                console.log('Status:', response.status);
+                console.log('Data:', response.data);
+                
+                results.innerHTML = `
+                    <h2>Respuesta exitosa:</h2>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Data:</strong></p>
+                    <pre>${JSON.stringify(response.data, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                results.innerHTML = `
+                    <h2>Error:</h2>
+                    <p><strong>Message:</strong> ${error.message}</p>
+                    <p><strong>Status:</strong> ${error.response?.status}</p>
+                    <p><strong>Data:</strong></p>
+                    <pre>${JSON.stringify(error.response?.data, null, 2)}</pre>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
