@@ -253,6 +253,8 @@ const formulario = ref({
   anio: ''
 })
 
+// Variables eliminadas: imagenes, progresoSubida, errorImagenes
+
 // Método para crear la publicación
 const crearPublicacion = async () => {
   // Validar campos requeridos

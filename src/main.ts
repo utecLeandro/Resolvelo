@@ -8,9 +8,16 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import cors from 'cors';
 import type { Request, Response, NextFunction } from 'express';
+import { join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Configurar servicio de archivos estáticos para imágenes
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
 
   // Configurar validaciones globales
   app.useGlobalPipes(new ValidationPipe({

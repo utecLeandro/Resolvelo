@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CrearReservaDto } from './dto/crear-reserva.dto';
 
 export interface UpdateReservaDto {
-  estado?: 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA';
+  estado?: 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA' | 'RECHAZADA';
   fechaInicio?: string;
   fechaFin?: string;
   precioTotal?: number;
@@ -20,6 +20,7 @@ export class ReservasService {
 
   async obtenerSolicitudesPendientes(propietarioId: string) {
     try {
+      console.log('🔍 [SERVICE] obtenerSolicitudesPendientes - Buscando solicitudes para propietarioId:', propietarioId);
       const solicitudes = await this.prisma.reserva.findMany({
         where: {
           propietarioId: propietarioId,
@@ -53,6 +54,17 @@ export class ReservasService {
         }
       });
 
+      console.log('📋 [SERVICE] obtenerSolicitudesPendientes - Resultados:', {
+        propietarioId,
+        cantidadEncontradas: solicitudes.length,
+        solicitudes: solicitudes.map(s => ({
+          id: s.id,
+          usuarioId: s.usuarioId,
+          propietarioId: s.propietarioId,
+          publicacionTitulo: s.publicacion?.titulo
+        }))
+      });
+
       return {
         success: true,
         message: 'Solicitudes pendientes obtenidas exitosamente',
@@ -63,6 +75,68 @@ export class ReservasService {
       console.error('Error al obtener solicitudes pendientes:', error);
       throw new HttpException(
         'Error interno del servidor al obtener solicitudes pendientes',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async obtenerTodasLasSolicitudes(propietarioId: string) {
+    try {
+      console.log('🔍 [SERVICE] obtenerTodasLasSolicitudes - Buscando todas las solicitudes para propietarioId:', propietarioId);
+      const solicitudes = await this.prisma.reserva.findMany({
+        where: {
+          propietarioId: propietarioId
+        },
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              email: true,
+              telefono: true,
+              calificacionPromedio: true,
+              fechaCreacion: true
+            }
+          },
+          publicacion: {
+            select: {
+              id: true,
+              titulo: true,
+              categoria: true,
+              precioPorDia: true,
+              marca: true,
+              modelo: true
+            }
+          }
+        },
+        orderBy: {
+          fechaCreacion: 'desc'
+        }
+      });
+
+      console.log('📋 [SERVICE] obtenerTodasLasSolicitudes - Resultados:', {
+        propietarioId,
+        cantidadEncontradas: solicitudes.length,
+        solicitudes: solicitudes.map(s => ({
+          id: s.id,
+          estado: s.estado,
+          usuarioId: s.usuarioId,
+          propietarioId: s.propietarioId,
+          publicacionTitulo: s.publicacion?.titulo
+        }))
+      });
+
+      return {
+        success: true,
+        message: 'Todas las solicitudes obtenidas exitosamente',
+        data: solicitudes,
+        total: solicitudes.length
+      };
+    } catch (error) {
+      console.error('Error al obtener todas las solicitudes:', error);
+      throw new HttpException(
+        'Error interno del servidor al obtener todas las solicitudes',
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
@@ -252,6 +326,17 @@ export class ReservasService {
         }
       });
 
+      console.log('📋 [SERVICE] obtenerReservasArrendatario - Resultados:', {
+        usuarioId,
+        cantidadEncontradas: reservas.length,
+        reservas: reservas.map(r => ({
+          id: r.id,
+          usuarioId: r.usuarioId,
+          propietarioId: r.propietarioId,
+          publicacionTitulo: r.publicacion.titulo
+        }))
+      });
+
       return {
         success: true,
         data: reservas,
@@ -308,6 +393,7 @@ export class ReservasService {
 
   async obtenerReservasArrendatario(usuarioId: string) {
     try {
+      console.log('🔍 [SERVICE] obtenerReservasArrendatario - Buscando reservas para usuarioId:', usuarioId);
       const reservas = await this.prisma.reserva.findMany({
         where: { 
           usuarioId: usuarioId 
@@ -421,5 +507,167 @@ export class ReservasService {
 
   async confirmarReserva(id: string) {
     return this.actualizarReserva(id, { estado: 'CONFIRMADA' });
+  }
+
+  async aceptarReserva(id: string) {
+    return this.actualizarReserva(id, { estado: 'CONFIRMADA' });
+  }
+
+  async rechazarReserva(id: string) {
+    return this.actualizarReserva(id, { estado: 'RECHAZADA' });
+  }
+
+  async activarReserva(id: string) {
+    return this.actualizarReserva(id, { estado: 'EN_CURSO' });
+  }
+
+  /**
+   * Obtener reservas activas del propietario (CONFIRMADA, EN_CURSO)
+   */
+  async obtenerReservasActivasPropietario(propietarioId: string) {
+    try {
+      console.log('🔍 [SERVICE] obtenerReservasActivasPropietario - Buscando reservas para propietarioId:', propietarioId);
+      
+      const reservas = await this.prisma.reserva.findMany({
+        where: { 
+          propietarioId: propietarioId,
+          estado: { in: ['CONFIRMADA', 'EN_CURSO'] }
+        },
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              email: true,
+              telefono: true
+            }
+          },
+          publicacion: {
+            select: {
+              id: true,
+              titulo: true,
+              descripcion: true,
+              precioPorDia: true,
+              direccion: true,
+              ciudad: true,
+              departamento: true,
+              imagenes: true
+            }
+          },
+          transacciones: {
+            select: {
+              id: true,
+              monto: true,
+              estado: true,
+              fechaCreacion: true,
+              metodoPago: true
+            },
+            orderBy: {
+              fechaCreacion: 'desc'
+            }
+          }
+        },
+        orderBy: {
+          fechaInicio: 'asc'
+        }
+      });
+
+      console.log('📋 [SERVICE] obtenerReservasActivasPropietario - Resultados:', {
+        propietarioId,
+        cantidadEncontradas: reservas.length,
+        reservas: reservas.map(r => ({
+          id: r.id,
+          estado: r.estado,
+          fechaInicio: r.fechaInicio,
+          fechaFin: r.fechaFin,
+          publicacionTitulo: r.publicacion?.titulo
+        }))
+      });
+
+      return {
+        success: true,
+        data: reservas,
+        count: reservas.length
+      };
+    } catch (error: any) {
+      console.error('❌ [SERVICE] Error en obtenerReservasActivasPropietario:', error);
+      throw new BadRequestException(`Error al obtener las reservas activas del propietario: ${error.message}`);
+    }
+  }
+
+  /**
+   * Obtener historial de reservas del propietario (COMPLETADA, CANCELADA, RECHAZADA)
+   */
+  async obtenerHistorialReservasPropietario(propietarioId: string) {
+    try {
+      console.log('🔍 [SERVICE] obtenerHistorialReservasPropietario - Buscando historial para propietarioId:', propietarioId);
+      
+      const reservas = await this.prisma.reserva.findMany({
+        where: { 
+          propietarioId: propietarioId,
+          estado: { in: ['COMPLETADA', 'CANCELADA_USUARIO', 'CANCELADA_PROPIETARIO', 'RECHAZADA'] }
+        },
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              email: true,
+              telefono: true
+            }
+          },
+          publicacion: {
+            select: {
+              id: true,
+              titulo: true,
+              descripcion: true,
+              precioPorDia: true,
+              direccion: true,
+              ciudad: true,
+              departamento: true,
+              imagenes: true
+            }
+          },
+          transacciones: {
+            select: {
+              id: true,
+              monto: true,
+              estado: true,
+              fechaCreacion: true,
+              metodoPago: true
+            },
+            orderBy: {
+              fechaCreacion: 'desc'
+            }
+          }
+        },
+        orderBy: {
+          fechaCreacion: 'desc'
+        }
+      });
+
+      console.log('📋 [SERVICE] obtenerHistorialReservasPropietario - Resultados:', {
+        propietarioId,
+        cantidadEncontradas: reservas.length,
+        reservas: reservas.map(r => ({
+          id: r.id,
+          estado: r.estado,
+          fechaInicio: r.fechaInicio,
+          fechaFin: r.fechaFin,
+          publicacionTitulo: r.publicacion?.titulo
+        }))
+      });
+
+      return {
+        success: true,
+        data: reservas,
+        count: reservas.length
+      };
+    } catch (error: any) {
+      console.error('❌ [SERVICE] Error en obtenerHistorialReservasPropietario:', error);
+      throw new BadRequestException(`Error al obtener el historial de reservas del propietario: ${error.message}`);
+    }
   }
 }

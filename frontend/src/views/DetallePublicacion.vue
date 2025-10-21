@@ -55,39 +55,29 @@
 
       <!-- Detalle de la publicación -->
       <div v-else-if="publicacion" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Galería de imágenes placeholder -->
+        <!-- Galería de imágenes -->
         <div class="space-y-4">
-          <!-- Imagen principal placeholder -->
-          <div class="aspect-w-16 aspect-h-12 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl overflow-hidden">
-            <div class="w-full h-full flex items-center justify-center">
-              <svg 
-                class="w-24 h-24 text-blue-400 opacity-60" 
-                fill="currentColor" 
-                viewBox="0 0 24 24"
-                :aria-label="publicacion.titulo"
-              >
+          <!-- Imagen principal cuadrada -->
+          <div class="aspect-square bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl overflow-hidden flex items-center justify-center border-2 border-gray-200">
+            <div class="text-center">
+              <svg class="h-32 w-32 text-blue-400 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
               </svg>
+              <p class="text-lg font-medium text-blue-600">{{ publicacion.titulo }}</p>
+              <p class="text-sm text-gray-500">Imagen principal</p>
             </div>
           </div>
           
-          <!-- Miniaturas placeholder -->
-          <div v-if="publicacion.imagenes && publicacion.imagenes.length > 1" class="grid grid-cols-4 gap-2">
-            <div
-              v-for="(imagen, index) in publicacion.imagenes.slice(0, 4)"
-              :key="imagen.id"
-              class="aspect-w-1 aspect-h-1 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden border-2 border-gray-300"
+          <!-- Imágenes adicionales -->
+          <div class="grid grid-cols-5 gap-2">
+            <div 
+              v-for="index in 5" 
+              :key="index"
+              class="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer"
             >
-              <div class="w-full h-full flex items-center justify-center">
-                <svg 
-                  class="w-6 h-6 text-gray-400" 
-                  fill="currentColor" 
-                  viewBox="0 0 24 24"
-                  :aria-label="`${publicacion.titulo} - imagen ${index + 1}`"
-                >
-                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                </svg>
-              </div>
+              <svg class="h-8 w-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+              </svg>
             </div>
           </div>
         </div>
@@ -159,48 +149,40 @@
           <div class="bg-white border border-gray-200 rounded-lg p-6" aria-labelledby="titulo-fechas-alquiler">
             <h3 id="titulo-fechas-alquiler" class="font-semibold text-gray-900 mb-4">Fechas de alquiler</h3>
 
-            <!-- Campos de fecha inicio/fin -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Calendario de rango de fechas -->
+            <div class="space-y-3">
               <div>
-                <label for="fechaInicio" class="block text-sm font-medium text-gray-700 mb-1">Fecha inicio</label>
+                <label for="rangoFechas" class="block text-sm font-medium text-gray-700 mb-2">
+                  Selecciona el período de alquiler
+                </label>
                 <VueDatePicker
-                  v-model="fechaInicio"
+                  v-model="rangoFechas"
                   :locale="'es'"
-                  :format="formatearDDMMYYYY"
+                  :format="formatearRangoFechas"
                   :enable-time-picker="false"
-                  :clearable="false"
+                  :clearable="true"
                   :week-start="1"
                   :min-date="hoy"
-                  :auto-apply="true"
-                  :close-on-auto-apply="true"
+                  :auto-apply="false"
                   :text-input="false"
-                  input-id="fechaInicio"
-                  placeholder="dd/mm/yyyy"
-                  :input-class="'w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pl-14 pr-3 py-2'"
-                  aria-describedby="ayuda-fecha-inicio"
+                  :range="true"
+                  :partial-range="true"
+                  :min-range="1"
+                  :max-range="365"
+                  :multi-calendars="true"
+                  :disabled-dates="fechasDeshabilitadas"
+                  :highlight="fechasConSombreado"
+                  :markers="marcadoresConTooltips"
+                  @range-start="onRangeStart"
+                  @range-end="onRangeEnd"
+                  input-id="rangoFechas"
+                  placeholder="Selecciona las fechas de inicio y fin"
+                  :input-class="'w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-sm'"
+                  aria-describedby="ayuda-rango-fechas"
                 />
-                <p id="ayuda-fecha-inicio" class="mt-1 text-xs text-gray-500">Selecciona el día en que comienza el alquiler</p>
-              </div>
-
-              <div>
-                <label for="fechaFin" class="block text-sm font-medium text-gray-700 mb-1">Fecha fin</label>
-                <VueDatePicker
-                  v-model="fechaFin"
-                  :locale="'es'"
-                  :format="formatearDDMMYYYY"
-                  :enable-time-picker="false"
-                  :clearable="false"
-                  :week-start="1"
-                  :min-date="fechaInicio || hoy"
-                  :auto-apply="true"
-                  :close-on-auto-apply="true"
-                  :text-input="false"
-                  input-id="fechaFin"
-                  placeholder="dd/mm/yyyy"
-                  :input-class="'w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pl-14 pr-3 py-2'"
-                  aria-describedby="ayuda-fecha-fin"
-                />
-                <p id="ayuda-fecha-fin" class="mt-1 text-xs text-gray-500">Selecciona el último día del alquiler</p>
+                <p id="ayuda-rango-fechas" class="mt-2 text-xs text-gray-500">
+                  Haz clic en la fecha de inicio y luego en la fecha de fin. Para alquilar un solo día, selecciona la misma fecha dos veces.
+                </p>
               </div>
             </div>
 
@@ -303,7 +285,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EstadosUI from '../components/EstadosUI.vue'
 import { publicacionesService, reservasService } from '../services/api'
@@ -323,14 +305,101 @@ const error = ref<string | null>(null)
 const usuarioAutenticado = ref(false)
 const datosUsuario = ref<any>(null)
 
+// Variables eliminadas: imagenPrincipal
+
 // Fechas de alquiler (RES-15)
-const hoy = new Date()
-const fechaInicio = ref<Date | null>(null)
-const fechaFin = ref<Date | null>(null)
+const hoy = (() => {
+  const fecha = new Date()
+  fecha.setHours(0, 0, 0, 0) // Establecer a medianoche para evitar problemas de hora
+  return fecha
+})()
+const rangoFechas = ref<[Date, Date] | null>(null)
 // Disponibilidad real
 const reservasActivas = ref<ReservaActiva[]>([])
 const disponibilidadRango = ref<boolean | null>(null)
 const comprobandoDisponibilidad = ref(false)
+
+// Computed properties para mantener compatibilidad con el código existente
+const fechaInicio = computed(() => {
+  return rangoFechas.value ? rangoFechas.value[0] : null
+})
+
+const fechaFin = computed(() => {
+  return rangoFechas.value ? rangoFechas.value[1] : null
+})
+
+// Función para generar fechas deshabilitadas basadas en reservas activas
+const fechasDeshabilitadas = computed(() => {
+  if (!reservasActivas.value || reservasActivas.value.length === 0) return []
+  
+  const fechasOcupadas: Date[] = []
+  
+  reservasActivas.value.forEach(reserva => {
+    const inicio = new Date(reserva.fechaInicio)
+    const fin = new Date(reserva.fechaFin)
+    
+    // Generar todas las fechas entre inicio y fin (inclusive)
+    const fechaActual = new Date(inicio)
+    while (fechaActual <= fin) {
+      fechasOcupadas.push(new Date(fechaActual))
+      fechaActual.setDate(fechaActual.getDate() + 1)
+    }
+  })
+  
+  return fechasOcupadas
+})
+
+// Función para generar fechas con sombreado (highlight)
+const fechasConSombreado = computed(() => {
+  const fechasReservadas: Date[] = []
+  
+  // Agregar fechas reservadas para sombreado rojo
+  if (reservasActivas.value && reservasActivas.value.length > 0) {
+    reservasActivas.value.forEach(reserva => {
+      const inicio = new Date(reserva.fechaInicio)
+      const fin = new Date(reserva.fechaFin)
+      
+      const fechaActual = new Date(inicio)
+      while (fechaActual <= fin) {
+        fechasReservadas.push(new Date(fechaActual))
+        fechaActual.setDate(fechaActual.getDate() + 1)
+      }
+    })
+  }
+  
+  return {
+    dates: fechasReservadas
+  }
+})
+
+// Función para generar marcadores con tooltips solo para fechas reservadas
+const marcadoresConTooltips = computed(() => {
+  const marcadores: any[] = []
+  
+  // Marcadores solo para fechas reservadas (sin tooltips para fechas disponibles)
+  if (reservasActivas.value && reservasActivas.value.length > 0) {
+    reservasActivas.value.forEach(reserva => {
+      const inicio = new Date(reserva.fechaInicio)
+      const fin = new Date(reserva.fechaFin)
+      
+      const fechaActual = new Date(inicio)
+      while (fechaActual <= fin) {
+        marcadores.push({
+          date: new Date(fechaActual),
+          type: 'dot',
+          color: 'transparent', // Invisible ya que usamos highlight para el color
+          tooltip: [{ 
+            text: 'Esta fecha ya está reservada', 
+            color: '#dc2626' 
+          }]
+        })
+        fechaActual.setDate(fechaActual.getDate() + 1)
+      }
+    })
+  }
+  
+  return marcadores
+})
 
 const diasSeleccionados = computed(() => {
   if (!fechaInicio.value || !fechaFin.value) return 0
@@ -464,7 +533,7 @@ const cargarPublicacion = async () => {
   }
 }
 
-
+// Métodos eliminados: cambiarImagenPrincipal, manejarErrorImagen, imagenPrincipalComputed, watch de imagenPrincipal
 
 // Formateadores
 const formatearISO = (d: Date) => {
@@ -479,6 +548,13 @@ const formatearDDMMYYYY = (d: Date) => {
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const yyyy = d.getFullYear()
   return `${dd}/${mm}/${yyyy}`
+}
+
+const formatearRangoFechas = (rango: [Date, Date] | null) => {
+  if (!rango || !rango[0] || !rango[1]) return ''
+  const inicio = formatearDDMMYYYY(rango[0])
+  const fin = formatearDDMMYYYY(rango[1])
+  return `${inicio} - ${fin}`
 }
 
 const contactarPropietario = async () => {
@@ -551,8 +627,8 @@ const contactarPropietario = async () => {
       
       if (resultado.success) {
         alert(`¡Solicitud enviada exitosamente! Tu solicitud de alquiler ha sido enviada al propietario. Te notificaremos cuando sea aprobada.`)
-        // Opcional: redirigir a una página de confirmación o mis reservas
-        router.push('/mis-publicaciones?tab=solicitudes')
+        // Redirigir a mis reservas para ver la solicitud creada
+        router.push('/mis-reservas')
       } else {
         alert('Error al enviar la solicitud. Por favor, inténtalo de nuevo.')
       }
@@ -569,6 +645,17 @@ onMounted(() => {
   verificarAutenticacion()
   cargarPublicacion()
 })
+
+// Watcher específico para rangoFechas para manejar selección de un solo día
+watch(rangoFechas, (newRange) => {
+  if (newRange && newRange.length === 2 && newRange[0] && !newRange[1]) {
+    // Si solo se ha seleccionado la fecha de inicio, establecer la misma fecha como fin
+    console.log('Solo fecha de inicio seleccionada, estableciendo mismo día como fin')
+    nextTick(() => {
+      rangoFechas.value = [newRange[0], newRange[0]]
+    })
+  }
+}, { deep: true })
 
 // Verificar disponibilidad real cuando cambian las fechas
 watch([fechaInicio, fechaFin], async ([inicio, fin]) => {
@@ -595,6 +682,15 @@ watch([fechaInicio, fechaFin], async ([inicio, fin]) => {
     comprobandoDisponibilidad.value = false
   }
 })
+
+// Funciones de manejo de eventos del calendario
+const onRangeStart = (date: Date) => {
+  console.log('Fecha de inicio seleccionada:', date)
+}
+
+const onRangeEnd = (date: Date) => {
+  console.log('Fecha de fin seleccionada:', date)
+}
 
 // Expose reactive properties and methods
 defineExpose({
@@ -681,7 +777,7 @@ a:focus {
 
 /* Mejoras de estilo para el DatePicker */
 :deep(.dp__theme_default) {
-  --dp-primary-color: #2563eb; /* azul tailwind 600 */
+  --dp-primary-color: #2563eb; /* azul vibrante para elementos principales */
   --dp-primary-text-color: #ffffff;
   --dp-hover-color: #eff6ff; /* azul claro */
   --dp-hover-text-color: #1f2937; /* gris 800 */
@@ -689,9 +785,10 @@ a:focus {
   --dp-text-color: #111827; /* gris 900 */
   --dp-border-color: #d1d5db; /* gris 300 */
   --dp-disabled-color: #e5e7eb; /* gris 200 */
-  --dp-overlay-color: rgba(37, 99, 235, 0.12);
-  --dp-range-bg-color: #93c5fd; /* azul 300 */
-  --dp-range-text-color: #111827;
+  --dp-overlay-color: rgba(37, 99, 235, 0.15); /* overlay azul claro */
+  --dp-range-bg-color: #2563eb; /* azul vibrante para el rango */
+  --dp-range-text-color: #ffffff; /* texto blanco en el rango */
+  --dp-range-between-color: #3b82f6; /* azul medio para fechas intermedias */
 }
 
 /* Icono más cercano al texto y mejor alineado */
@@ -712,5 +809,104 @@ a:focus {
 :deep(.dp__menu) {
   box-shadow: 0 10px 18px -5px rgba(0, 0, 0, 0.15);
   border: 1px solid #e5e7eb;
+}
+
+/* Estilos para fechas con highlight */
+:deep(.dp__cell_inner) {
+  position: relative;
+}
+
+/* Fechas reservadas - sombreado rojo claro */
+:deep(.dp__cell_highlight) {
+  background-color: #fecaca !important; /* rojo claro */
+  color: #dc2626 !important; /* texto rojo oscuro */
+  border-radius: 0.375rem;
+}
+
+:deep(.dp__cell_highlight:hover) {
+  background-color: #fca5a5 !important; /* rojo un poco más oscuro al hover */
+}
+
+/* Fechas disponibles - sombreado verde claro */
+:deep(.dp__cell_inner:not(.dp__cell_highlight):not(.dp__cell_disabled):not(.dp__today)) {
+  background-color: #dcfce7 !important; /* verde claro */
+  color: #16a34a !important; /* texto verde oscuro */
+  border-radius: 0.375rem;
+}
+
+:deep(.dp__cell_inner:not(.dp__cell_highlight):not(.dp__cell_disabled):not(.dp__today):hover) {
+  background-color: #bbf7d0 !important; /* verde un poco más oscuro al hover */
+}
+
+/* Asegurar que las fechas deshabilitadas mantengan su estilo original */
+:deep(.dp__cell_disabled) {
+  background-color: #f3f4f6 !important;
+  color: #9ca3af !important;
+}
+
+/* Estilo para el día de hoy */
+:deep(.dp__today) {
+  background-color: #dbeafe !important; /* azul claro */
+  color: #1d4ed8 !important; /* azul oscuro */
+  font-weight: 600;
+}
+
+/* Estilos para el rango de fechas seleccionadas - AZUL CON VERDE OSCURO PARA INICIO/FIN */
+:deep(.dp__range_start),
+:deep(.dp__range_end) {
+  background-color: #052e16 !important; /* verde muy oscuro para inicio y fin */
+  color: white !important;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  border: 2px solid #0f172a !important; /* borde casi negro */
+  box-shadow: 0 3px 12px rgba(5, 46, 22, 0.8) !important; /* sombra verde más intensa */
+  transform: scale(1.05) !important; /* ligeramente más grande */
+}
+
+:deep(.dp__range_between) {
+  background-color: #2563eb !important; /* azul vibrante para fechas intermedias */
+  color: white !important;
+  font-weight: 600;
+  border: 1px solid #166534 !important; /* borde verde oscuro */
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.3) !important; /* sombra azul sutil */
+}
+
+/* Hover states para el rango seleccionado */
+:deep(.dp__range_start:hover),
+:deep(.dp__range_end:hover) {
+  background-color: #0f172a !important; /* verde casi negro al hover */
+  border-color: #1e293b !important; /* borde gris muy oscuro */
+  box-shadow: 0 5px 16px rgba(5, 46, 22, 0.9) !important; /* sombra más intensa */
+  transform: scale(1.08) !important;
+}
+
+:deep(.dp__range_between:hover) {
+  background-color: #1d4ed8 !important; /* azul más oscuro al hover */
+  border-color: #14532d !important; /* borde verde oscuro */
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.4) !important;
+}
+
+/* Asegurar que el rango seleccionado tenga prioridad sobre otros estilos */
+:deep(.dp__cell_inner.dp__range_start),
+:deep(.dp__cell_inner.dp__range_end),
+:deep(.dp__cell_inner.dp__range_between) {
+  position: relative;
+  z-index: 10 !important; /* z-index más alto */
+}
+
+/* Estilo especial cuando una fecha del rango está en una fecha reservada */
+:deep(.dp__cell_highlight.dp__range_start),
+:deep(.dp__cell_highlight.dp__range_end) {
+  background-color: #dc2626 !important; /* rojo intenso para conflicto */
+  color: white !important;
+  border-color: #991b1b !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.5) !important;
+}
+
+:deep(.dp__cell_highlight.dp__range_between) {
+  background-color: #ea580c !important; /* naranja intenso para conflicto intermedio */
+  color: white !important;
+  border-color: #c2410c !important;
+  box-shadow: 0 1px 4px rgba(234, 88, 12, 0.4) !important;
 }
 </style>

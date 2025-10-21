@@ -43,17 +43,26 @@ export class FiltrosPublicacionDto {
   // Filtros por disponibilidad
   @IsOptional()
   @IsBoolean({ message: 'La disponibilidad debe ser verdadero o falso' })
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    return value === 'true' || value === true;
+  })
   disponible?: boolean;
 
   @IsOptional()
   @IsBoolean({ message: 'La entrega a domicilio debe ser verdadero o falso' })
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    return value === 'true' || value === true;
+  })
   entregaDomicilio?: boolean;
 
   @IsOptional()
   @IsBoolean({ message: 'El retiro local debe ser verdadero o falso' })
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    return value === 'true' || value === true;
+  })
   retiroLocal?: boolean;
 
   // Filtros por estado

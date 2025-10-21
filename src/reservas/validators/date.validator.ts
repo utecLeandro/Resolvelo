@@ -27,16 +27,16 @@ export class IsFutureDateConstraint implements ValidatorConstraintInterface {
         return false;
       }
       
-      // Verificar que sea en el futuro (al menos 1 hora desde ahora)
-      const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-      return inputDate >= oneHourFromNow;
+      // Verificar que sea desde el día actual (medianoche)
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return inputDate >= today;
     } catch (error) {
       return false;
     }
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'La fecha debe ser al menos 1 hora en el futuro';
+    return 'La fecha debe ser desde el día actual en adelante';
   }
 }
 
@@ -62,10 +62,9 @@ export class IsAfterConstraint implements ValidatorConstraintInterface {
         return false;
       }
       
-      // Verificar que la fecha actual sea posterior a la fecha relacionada
-      // Debe ser al menos 1 hora después
-      const oneHourAfterRelated = new Date(relatedDate.getTime() + 60 * 60 * 1000);
-      return currentDate >= oneHourAfterRelated;
+      // Verificar que la fecha actual sea posterior o igual a la fecha relacionada
+      // Permitir alquileres de un solo día (fecha inicio = fecha fin)
+      return currentDate >= relatedDate;
     } catch (error) {
       return false;
     }
@@ -73,7 +72,7 @@ export class IsAfterConstraint implements ValidatorConstraintInterface {
 
   defaultMessage(args: ValidationArguments) {
     const [relatedPropertyName] = args.constraints;
-    return `La fecha debe ser al menos 1 hora posterior a ${relatedPropertyName}`;
+    return `La fecha debe ser posterior o igual a ${relatedPropertyName}`;
   }
 }
 

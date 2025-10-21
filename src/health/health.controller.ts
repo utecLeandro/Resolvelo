@@ -12,4 +12,9 @@ export class HealthController {
   getHealth() {
     return { status: 'OK' };
   }
+
+  @Get('test')
+  getTest() {
+    return { message: 'Test working!' };
+  }
 }
