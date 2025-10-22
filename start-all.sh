@@ -110,13 +110,13 @@ fi
 
 # 4. Ejecutar migraciones y seed
 echo "🗄️  Ejecutando migraciones de base de datos..."
-if ! npx prisma migrate deploy; then
+if ! npx prisma migrate deploy --schema prisma/schema.prisma; then
     echo "❌ Error al ejecutar migraciones"
     exit 1
 fi
 
 echo "🌱 Ejecutando seed de datos..."
-if ! npx prisma db seed; then
+if ! npx prisma db seed --schema prisma/schema.prisma; then
     echo "⚠️  Warning: Error al ejecutar seed (puede ser normal si ya existen datos)"
 fi
 
