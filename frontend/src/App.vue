@@ -1,18 +1,19 @@
 <!-- App.vue - Layout principal con navegación condicional -->
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import NavegacionPrincipal from './components/NavegacionPrincipal.vue'
 import PiePagina from './components/PiePagina.vue'
-import { useAuth } from './composables/useAuth'
 
 // Composables
 const route = useRoute()
-const { usuarioAutenticado, nombreCompleto, verificarAutenticacion } = useAuth()
+
+// Estado reactivo para autenticación
+const usuarioAutenticado = ref(false)
+const nombreUsuario = ref('')
 
 // Rutas que no deben mostrar navegación y pie de página
-// Mostramos la navegación también en /login y /registro para mantener estilos consistentes con el catálogo
-const rutasSinLayout = ['/verificacion-pendiente']
+const rutasSinLayout = ['/login', '/registro', '/verificacion-pendiente']
 
 // Computed para determinar si mostrar el layout completo
 const mostrarLayoutCompleto = computed(() => {
@@ -31,6 +32,31 @@ const actualizarEstadoAutenticacion = () => {
 
 // Exponer la función globalmente para que otros componentes puedan usarla
 ;(window as any).actualizarEstadoAutenticacion = actualizarEstadoAutenticacion
+
+// Función para verificar si el usuario está autenticado
+const verificarAutenticacion = () => {
+  const token = localStorage.getItem('access_token')
+  if (token) {
+    // Aquí podrías verificar el token con el backend
+    usuarioAutenticado.value = true
+    // Obtener información del usuario del token o localStorage
+    const userData = localStorage.getItem('userData')
+    if (userData) {
+      try {
+        const user = JSON.parse(userData)
+        nombreUsuario.value = `${user.nombre} ${user.apellido}`
+      } catch (error) {
+        console.error('Error al parsear datos del usuario:', error)
+        // Si hay error, limpiar datos corruptos
+        localStorage.removeItem('userData')
+        usuarioAutenticado.value = false
+      }
+    }
+  } else {
+    usuarioAutenticado.value = false
+    nombreUsuario.value = ''
+  }
+}
 </script>
 
 <template>
@@ -39,7 +65,7 @@ const actualizarEstadoAutenticacion = () => {
     <NavegacionPrincipal 
       v-if="mostrarLayoutCompleto"
       :usuario-autenticado="usuarioAutenticado"
-      :nombre-usuario="nombreCompleto"
+      :nombre-usuario="nombreUsuario"
     />
     
     <!-- Contenido principal -->
@@ -57,22 +83,4 @@ const actualizarEstadoAutenticacion = () => {
 
 <style scoped>
 /* Estilos globales mínimos para el layout */
-</style>
-
-<!-- Estilos globales no scoped para cursores en elementos clicables -->
-<style>
-/* Cursor de mano en elementos clicables al pasar por encima */
-a[href]:hover,
-button:not(:disabled):hover,
-[role="button"]:not([aria-disabled="true"]):hover,
-.clickable:hover,
-.link:hover {
-  cursor: pointer;
-}
-
-/* Mantener el cursor de no permitido si el botón está deshabilitado */
-button:disabled,
-[aria-disabled="true"] {
-  cursor: not-allowed;
-}
 </style>
