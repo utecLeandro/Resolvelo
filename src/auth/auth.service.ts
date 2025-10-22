@@ -72,7 +72,7 @@ export class AuthService {
       }
       // BD no disponible (Prisma no puede conectar)
       if (error.code === 'P1001' || error.name === 'PrismaClientInitializationError') {
-        throw new ServiceUnavailableException('Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.');
+        throw new ServiceUnavailableException('Base de datos no disponible. Verifica la conexión a RDS o la configuración de DATABASE_URL.');
       }
       // Re-lanzar otros errores
       throw error;
@@ -123,7 +123,7 @@ export class AuthService {
       };
     } catch (error: any) {
       if (error.code === 'P1001' || error.name === 'PrismaClientInitializationError') {
-        throw new ServiceUnavailableException('Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.');
+        throw new ServiceUnavailableException('Base de datos no disponible. Verifica la conexión a RDS o la configuración de DATABASE_URL.');
       }
       throw error;
     }
@@ -176,7 +176,7 @@ export class AuthService {
         throw new UnauthorizedException('Token inválido o expirado');
       }
       if (error.code === 'P1001' || error.name === 'PrismaClientInitializationError') {
-        throw new ServiceUnavailableException('Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.');
+        throw new ServiceUnavailableException('Base de datos no disponible. Verifica la conexión a RDS o la configuración de DATABASE_URL.');
       }
       throw error;
     }

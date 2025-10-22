@@ -68,35 +68,70 @@ catch {
     exit 1
 }
 
-# Levantar servicios de Docker (PostgreSQL y Redis)
-Write-Host "Levantando servicios de base de datos..." -ForegroundColor Cyan
-try {
-    docker-compose up -d postgres redis
-    if ($LASTEXITCODE -ne 0) {
-        throw "Error al levantar Docker"
+# Verificar configuración de base de datos
+Write-Host "Verificando configuración de base de datos..." -ForegroundColor Cyan
+$useLocalDB = $false
+if (Test-Path ".env") {
+    $envContent = Get-Content ".env" -Raw
+    if ($envContent -match "DATABASE_URL=.*localhost:5433") {
+        $useLocalDB = $true
+        Write-Host "DATABASE_URL configurado para PostgreSQL local" -ForegroundColor Yellow
+    } else {
+        Write-Host "DATABASE_URL configurado para RDS" -ForegroundColor Green
     }
-    Write-Host "Servicios de Docker iniciados" -ForegroundColor Green
-}
-catch {
-    Write-Host "Error al levantar servicios de Docker." -ForegroundColor Red
-    Write-Host "Verifica que Docker Desktop esté corriendo correctamente." -ForegroundColor Yellow
-    exit 1
+} else {
+    $useLocalDB = $true
+    Write-Host "Archivo .env no encontrado, usando configuración local por defecto" -ForegroundColor Yellow
 }
 
-# Esperar a que PostgreSQL esté listo
-Write-Host "Esperando a que PostgreSQL esté listo..." -ForegroundColor Yellow
-$maxAttempts = 30
-$attempt = 0
-do {
-    Start-Sleep -Seconds 2
-    $attempt++
-    $pgReady = Test-Port 5433
-    if ($attempt -gt $maxAttempts) {
-        Write-Host "PostgreSQL no está respondiendo después de $maxAttempts intentos" -ForegroundColor Red
+# Levantar servicios de Docker según configuración
+if ($useLocalDB) {
+    Write-Host "Levantando servicios de base de datos local..." -ForegroundColor Cyan
+    try {
+        docker-compose up -d postgres redis
+        if ($LASTEXITCODE -ne 0) {
+            throw "Error al levantar Docker"
+        }
+        Write-Host "Servicios de Docker iniciados" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Error al levantar servicios de Docker." -ForegroundColor Red
+        Write-Host "Verifica que Docker Desktop esté corriendo correctamente." -ForegroundColor Yellow
         exit 1
     }
-} while (-not $pgReady)
-Write-Host "PostgreSQL está listo" -ForegroundColor Green
+} else {
+    Write-Host "Usando RDS - intentando levantar solo Redis..." -ForegroundColor Cyan
+    try {
+        docker-compose up -d redis
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Warning: No se pudo levantar Redis, continuando sin él" -ForegroundColor Yellow
+        } else {
+            Write-Host "Redis iniciado" -ForegroundColor Green
+        }
+    }
+    catch {
+        Write-Host "Warning: Redis no disponible, continuando sin él" -ForegroundColor Yellow
+    }
+}
+
+# Esperar a que PostgreSQL esté listo (solo si es local)
+if ($useLocalDB) {
+    Write-Host "Esperando a que PostgreSQL esté listo..." -ForegroundColor Yellow
+    $maxAttempts = 30
+    $attempt = 0
+    do {
+        Start-Sleep -Seconds 2
+        $attempt++
+        $pgReady = Test-Port 5433
+        if ($attempt -gt $maxAttempts) {
+            Write-Host "PostgreSQL no está respondiendo después de $maxAttempts intentos" -ForegroundColor Red
+            exit 1
+        }
+    } while (-not $pgReady)
+    Write-Host "PostgreSQL está listo" -ForegroundColor Green
+} else {
+    Write-Host "Usando RDS - no se requiere espera de PostgreSQL local" -ForegroundColor Green
+}
 
 # 2. Verificar y configurar archivo .env
 Write-Host "Verificando configuración..." -ForegroundColor Cyan
@@ -122,14 +157,14 @@ if ($LASTEXITCODE -ne 0) {
 
 # 4. Ejecutar migraciones y seed
 Write-Host "Ejecutando migraciones de base de datos..." -ForegroundColor Cyan
-npx prisma migrate deploy
+npx prisma migrate deploy --schema prisma/schema.prisma
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error al ejecutar migraciones" -ForegroundColor Red
     exit 1
 }
 
 Write-Host "Ejecutando seed de datos..." -ForegroundColor Cyan
-npx prisma db seed
+npx prisma db seed --schema prisma/schema.prisma
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Warning: Error al ejecutar seed (puede ser normal si ya existen datos)" -ForegroundColor Yellow
 }
