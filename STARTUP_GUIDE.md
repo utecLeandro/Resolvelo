@@ -215,3 +215,11 @@ npx prisma studio --browser none
 - **Puertos**: Backend en 3000, Frontend en 5174, PostgreSQL en 5433
 - **Base de datos**: Siempre verificar que PostgreSQL esté corriendo antes del backend
 - **Scripts**: Usar los scripts de automatización para mayor comodidad y consistencia
+
+Si prefieres AWS RDS en vez de Docker para PostgreSQL, configura en tu .env:
+
+```
+DATABASE_URL="postgresql://<RDS_USER>:<RDS_PASSWORD>@<RDS_HOST>:5432/<RDS_DB>?schema=public&sslmode=require"
+```
+
+Con esto, no es necesario levantar el contenedor de Postgres (redis puede seguir usándose en Docker si lo deseas).
