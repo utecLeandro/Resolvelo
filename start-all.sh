@@ -38,27 +38,54 @@ for port in "${!ports[@]}"; do
     fi
 done
 
-# 1. Levantar servicios de Docker (PostgreSQL y Redis)
-echo "🐳 Levantando servicios de base de datos..."
-if ! docker-compose up -d postgres redis; then
-    echo "❌ Error al levantar Docker. Asegúrate de que Docker esté instalado y corriendo."
-    exit 1
+# 1. Detectar origen de base de datos y levantar servicios necesarios
+echo "🐳 Detectando y levantando servicios de base de datos..."
+# Cargar .env para leer DATABASE_URL
+if [ -f ".env" ]; then
+    set -a
+    . ./.env
+    set +a
 fi
-echo "✅ Servicios de Docker iniciados"
 
-# Esperar a que PostgreSQL esté listo
-echo "⏳ Esperando a que PostgreSQL esté listo..."
-max_attempts=30
-attempt=0
-while ! check_port 5433; do
-    sleep 2
-    attempt=$((attempt + 1))
-    if [ $attempt -gt $max_attempts ]; then
-        echo "❌ PostgreSQL no está respondiendo después de $max_attempts intentos"
+USE_REMOTE_DB=0
+if [[ -n "$DATABASE_URL" ]]; then
+    if echo "$DATABASE_URL" | grep -Eqi '@(localhost|127\.0\.0\.1):5433/'; then
+        USE_REMOTE_DB=0
+    else
+        USE_REMOTE_DB=1
+    fi
+fi
+
+if [ "$USE_REMOTE_DB" -eq 1 ]; then
+    echo "🗄️  Usando base de datos remota (RDS). No se levantará PostgreSQL en Docker."
+    # Levantar solo Redis (opcional)
+    if docker-compose up -d redis; then
+        echo "✅ Redis iniciado (Docker)"
+    else
+        echo "⚠️  No se pudo iniciar Redis. Si lo necesitas, inicia Docker y vuelve a intentar."
+    fi
+else
+    echo "🗄️  Usando base de datos local (Docker). Levantando PostgreSQL y Redis..."
+    if ! docker-compose up -d postgres redis; then
+        echo "❌ Error al levantar Docker. Asegúrate de que Docker esté instalado y corriendo."
         exit 1
     fi
-done
-echo "✅ PostgreSQL está listo"
+    echo "✅ Servicios de Docker iniciados"
+
+    # Esperar a que PostgreSQL esté listo
+    echo "⏳ Esperando a que PostgreSQL esté listo..."
+    max_attempts=30
+    attempt=0
+    while ! check_port 5433; do
+        sleep 2
+        attempt=$((attempt + 1))
+        if [ $attempt -gt $max_attempts ]; then
+            echo "❌ PostgreSQL no está respondiendo después de $max_attempts intentos"
+            exit 1
+        fi
+    done
+    echo "✅ PostgreSQL está listo"
+fi
 
 # 2. Verificar y configurar archivo .env
 echo "⚙️  Verificando configuración..."
