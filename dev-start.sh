@@ -327,10 +327,10 @@ trap cleanup EXIT
 
 # Función principal
 main() {
-    # Garantizar ejecución desde el directorio del script
-    SCRIPT_DIR="$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)"
-    cd "$SCRIPT_DIR"
-    print_info "Ejecutando desde: $SCRIPT_DIR"
+  SCRIPT_SOURCE="${BASH_SOURCE[0]:-$0}"
+  SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+  cd "$SCRIPT_DIR"
+  print_info "Ejecutando desde: $SCRIPT_DIR"
     
     print_header
     
