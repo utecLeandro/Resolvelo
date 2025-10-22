@@ -2,7 +2,7 @@
 
 # Script de desarrollo completo para ReSolVelo
 # Levanta frontend, backend y conecta a RDS automáticamente
-# Autor: Sistema de desarrollo ReSolVelo
+# Autor: NUCLEOTEC ReSolVelo
 # Fecha: $(date +%Y-%m-%d)
 
 set -e  # Salir si cualquier comando falla
@@ -327,6 +327,11 @@ trap cleanup EXIT
 
 # Función principal
 main() {
+    # Garantizar ejecución desde el directorio del script
+    SCRIPT_DIR="$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)"
+    cd "$SCRIPT_DIR"
+    print_info "Ejecutando desde: $SCRIPT_DIR"
+    
     print_header
     
     # Verificaciones iniciales
