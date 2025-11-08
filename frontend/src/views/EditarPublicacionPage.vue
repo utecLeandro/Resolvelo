@@ -129,18 +129,21 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label for="precio" class="block text-sm font-medium text-gray-700 mb-2">
-                Precio por día (COP) *
+                Precio por día $ *
               </label>
-              <input
-                id="precio"
-                v-model="formulario.precio"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-                placeholder="150.50"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+              <div class="flex">
+                <span class="inline-flex items-center px-3 border border-gray-300 bg-gray-50 text-gray-700 rounded-l-md">$</span>
+                <input
+                  id="precio"
+                  v-model="formulario.precio"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                  placeholder="150.50"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-r-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-l-0"
+                />
+              </div>
             </div>
             <div>
               <label for="ciudad" class="block text-sm font-medium text-gray-700 mb-2">
@@ -151,7 +154,7 @@
                 v-model="formulario.ciudad"
                 type="text"
                 required
-                placeholder="Ej: Bogotá"
+                placeholder="Ej: Santa Lucía"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -164,7 +167,7 @@
                 v-model="formulario.departamento"
                 type="text"
                 required
-                placeholder="Ej: Cundinamarca"
+                placeholder="Ej: Canelones"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>

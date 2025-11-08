@@ -5,7 +5,7 @@
 
 import { IsOptional, IsString, IsEnum, IsDecimal, IsInt, Min, Max, IsBoolean, IsDate, IsNumber } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import { CategoriaEquipo, EstadoPublicacion } from '@prisma/client';
+import { CategoriaEquipo, EstadoPublicacion, EstadoModeracion } from '@prisma/client';
 
 export class FiltrosPublicacionDto {
   // Búsqueda por texto
@@ -69,6 +69,21 @@ export class FiltrosPublicacionDto {
   @IsOptional()
   @IsEnum(EstadoPublicacion, { message: 'El estado debe ser válido' })
   estado?: EstadoPublicacion;
+
+  // Filtros por estado de moderación (solo para vistas/admin)
+  @IsOptional()
+  @IsEnum(EstadoModeracion, { message: 'El estado de moderación debe ser válido' })
+  estadoModeracion?: EstadoModeracion;
+
+  // Flag: incluir todos los estados de moderación (para vistas de administración)
+  // Cuando es true, no se aplica filtro por estadoModeracion y se listan todas las publicaciones
+  @IsOptional()
+  @IsBoolean({ message: 'incluirTodosEstadosModeracion debe ser verdadero o falso' })
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    return value === 'true' || value === true;
+  })
+  incluirTodosEstadosModeracion?: boolean;
 
   // Filtros por calificación
   @IsOptional()

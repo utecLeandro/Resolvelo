@@ -1,9 +1,10 @@
 // Enrutador principal de la aplicación
-// Se crean rutas para login y registro siguiendo guía de estilo Airbnb
-// y buenas prácticas de accesibilidad/UX.
+// Rutas públicas y protegidas, incluyendo panel de administración.
 
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+
+// Vistas principales
 import LoginPage from '../views/LoginPage.vue'
 import RegisterPage from '../views/RegisterPage.vue'
 import PendingVerification from '../views/PendingVerification.vue'
@@ -17,21 +18,59 @@ import PagoPage from '../views/PagoPage.vue'
 import DebugPage from '../views/DebugPage.vue'
 import PaginaInformativa from '../views/PaginaInformativa.vue'
 import TestApiPage from '../views/TestApiPage.vue'
+import RecuperarContrasenaPage from '../views/RecuperarContrasenaPage.vue'
+import ResetPasswordPage from '../views/ResetPasswordPage.vue'
+
+// Administración
+import AdminUsersPage from '../views/AdminUsersPage.vue'
+import AdminHomePage from '../views/AdminHomePage.vue'
+import AdminPublicacionesPage from '../views/AdminPublicacionesPage.vue'
 
 // Definición de rutas de la aplicación
 const routes: RouteRecordRaw[] = [
+  { path: '/', redirect: '/catalogo' },
+
+  // Administración
   {
-    path: '/',
-    redirect: '/catalogo',
+    path: '/admin',
+    name: 'Admin',
+    component: AdminHomePage,
+    meta: {
+      title: 'Administración - ReSolVelo',
+      description: 'Panel principal de administración',
+      requiresAuth: true,
+    },
   },
+  {
+    path: '/admin/usuarios',
+    name: 'AdminUsuarios',
+    component: AdminUsersPage,
+    meta: {
+      title: 'Gestión de Usuarios - ReSolVelo',
+      description: 'Panel para listar y habilitar/deshabilitar usuarios',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/admin/publicaciones',
+    name: 'AdminPublicaciones',
+    component: AdminPublicacionesPage,
+    meta: {
+      title: 'Gestión de Publicaciones - ReSolVelo',
+      description: 'Listado y moderación de publicaciones',
+      requiresAuth: true,
+    },
+  },
+
+  // Catálogo y flujo público
   {
     path: '/catalogo',
     name: 'Catalogo',
     component: CatalogoPage,
     meta: {
       title: 'Catálogo de Instrumentos - ReSolVelo',
-      description: 'Explora nuestra amplia selección de instrumentos musicales disponibles para alquiler'
-    }
+      description: 'Explora nuestra selección de instrumentos disponibles para alquiler',
+    },
   },
   {
     path: '/publicacion/:id',
@@ -39,33 +78,38 @@ const routes: RouteRecordRaw[] = [
     component: DetallePublicacion,
     meta: {
       title: 'Detalle del Instrumento - ReSolVelo',
-      description: 'Información detallada del instrumento musical disponible para alquiler'
-    }
+      description: 'Información detallada del instrumento musical',
+    },
+  },
+  { path: '/login', name: 'Login', component: LoginPage },
+  {
+    path: '/recuperar-contraseña',
+    name: 'RecuperarContrasena',
+    component: RecuperarContrasenaPage,
+    meta: {
+      title: 'Recuperación de contraseña - ReSolVelo',
+      description: 'Solicita un enlace para restablecer tu contraseña',
+    },
   },
   {
-    path: '/login',
-    name: 'Login',
-    component: LoginPage,
-    // meta podría incluir reglas de auth en el futuro
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: ResetPasswordPage,
+    meta: {
+      title: 'Restablecer contraseña - ReSolVelo',
+      description: 'Ingresa una nueva contraseña para tu cuenta',
+    },
   },
-  {
-    path: '/registro',
-    name: 'Registro',
-    component: RegisterPage,
-  },
-  {
-    path: '/verificacion-pendiente',
-    name: 'VerificaciónPendiente',
-    component: PendingVerification,
-  },
+  { path: '/registro', name: 'Registro', component: RegisterPage },
+  { path: '/verificacion-pendiente', name: 'VerificaciónPendiente', component: PendingVerification },
   {
     path: '/perfil',
     name: 'Perfil',
     component: PerfilPage,
     meta: {
       title: 'Mi perfil - ReSolVelo',
-      description: 'Actualiza tu información de perfil'
-    }
+      description: 'Actualiza tu información de perfil',
+    },
   },
   {
     path: '/crear-publicacion',
@@ -73,23 +117,18 @@ const routes: RouteRecordRaw[] = [
     component: CrearPublicacionPage,
     meta: {
       title: 'Crear Publicación - ReSolVelo',
-      description: 'Publica tu instrumento musical para alquiler'
-    }
+      description: 'Publica tu instrumento musical para alquiler',
+    },
   },
-  {
-    path: '/editar-publicacion/:id',
-    name: 'EditarPublicacion',
-    component: () => import('../views/EditarPublicacionPage.vue'),
-    meta: { requiresAuth: true }
-  },
+  { path: '/editar-publicacion/:id', name: 'EditarPublicacion', component: () => import('../views/EditarPublicacionPage.vue'), meta: { requiresAuth: true } },
   {
     path: '/mis-publicaciones',
     name: 'MisPublicaciones',
     component: MisPublicacionesPage,
     meta: {
       title: 'Panel del Propietario - ReSolVelo',
-      description: 'Gestiona tus instrumentos musicales publicados y solicitudes de alquiler'
-    }
+      description: 'Gestiona tus publicaciones y solicitudes de alquiler',
+    },
   },
   {
     path: '/mis-reservas',
@@ -97,8 +136,8 @@ const routes: RouteRecordRaw[] = [
     component: MisReservasPage,
     meta: {
       title: 'Mis Reservas - ReSolVelo',
-      description: 'Gestiona tus reservas de instrumentos musicales'
-    }
+      description: 'Gestiona tus reservas de instrumentos musicales',
+    },
   },
   {
     path: '/pago/:id',
@@ -106,91 +145,18 @@ const routes: RouteRecordRaw[] = [
     component: PagoPage,
     meta: {
       title: 'Procesar Pago - ReSolVelo',
-      description: 'Completa el pago para confirmar tu reserva'
-    }
+      description: 'Completa el pago para confirmar tu reserva',
+    },
   },
-  {
-    path: '/debug',
-    name: 'Debug',
-    component: DebugPage,
-    meta: {
-      title: 'Debug - ReSolVelo',
-      description: 'Página de debug temporal'
-    }
-  },
-  {
-    path: '/test-api',
-    name: 'TestApi',
-    component: TestApiPage,
-    meta: {
-      title: 'Test API - ReSolVelo',
-      description: 'Página de test para debuggear API'
-    }
-  },
-  {
-    path: '/como-funciona',
-    name: 'ComoFunciona',
-    component: PaginaInformativa,
-    meta: {
-      title: 'Cómo funciona - ReSolVelo',
-      description: 'Descubre cómo funciona nuestra plataforma de alquiler de instrumentos musicales'
-    }
-  },
-  {
-    path: '/preguntas-frecuentes',
-    name: 'PreguntasFrecuentes',
-    component: PaginaInformativa,
-    meta: {
-      title: 'Preguntas Frecuentes - ReSolVelo',
-      description: 'Encuentra respuestas a las preguntas más comunes sobre ReSolVelo'
-    }
-  },
-  {
-    path: '/contacto',
-    name: 'Contacto',
-    component: PaginaInformativa,
-    meta: {
-      title: 'Contacto - ReSolVelo',
-      description: 'Ponte en contacto con nuestro equipo de soporte'
-    }
-  },
-  {
-    path: '/centro-ayuda',
-    name: 'CentroAyuda',
-    component: PaginaInformativa,
-    meta: {
-      title: 'Centro de Ayuda - ReSolVelo',
-      description: 'Recursos y guías para aprovechar al máximo ReSolVelo'
-    }
-  },
-  {
-    path: '/politicas-seguridad',
-    name: 'PoliticasSeguridad',
-    component: PaginaInformativa,
-    meta: {
-      title: 'Políticas de Seguridad - ReSolVelo',
-      description: 'Conoce nuestras medidas de seguridad y protección'
-    }
-  },
-  {
-    path: '/terminos-condiciones',
-    name: 'TerminosCondiciones',
-    component: PaginaInformativa,
-    meta: {
-      title: 'Términos y Condiciones - ReSolVelo',
-      description: 'Lee los términos y condiciones de uso de la plataforma'
-    }
-  },
-  {
-    path: '/politica-privacidad',
-    name: 'PoliticaPrivacidad',
-    component: PaginaInformativa,
-    meta: {
-      title: 'Política de Privacidad - ReSolVelo',
-      description: 'Información sobre cómo protegemos tu privacidad'
-    }
-  },
-
+  { path: '/debug', name: 'Debug', component: DebugPage, meta: { title: 'Debug - ReSolVelo', description: 'Página de debug temporal' } },
+  { path: '/test-api', name: 'TestApi', component: TestApiPage, meta: { title: 'Test API - ReSolVelo', description: 'Página de test para debuggear API' } },
+  { path: '/como-funciona', name: 'ComoFunciona', component: PaginaInformativa, meta: { title: 'Cómo funciona - ReSolVelo', description: 'Cómo funciona la plataforma' } },
+  { path: '/preguntas-frecuentes', name: 'PreguntasFrecuentes', component: PaginaInformativa, meta: { title: 'Preguntas Frecuentes - ReSolVelo', description: 'Respuestas a preguntas comunes' } },
+  { path: '/contacto', name: 'Contacto', component: PaginaInformativa, meta: { title: 'Contacto - ReSolVelo', description: 'Contacta a nuestro equipo de soporte' } },
+  { path: '/centro-ayuda', name: 'CentroAyuda', component: PaginaInformativa, meta: { title: 'Centro de Ayuda - ReSolVelo', description: 'Recursos y guías' } },
+  { path: '/politicas-seguridad', name: 'PoliticasSeguridad', component: PaginaInformativa, meta: { title: 'Políticas de Seguridad - ReSolVelo', description: 'Medidas de seguridad y protección' } },
+  { path: '/terminos-condiciones', name: 'TerminosCondiciones', component: PaginaInformativa, meta: { title: 'Términos y Condiciones - ReSolVelo', description: 'Términos y condiciones de uso' } },
+  { path: '/politica-privacidad', name: 'PoliticaPrivacidad', component: PaginaInformativa, meta: { title: 'Política de Privacidad - ReSolVelo', description: 'Cómo protegemos tu privacidad' } },
 ]
 
 // Creación del router con historial HTML5
@@ -199,24 +165,38 @@ const router = createRouter({
   routes,
 })
 
-// Guard de navegación para manejar redirección post-login
+// Guard de navegación: gestión de redirect tras login y protección de rutas
 router.beforeEach((to, from, next) => {
   // Si el usuario va al login
   if (to.name === 'Login') {
-    // Verificar si hay un parámetro redirect en la URL
     const redirectParam = to.query.redirect as string
     if (redirectParam) {
-      // Guardar la ruta de redirección desde el parámetro
       sessionStorage.setItem('rutaAnteriorLogin', redirectParam)
-    } else if (from.name !== 'Login' && from.name !== 'Registro' && from.name !== 'VerificaciónPendiente') {
-      // Si no hay parámetro redirect y no viene del login/registro, guardar la ruta anterior
-      const rutaAnterior = from.fullPath
-      if (rutaAnterior && rutaAnterior !== '/') {
-        sessionStorage.setItem('rutaAnteriorLogin', rutaAnterior)
+    } else {
+      const rutasAuth = new Set([
+        'Login',
+        'Registro',
+        'VerificaciónPendiente',
+        'RecuperarContrasena',
+        'ResetPassword',
+      ])
+      if (from.name && !rutasAuth.has(String(from.name))) {
+        const rutaAnterior = from.fullPath
+        if (rutaAnterior && rutaAnterior !== '/') {
+          sessionStorage.setItem('rutaAnteriorLogin', rutaAnterior)
+        }
       }
     }
   }
-  
+
+  // Proteger rutas que requieren autenticación
+  if (to.meta && (to.meta as any).requiresAuth) {
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      const redirect = encodeURIComponent(to.fullPath)
+      return next({ name: 'Login', query: { redirect } })
+    }
+  }
   next()
 })
 

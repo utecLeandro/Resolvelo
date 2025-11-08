@@ -518,7 +518,9 @@ export class ReservasService {
   }
 
   async activarReserva(id: string) {
-    return this.actualizarReserva(id, { estado: 'EN_CURSO' });
+    // El estado EN_CURSO no existe en el esquema actual de Prisma.
+    // Para mantener compatibilidad con el modelo, activamos la reserva como CONFIRMADA.
+    return this.actualizarReserva(id, { estado: 'CONFIRMADA' });
   }
 
   /**
@@ -531,7 +533,8 @@ export class ReservasService {
       const reservas = await this.prisma.reserva.findMany({
         where: { 
           propietarioId: propietarioId,
-          estado: { in: ['CONFIRMADA', 'EN_CURSO'] }
+          // El estado EN_CURSO no existe en el esquema actual, consideramos activas las CONFIRMADAS
+          estado: { in: ['CONFIRMADA'] }
         },
         include: {
           usuario: {
@@ -606,7 +609,8 @@ export class ReservasService {
       const reservas = await this.prisma.reserva.findMany({
         where: { 
           propietarioId: propietarioId,
-          estado: { in: ['COMPLETADA', 'CANCELADA_USUARIO', 'CANCELADA_PROPIETARIO', 'RECHAZADA'] }
+          // Unificamos estados de cancelación en 'CANCELADA' según el esquema actual
+          estado: { in: ['COMPLETADA', 'CANCELADA', 'RECHAZADA'] }
         },
         include: {
           usuario: {

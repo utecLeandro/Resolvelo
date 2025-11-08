@@ -120,18 +120,21 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label for="precio" class="block text-sm font-medium text-gray-700 mb-2">
-                Precio por día (COP) *
+                Precio por día $ *
               </label>
-              <input
-                id="precio"
-                v-model="formulario.precio"
-                type="number"
-                min="1"
-                step="0.01"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="150.50"
-              />
+              <div class="flex">
+                <span class="inline-flex items-center px-3 border border-gray-300 bg-gray-50 text-gray-700 rounded-l-md">$</span>
+                <input
+                  id="precio"
+                  v-model="formulario.precio"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-r-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-l-0"
+                  placeholder="150.50"
+                />
+              </div>
             </div>
 
             <div>
@@ -144,7 +147,7 @@
                 type="text"
                 required
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Ej: Bogotá"
+                placeholder="Ej: Santa Lucía"
               />
             </div>
 
@@ -158,7 +161,7 @@
                 type="text"
                 required
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Ej: Cundinamarca"
+                placeholder="Ej: Canelones"
               />
             </div>
           </div>

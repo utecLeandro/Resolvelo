@@ -130,7 +130,7 @@
                 'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
               ]"
             >
-              Pendientes ({{ solicitudesPendientes.length }})
+              Pendientes ({{ solicitudesPendientesCount.length }})
             </button>
             <button
               @click="subPestanaSolicitudes = 'aprobadas'"
@@ -378,7 +378,12 @@
           <div
             v-for="solicitud in solicitudesFiltradas"
             :key="solicitud.id"
-            class="bg-white rounded-lg shadow-md overflow-hidden"
+            :class="[
+              'rounded-lg shadow-md overflow-hidden',
+              solicitud.estado === 'CONFIRMADA' 
+                ? 'bg-white border-l-4 border-green-500' 
+                : 'bg-white'
+            ]"
           >
             <div class="p-6">
               <div class="flex items-start space-x-4">
@@ -430,8 +435,36 @@
                         </div>
                       </div>
 
-                      <!-- Botones de acción -->
-                      <div class="flex space-x-3">
+                      <!-- Botones de acción condicionales -->
+                      <!-- Para solicitudes aprobadas (CONFIRMADA) -->
+                      <div v-if="solicitud.estado === 'CONFIRMADA'" class="space-y-3">
+                        <!-- Estado confirmada -->
+                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                          </svg>
+                          Confirmada
+                        </div>
+                        
+                        <!-- Botones para solicitud confirmada -->
+                        <div class="flex space-x-3">
+                          <button
+                            @click="contactarArrendatario(solicitud)"
+                            class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                          >
+                            Contactar
+                          </button>
+                          <button
+                            @click="verDetallesSolicitud(solicitud)"
+                            class="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
+                          >
+                            Ver Detalle
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Para solicitudes pendientes -->
+                      <div v-else-if="solicitud.estado === 'PENDIENTE'" class="flex space-x-3">
                         <button
                           @click="aprobarSolicitud(solicitud)"
                           :disabled="procesandoSolicitud === solicitud.id"
@@ -450,6 +483,16 @@
                         >
                           Rechazar
                         </button>
+                      </div>
+
+                      <!-- Para solicitudes rechazadas -->
+                      <div v-else-if="solicitud.estado === 'RECHAZADA'" class="flex items-center">
+                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                          </svg>
+                          Rechazada
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1001,6 +1044,7 @@ const publicacionesPausadas = computed(() => (publicaciones.value || []).filter(
 const publicacionesEnRevision = computed(() => (publicaciones.value || []).filter(p => p.estadoModeracion === 'PENDIENTE_REVISION'))
 
 // Computed properties para solicitudes
+const solicitudesPendientesCount = computed(() => (solicitudesPendientes.value || []).filter(s => s.estado === 'PENDIENTE'))
 const solicitudesAprobadas = computed(() => (solicitudesPendientes.value || []).filter(s => s.estado === 'CONFIRMADA'))
 const solicitudesRechazadas = computed(() => (solicitudesPendientes.value || []).filter(s => s.estado === 'RECHAZADA'))
 
@@ -1100,8 +1144,11 @@ const aprobarSolicitud = async (solicitud: SolicitudReserva) => {
     const response = await reservasService.aprobarReserva(solicitud.id, {})
     
     if (response.success) {
-       // Actualizar el estado local
-       solicitud.estado = 'CONFIRMADA'
+       // Actualizar el estado local inmediatamente
+       const solicitudIndex = solicitudesPendientes.value.findIndex(s => s.id === solicitud.id)
+       if (solicitudIndex !== -1) {
+         solicitudesPendientes.value[solicitudIndex].estado = 'CONFIRMADA'
+       }
        
        // Emitir evento para actualización en tiempo real
        const evento = new CustomEvent('reserva-actualizada', {
@@ -1116,9 +1163,13 @@ const aprobarSolicitud = async (solicitud: SolicitudReserva) => {
       // Mostrar mensaje de éxito
       mostrarNotificacion('Solicitud aprobada exitosamente', 'success')
       
-      // Recargar las publicaciones y solicitudes para reflejar los cambios
+      // Recargar solo las publicaciones (para actualizar estadísticas)
       await cargarPublicaciones()
-      await cargarSolicitudesPendientes()
+      
+      // Opcional: recargar solicitudes después de un pequeño delay para sincronizar con el servidor
+      setTimeout(async () => {
+        await cargarSolicitudesPendientes()
+      }, 1000)
     } else {
       throw new Error(response.message || 'Error al aprobar la solicitud')
     }
@@ -1153,8 +1204,11 @@ const confirmarRechazo = async () => {
     })
     
     if (response.success) {
-      // Actualizar el estado local
-      solicitudArechazar.value.estado = 'RECHAZADA'
+      // Actualizar el estado local inmediatamente
+      const solicitudIndex = solicitudesPendientes.value.findIndex(s => s.id === solicitudArechazar.value!.id)
+      if (solicitudIndex !== -1) {
+        solicitudesPendientes.value[solicitudIndex].estado = 'RECHAZADA'
+      }
       
       // Emitir evento para actualización en tiempo real
       const evento = new CustomEvent('reserva-actualizada', {
@@ -1170,9 +1224,13 @@ const confirmarRechazo = async () => {
       cerrarModalRechazo()
       mostrarNotificacion('Solicitud rechazada exitosamente', 'success')
       
-      // Recargar las publicaciones y solicitudes para reflejar los cambios
+      // Recargar solo las publicaciones (para actualizar estadísticas)
       await cargarPublicaciones()
-      await cargarSolicitudesPendientes()
+      
+      // Opcional: recargar solicitudes después de un pequeño delay para sincronizar con el servidor
+      setTimeout(async () => {
+        await cargarSolicitudesPendientes()
+      }, 1000)
     } else {
       throw new Error(response.message || 'Error al rechazar la solicitud')
     }
@@ -1188,6 +1246,35 @@ const formatearFecha = (fecha: string) => {
     month: 'short',
     day: 'numeric'
   })
+}
+
+// Nuevas funciones para solicitudes confirmadas
+const contactarArrendatario = (solicitud: SolicitudReserva) => {
+  // Aquí puedes implementar la lógica para contactar al arrendatario
+  // Por ejemplo, abrir un modal de chat, redirigir a WhatsApp, etc.
+  console.log('Contactando arrendatario:', solicitud.arrendatario)
+  
+  // Ejemplo: abrir WhatsApp (si tienes el número de teléfono)
+  if (solicitud.arrendatario?.telefono) {
+    const mensaje = `Hola ${solicitud.arrendatario.nombre}, tu solicitud para ${solicitud.publicacion?.titulo} ha sido aprobada. ¿Cuándo podemos coordinar la entrega?`
+    const url = `https://wa.me/${solicitud.arrendatario.telefono}?text=${encodeURIComponent(mensaje)}`
+    window.open(url, '_blank')
+  } else {
+    mostrarNotificacion('Información de contacto no disponible', 'warning')
+  }
+}
+
+const verDetallesSolicitud = (solicitud: SolicitudReserva) => {
+  // Aquí puedes implementar la lógica para mostrar los detalles completos
+  // Por ejemplo, abrir un modal con toda la información de la solicitud
+  console.log('Ver detalles de solicitud:', solicitud)
+  
+  // Por ahora, mostrar una notificación con información básica
+  const fechaInicio = formatearFecha(solicitud.fechaInicio)
+  const fechaFin = formatearFecha(solicitud.fechaFin)
+  const mensaje = `Solicitud de ${solicitud.arrendatario?.nombre} para ${solicitud.publicacion?.titulo} del ${fechaInicio} al ${fechaFin} por $${solicitud.precioTotal}`
+  
+  mostrarNotificacion(mensaje, 'info')
 }
 
 // Métodos - Reservas Activas
@@ -1239,11 +1326,6 @@ const cargarHistorialReservas = async () => {
 }
 
 // Métodos - Acciones de Reservas
-const contactarArrendatario = (email: string) => {
-  const asunto = encodeURIComponent('Consulta sobre reserva - ReSolVelo')
-  const cuerpo = encodeURIComponent('Hola,\n\nMe pongo en contacto contigo respecto a la reserva de mi equipo.\n\nSaludos.')
-  window.location.href = `mailto:${email}?subject=${asunto}&body=${cuerpo}`
-}
 
 const verDetalleReserva = (reservaId: string) => {
   console.log('Ver detalle de reserva:', reservaId)

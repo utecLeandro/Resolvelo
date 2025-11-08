@@ -12,23 +12,28 @@ const datosUsuario = ref<{
   direccion?: string
 } | null>(null)
 
-// Computed para el nombre completo del usuario
+// Computed para el nombre completo del usuario (fallback al email si nombre/apellido no están cargados)
 const nombreCompleto = computed(() => {
   if (!datosUsuario.value) return ''
-  return `${datosUsuario.value.nombre} ${datosUsuario.value.apellido}`.trim()
+  const nombre = (datosUsuario.value.nombre || '').trim()
+  const apellido = (datosUsuario.value.apellido || '').trim()
+  const combinado = `${nombre} ${apellido}`.trim()
+  if (combinado.length > 0) return combinado
+  return (datosUsuario.value.email || '').trim()
 })
 
-// Computed para las iniciales del usuario
+// Computed para las iniciales del usuario (fallback al email)
 const iniciales = computed(() => {
   if (!datosUsuario.value) return 'U'
-  const nombre = datosUsuario.value.nombre || ''
-  const apellido = datosUsuario.value.apellido || ''
-  
-  const inicialesArray = []
+  const nombre = (datosUsuario.value.nombre || '').trim()
+  const apellido = (datosUsuario.value.apellido || '').trim()
+  const inicialesArray: string[] = []
   if (nombre) inicialesArray.push(nombre.charAt(0).toUpperCase())
   if (apellido) inicialesArray.push(apellido.charAt(0).toUpperCase())
-  
-  return inicialesArray.slice(0, 2).join('')
+  const result = inicialesArray.slice(0, 2).join('')
+  if (result) return result
+  const email = (datosUsuario.value.email || '').trim()
+  return email ? email.charAt(0).toUpperCase() : 'U'
 })
 
 export function useAuth() {
@@ -72,13 +77,44 @@ export function useAuth() {
         return
       } catch (parseError) {
         console.error('Error al parsear datos del usuario:', parseError)
-        limpiarAutenticacion()
+        // Si el token existe pero el parse falla, intentar recuperar el perfil a partir del token
+        try {
+          const perfil = await authService.perfil()
+          datosUsuario.value = {
+            id: perfil.id,
+            nombre: perfil.nombre || '',
+            apellido: perfil.apellido || '',
+            email: perfil.email || '',
+            documentoIdentidad: perfil.documentoIdentidad,
+            direccion: perfil.direccion
+          }
+          usuarioAutenticado.value = true
+          localStorage.setItem('userData', JSON.stringify(datosUsuario.value))
+        } catch (recuperacionError) {
+          console.warn('No se pudo recuperar el perfil desde el token tras error de parseo:', recuperacionError)
+          limpiarAutenticacion()
+        }
         return
       }
     }
 
-    // Si no hay datos en localStorage, limpiar autenticación
-    limpiarAutenticacion()
+    // Si no hay datos en localStorage pero sí hay token, intentar recuperar el perfil desde el backend
+    try {
+      const perfil = await authService.perfil()
+      datosUsuario.value = {
+        id: perfil.id,
+        nombre: perfil.nombre || '',
+        apellido: perfil.apellido || '',
+        email: perfil.email || '',
+        documentoIdentidad: perfil.documentoIdentidad,
+        direccion: perfil.direccion
+      }
+      usuarioAutenticado.value = true
+      localStorage.setItem('userData', JSON.stringify(datosUsuario.value))
+    } catch (error) {
+      console.warn('No se pudo recuperar el perfil desde el token. Limpiando autenticación.', error)
+      limpiarAutenticacion()
+    }
   }
 
   // Función para actualizar los datos del usuario

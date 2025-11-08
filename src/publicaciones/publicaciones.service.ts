@@ -147,6 +147,108 @@ export class PublicacionesService {
   }
 
   /**
+   * Aprobar una publicación (moderación)
+   */
+  async aprobarPublicacion(publicacionId: string, moderadorId: string, comentario?: string): Promise<Publicacion> {
+    // Verificar existencia de la publicación
+    const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId } });
+    if (!existente) {
+      throw new NotFoundException('Publicación no encontrada');
+    }
+
+    // Buscar el registro de Administrador asociado al usuario autenticado
+    const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: moderadorId } });
+    if (!admin) {
+      throw new ForbiddenException('El usuario autenticado no es administrador');
+    }
+
+    const estadoAnterior = existente.estadoModeracion;
+
+    // Transacción para actualizar publicación y registrar moderación
+    const [actualizada] = await this.prisma.$transaction([
+      this.prisma.publicacion.update({
+        where: { id: publicacionId },
+        data: {
+          estadoModeracion: EstadoModeracion.APROBADA,
+          fechaModeracion: new Date(),
+          moderadoPor: moderadorId,
+          comentarioModeracion: comentario ?? null,
+        },
+        include: {
+          propietario: {
+            select: { id: true, nombre: true, apellido: true, calificacionPromedio: true, totalCalificaciones: true }
+          },
+          imagenes: { select: { id: true, url: true, esPrincipal: true } },
+          _count: { select: { reservas: true, calificaciones: true } }
+        }
+      }),
+      this.prisma.moderaccionPublicacion.create({
+        data: {
+          accion: 'APROBAR',
+          motivo: null,
+          comentarios: comentario ?? null,
+          estadoAnterior: estadoAnterior,
+          estadoNuevo: EstadoModeracion.APROBADA,
+          publicacionId: publicacionId,
+          moderadorId: admin.id,
+        }
+      })
+    ]);
+
+    return actualizada as unknown as Publicacion;
+  }
+
+  /**
+   * Rechazar una publicación (moderación)
+   */
+  async rechazarPublicacion(publicacionId: string, moderadorId: string, motivo?: string, comentario?: string): Promise<Publicacion> {
+    const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId } });
+    if (!existente) {
+      throw new NotFoundException('Publicación no encontrada');
+    }
+
+    // Buscar el registro de Administrador asociado al usuario autenticado
+    const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: moderadorId } });
+    if (!admin) {
+      throw new ForbiddenException('El usuario autenticado no es administrador');
+    }
+
+    const estadoAnterior = existente.estadoModeracion;
+
+    const [actualizada] = await this.prisma.$transaction([
+      this.prisma.publicacion.update({
+        where: { id: publicacionId },
+        data: {
+          estadoModeracion: EstadoModeracion.RECHAZADA,
+          fechaModeracion: new Date(),
+          moderadoPor: moderadorId,
+          comentarioModeracion: comentario ?? motivo ?? null,
+        },
+        include: {
+          propietario: {
+            select: { id: true, nombre: true, apellido: true, calificacionPromedio: true, totalCalificaciones: true }
+          },
+          imagenes: { select: { id: true, url: true, esPrincipal: true } },
+          _count: { select: { reservas: true, calificaciones: true } }
+        }
+      }),
+      this.prisma.moderaccionPublicacion.create({
+        data: {
+          accion: 'RECHAZAR',
+          motivo: motivo ?? null,
+          comentarios: comentario ?? null,
+          estadoAnterior: estadoAnterior,
+          estadoNuevo: EstadoModeracion.RECHAZADA,
+          publicacionId: publicacionId,
+          moderadorId: admin.id,
+        }
+      })
+    ]);
+
+    return actualizada as unknown as Publicacion;
+  }
+
+  /**
    * Obtener una publicación por ID
    * @param id ID de la publicación
    * @returns Publicación encontrada
@@ -450,12 +552,15 @@ export class PublicacionesService {
         const estadisticasReservas = {
           total: publicacion.reservas.length,
           pendientes: publicacion.reservas.filter(r => r.estado === EstadoReserva.PENDIENTE).length,
-          aprobadas: publicacion.reservas.filter(r => r.estado === EstadoReserva.APROBADA).length,
+          // En el esquema actual no existe el estado APROBADA; usamos CONFIRMADA como equivalente
+          aprobadas: publicacion.reservas.filter(r => r.estado === EstadoReserva.CONFIRMADA).length,
           confirmadas: publicacion.reservas.filter(r => r.estado === EstadoReserva.CONFIRMADA).length,
-          activas: publicacion.reservas.filter(r => r.estado === EstadoReserva.EN_CURSO).length,
+          // EN_CURSO no existe en el esquema actual
+          activas: publicacion.reservas.filter(r => r.estado === EstadoReserva.CONFIRMADA).length,
           completadas: publicacion.reservas.filter(r => r.estado === EstadoReserva.COMPLETADA).length,
           rechazadas: publicacion.reservas.filter(r => r.estado === EstadoReserva.RECHAZADA).length,
-          canceladas: publicacion.reservas.filter(r => r.estado === EstadoReserva.CANCELADA_USUARIO).length + publicacion.reservas.filter(r => r.estado === EstadoReserva.CANCELADA_PROPIETARIO).length,
+          // Unificamos cancelaciones en el estado CANCELADA
+          canceladas: publicacion.reservas.filter(r => r.estado === EstadoReserva.CANCELADA).length,
         };
 
         // Remover el array de reservas para no enviarlo al frontend (solo necesitamos las estadísticas)
@@ -485,7 +590,8 @@ export class PublicacionesService {
       const reservas = await this.prisma.reserva.findMany({
         where: {
           publicacionId: id,
-          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
+          // EN_CURSO no existe; consideramos activas PENDIENTE y CONFIRMADA
+          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA] },
         },
         select: { fechaInicio: true, fechaFin: true },
         orderBy: { fechaInicio: 'asc' },
@@ -512,7 +618,8 @@ export class PublicacionesService {
       const solapadas = await this.prisma.reserva.count({
         where: {
           publicacionId: id,
-          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
+          // EN_CURSO no existe en el esquema actual
+          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA] },
           NOT: {
             OR: [
               { fechaFin: { lte: fechaInicio } },
@@ -560,8 +667,19 @@ export class PublicacionesService {
   private construirCondicionesFiltrado(filtros: FiltrosPublicacionDto): any {
     const condiciones: any = {
       estado: EstadoPublicacion.ACTIVA,
-      estadoModeracion: EstadoModeracion.APROBADA,
     };
+
+    // Control de estado de moderación:
+    // - Si incluirTodosEstadosModeracion es true, no aplicamos filtro por estadoModeracion
+    // - Si se especifica estadoModeracion, lo usamos tal cual
+    // - En otros casos, por defecto mostramos solo APROBADAS (para vistas públicas)
+    if (filtros?.incluirTodosEstadosModeracion) {
+      // No establecer condiciones.estadoModeracion para traer todos los estados
+    } else if (filtros?.estadoModeracion) {
+      condiciones.estadoModeracion = filtros.estadoModeracion;
+    } else {
+      condiciones.estadoModeracion = EstadoModeracion.APROBADA;
+    }
 
     if (filtros.busqueda) {
       // Extraer palabras clave y sus variaciones del texto de búsqueda
