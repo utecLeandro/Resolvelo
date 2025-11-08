@@ -2,12 +2,14 @@
  * Servicio de autenticación.
  * Maneja lógica de registro con hash + salt y verificación mock.
  */
-import { Injectable, UnauthorizedException, NotFoundException, ConflictException, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException, ConflictException, ServiceUnavailableException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class AuthService {
@@ -117,6 +119,7 @@ export class AuthService {
           nombre: usuario.nombre,
           apellido: usuario.apellido,
           email: usuario.email,
+          rol: usuario.rol,
           estadoVerificacion: usuario.estadoVerificacion,
           emailVerificado: usuario.emailVerificado,
         },
@@ -180,5 +183,100 @@ export class AuthService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Inicia la recuperación de contraseña: genera token y envía email con instrucciones.
+   */
+  async iniciarRecuperacion(email: string) {
+    // Buscar usuario
+    const usuario = await this.prisma.usuario.findUnique({ where: { email } });
+    if (!usuario) {
+      // No revelar existencia del email por seguridad
+      return { message: 'Si el email existe, se enviarán instrucciones para recuperar la contraseña' };
+    }
+
+    // Generar token seguro
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiracion = new Date(Date.now() + 1000 * 60 * 60); // 1 hora
+
+    // Guardar token y expiración en el usuario
+    await this.prisma.usuario.update({
+      where: { id: usuario.id },
+      data: {
+        tokenRecuperacion: token,
+        fechaExpiracionToken: expiracion,
+      }
+    });
+
+    // Construir link de recuperación
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetLink = `${frontendUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+
+    // Enviar email vía SMTP (Mailhog en desarrollo)
+    try {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'localhost',
+        port: parseInt(process.env.SMTP_PORT || '1025', 10),
+        secure: process.env.SMTP_SECURE === 'true' ? true : false,
+        auth: (process.env.SMTP_USER || process.env.SMTP_PASS) ? {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        } : undefined,
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || 'noreply@resolvelo.com',
+        to: email,
+        subject: 'Recuperación de contraseña - ReSolVelo',
+        html: `
+          <p>Hola,</p>
+          <p>Recibimos una solicitud para restablecer tu contraseña. Si fuiste tú, haz clic en el siguiente enlace:</p>
+          <p><a href="${resetLink}">${resetLink}</a></p>
+          <p>Este enlace expira en 1 hora. Si no solicitaste esto, ignora este mensaje.</p>
+          <p>Equipo ReSolVelo</p>
+        `,
+      });
+    } catch (e) {
+      // En desarrollo, si el envío falla, no bloquear el flujo
+      console.warn('No se pudo enviar email de recuperación:', (e as any)?.message);
+    }
+
+    return { message: 'Si el email existe, se enviarán instrucciones para recuperar la contraseña' };
+  }
+
+  /**
+   * Completa la recuperación de contraseña: valida token y actualiza contraseña.
+   */
+  async resetearContrasena(email: string, token: string, newPassword: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { email } });
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    if (!usuario.tokenRecuperacion || !usuario.fechaExpiracionToken) {
+      throw new BadRequestException('No hay una solicitud de recuperación activa');
+    }
+    if (usuario.tokenRecuperacion !== token) {
+      throw new UnauthorizedException('Token inválido');
+    }
+    if (new Date(usuario.fechaExpiracionToken).getTime() < Date.now()) {
+      throw new UnauthorizedException('Token expirado');
+    }
+
+    // Generar nuevo hash + salt
+    const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS || '12', 10));
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+
+    await this.prisma.usuario.update({
+      where: { id: usuario.id },
+      data: {
+        passwordHash,
+        passwordSalt: salt,
+        tokenRecuperacion: null,
+        fechaExpiracionToken: null,
+      }
+    });
+
+    return { message: 'Contraseña actualizada correctamente' };
   }
 }

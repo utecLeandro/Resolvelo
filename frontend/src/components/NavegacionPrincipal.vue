@@ -4,7 +4,7 @@
     role="navigation"
     aria-label="Navegación principal"
   >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 2xl:px-12">
       <div class="flex justify-between items-center h-16">
         <!-- Logo y marca -->
         <div class="flex items-center">
@@ -84,7 +84,7 @@
               aria-haspopup="true"
               aria-label="Menú de usuario"
             >
-              <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+              <div class="w-8 h-8 aspect-square bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                 {{ iniciales }}
               </div>
               <span>{{ nombreUsuario }}</span>
@@ -131,6 +131,15 @@
                 @click="cerrarMenuUsuario"
               >
                 Mis reservas
+              </router-link>
+              <router-link 
+                v-if="esAdmin"
+                to="/admin"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+                role="menuitem"
+                @click="cerrarMenuUsuario"
+              >
+                Menú administrador
               </router-link>
               <hr class="my-1">
               <button
@@ -266,6 +275,15 @@
             >
               Mis reservas
             </router-link>
+            <router-link 
+              v-if="esAdmin"
+              to="/admin"
+              class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              role="menuitem"
+              @click="cerrarMenuMovil"
+            >
+              Menú administrador
+            </router-link>
             <button
               @click="cerrarSesion"
               class="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -297,8 +315,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import adminService from '../services/admin'
 
 // Props y emits
 interface Props {
@@ -317,6 +336,7 @@ const router = useRouter()
 // Estado reactivo
 const menuMovilAbierto = ref(false)
 const menuUsuarioAbierto = ref(false)
+const esAdmin = ref(false)
 
 // Computed properties
 const iniciales = computed(() => {
@@ -411,6 +431,10 @@ const cerrarSesion = () => {
 onMounted(() => {
   document.addEventListener('click', cerrarMenusAlClickFuera)
   document.addEventListener('keydown', manejarTeclaEscape)
+  // Verificar rol de administrador al montar si el usuario está autenticado
+  if (props.usuarioAutenticado) {
+    verificarRolAdmin()
+  }
 })
 
 onUnmounted(() => {
@@ -434,4 +458,40 @@ const mostrarToast = (mensaje: string) => {
 const cerrarToast = () => {
   toastVisible.value = false
 }
+
+// Verificar si el usuario actual es administrador
+const verificarRolAdmin = async () => {
+  try {
+    // Intento rápido: leer de localStorage
+    const userDataRaw = localStorage.getItem('userData')
+    if (userDataRaw) {
+      try {
+        const user = JSON.parse(userDataRaw)
+        const rol = user?.rol
+        if (rol === 'ADMINISTRADOR' || rol === 'SUPER_ADMIN') {
+          esAdmin.value = true
+          return
+        }
+      } catch (_) {
+        // Ignorar error de parseo y continuar con verificación vía API
+      }
+    }
+
+    // Verificación robusta: intentar listar usuarios admin (requiere rol admin)
+    await adminService.listarUsuarios({ pagina: 1, limite: 1 })
+    esAdmin.value = true
+  } catch (error: any) {
+    // Si recibe 401/403, no es admin; en otros errores de red, mantener oculto
+    esAdmin.value = false
+  }
+}
+
+// Re-verificar rol cuando cambia el estado de autenticación
+watch(() => props.usuarioAutenticado, (nuevo) => {
+  if (nuevo) {
+    verificarRolAdmin()
+  } else {
+    esAdmin.value = false
+  }
+})
 </script>

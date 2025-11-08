@@ -12,6 +12,7 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
+  console.log('[Main] Bootstrap iniciando...')
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Configurar servicio de archivos estáticos para imágenes
@@ -53,6 +54,19 @@ async function bootstrap() {
   // Prefijo global para la API
   app.setGlobalPrefix('api');
 
-  await app.listen(process.env.PORT || 3000);
+  // Asegurar puerto de arranque evitando conflictos en 3000
+  const port = parseInt(process.env.PORT ?? '3001', 10);
+  // Escuchar en 0.0.0.0 por defecto para aceptar conexiones desde fuera del contenedor
+  const host = process.env.HOST ?? '0.0.0.0';
+  console.log(`[Main] Intentando escuchar en http://${host}:${port} (env PORT=${process.env.PORT ?? 'no definido'})`);
+  const server = await app.listen(port, host);
+  try {
+    // @ts-ignore
+    const addr = (server as any).address?.();
+    console.log('[Main] address():', addr);
+    console.log(`[Main] Escuchando en http://${host}:${port} (prefijo global: /api)`);
+  } catch (e) {
+    console.log('[Main] No se pudo obtener address()', e);
+  }
 }
 bootstrap();

@@ -77,6 +77,8 @@ const onSubmit = async () => {
       formError.value = 'Usuario no encontrado. ¿Ya tienes una cuenta?'
     } else if (err?.response?.status === 503) {
       formError.value = 'Servicio no disponible. La base de datos no está conectada. Intenta nuevamente en unos segundos.'
+    } else if (err?.message) {
+      formError.value = err.message
     } else {
       formError.value = 'Error al iniciar sesión. Intenta nuevamente.'
     }
@@ -88,12 +90,34 @@ const onSubmit = async () => {
 // Foco y ayuda: acción opcional para probar salud del backend
 const probarConexion = async () => {
   try {
-    const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api').replace(/\/$/, '')
+    // Usar siempre el proxy '/api' por defecto en desarrollo para evitar puertos hardcodeados
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
     const response = await fetch(`${baseUrl}/health`)
-    const data = await response.json()
-    alert(`✅ Conexión exitosa: ${JSON.stringify(data)}`)
-  } catch (err) {
-    alert(`❌ Error de conexión: ${err}`)
+
+    // Si la respuesta no es OK, intentar extraer un mensaje de error legible
+    if (!response.ok) {
+      let mensaje = `HTTP ${response.status} ${response.statusText}`
+      try {
+        const errJson = await response.json()
+        if (errJson?.message) mensaje = errJson.message
+      } catch (_) {
+        // Ignorar error de parseo (p.ej. HTML o cuerpo vacío)
+      }
+      alert(`❌ Error de conexión: ${mensaje}`)
+      return
+    }
+
+    // Detectar tipo de contenido para evitar "Unexpected end of JSON input"
+    const contentType = response.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      const data = await response.json()
+      alert(`✅ Conexión exitosa: ${JSON.stringify(data)}`)
+    } else {
+      const text = await response.text()
+      alert(`✅ Conexión exitosa (texto): ${text}`)
+    }
+  } catch (err: any) {
+    alert(`❌ Error de conexión: ${err?.message || err}`)
   }
 }
 </script>
@@ -160,7 +184,10 @@ const probarConexion = async () => {
             </Switch>
             <span class="text-sm text-gray-700">Recordarme</span>
           </div>
-          <router-link to="/registro" class="text-sm text-blue-600 hover:text-blue-700">Crear cuenta</router-link>
+          <div class="flex items-center gap-4">
+            <router-link to="/recuperar-contraseña" class="text-sm text-blue-600 hover:text-blue-700">¿Olvidaste tu contraseña?</router-link>
+            <router-link to="/registro" class="text-sm text-blue-600 hover:text-blue-700">Crear cuenta</router-link>
+          </div>
         </div>
 
         <button
@@ -174,7 +201,7 @@ const probarConexion = async () => {
         <p v-if="formError" id="form-error" class="text-red-600 text-sm" aria-live="polite">{{ formError }}</p>
         <p v-if="successMessage" class="text-green-600 text-sm" aria-live="polite">{{ successMessage }}</p>
 
-        <div class="mt-6 pt-6 border-t border-gray-200">
+        <div class="mt-10 pt-6 border-t border-gray-200">
           <button
             @click="probarConexion"
             type="button"

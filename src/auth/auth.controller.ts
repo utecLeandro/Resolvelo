@@ -7,6 +7,8 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { PasswordStrengthService } from './services/password-strength.service';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -43,6 +45,26 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async validarContrasena(@Body() body: { password: string }) {
     return this.passwordStrengthService.evaluarFortaleza(body.password);
+  }
+
+  /**
+   * Inicia el flujo de recuperación de contraseña.
+   * Genera token y envía email con instrucciones.
+   */
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    return this.authService.iniciarRecuperacion(body.email);
+  }
+
+  /**
+   * Completa la recuperación de contraseña.
+   * Valida token y actualiza la contraseña del usuario.
+   */
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    return this.authService.resetearContrasena(body.email, body.token, body.newPassword);
   }
 
   /**

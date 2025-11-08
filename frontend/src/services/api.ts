@@ -101,8 +101,11 @@ export interface AuthResponse {
   user: {
     id: string
     nombre: string
+    apellido?: string
     email: string
+    rol?: 'USUARIO' | 'MODERADOR' | 'ADMINISTRADOR' | 'SUPER_ADMIN'
     estadoVerificacion: string
+    emailVerificado?: boolean
   }
 }
 
@@ -142,13 +145,48 @@ export const authService = {
     }
   },
 
+  // Solicitar recuperación de contraseña
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    try {
+      const response = await api.post('/auth/forgot-password', { email })
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for forgotPassword:', error.message)
+      return await fetchFallback('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      })
+    }
+  },
+
+  // Completar recuperación de contraseña
+  async resetPassword(email: string, token: string, newPassword: string): Promise<{ message: string }> {
+    try {
+      const response = await api.post('/auth/reset-password', { email, token, newPassword })
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for resetPassword:', error.message)
+      return await fetchFallback('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ email, token, newPassword })
+      })
+    }
+  },
+
   // Login de usuario existente
   async login(datos: LoginRequest): Promise<AuthResponse> {
     try {
       const response = await api.post('/auth/login', datos)
+      // Con validateStatus aceptamos 4xx como "success"; validamos manualmente
+      if (response.status !== 200) {
+        const mensaje = (response.data && (response.data.message || response.data.error)) || 'Credenciales incorrectas'
+        const err: any = new Error(mensaje)
+        err.response = response
+        throw err
+      }
       return response.data
     } catch (error: any) {
-      console.warn('Axios failed, trying fetch fallback for login:', error.message)
+      console.warn('Axios failed or status != 200, trying fetch fallback for login:', error.message)
       return await fetchFallback('/auth/login', {
         method: 'POST',
         body: JSON.stringify(datos)
@@ -160,9 +198,14 @@ export const authService = {
   async perfil() {
     try {
       const response = await api.get('/auth/profile')
+      // Axios considera 4xx como "success" por nuestro validateStatus; validamos manualmente
+      if (response.status !== 200) {
+        const mensaje = (response.data && (response.data.message || response.data.error)) || 'No autorizado'
+        throw new Error(`perfil: ${mensaje}`)
+      }
       return response.data
     } catch (error: any) {
-      console.warn('Axios failed, trying fetch fallback for perfil:', error.message)
+      console.warn('Axios failed or status != 200, trying fetch fallback for perfil:', error.message)
       return await fetchFallback('/auth/profile')
     }
   },

@@ -64,6 +64,7 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY --from=build --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=build --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=build --chown=nestjs:nodejs /app/prisma ./prisma
+COPY --from=build --chown=nestjs:nodejs /app/healthcheck.js ./
 COPY --from=build --chown=nestjs:nodejs /app/package*.json ./
 
 # Cambiar al usuario no-root

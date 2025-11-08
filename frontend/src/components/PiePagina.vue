@@ -4,7 +4,7 @@
     role="contentinfo"
     aria-label="Información del sitio web"
   >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 2xl:px-12 py-12">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <!-- Información de la empresa -->
         <div class="space-y-4">
