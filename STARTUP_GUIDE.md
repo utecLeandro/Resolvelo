@@ -1,5 +1,7 @@
 # Guía de Inicio - ReSolVelo
 
+> Nota (Windows): la carpeta canónica del proyecto es "Resolvelo" (con R mayúscula). Usa ese nombre en los comandos `cd` para evitar problemas de rutas.
+
 ## 🚀 Inicio Rápido (Recomendado)
 
 ### Un solo comando para levantar todo:
@@ -123,7 +125,7 @@ npm run dev -- --port 5174
 
 #### URLs de acceso:
 - **Frontend**: http://localhost:5174
-- **Backend API**: http://localhost:3000/api
+- **Backend API**: http://localhost:3006/api
 - **Prisma Studio**: http://localhost:5555 (ejecutar `npx prisma studio --browser none`)
 
 #### Usuarios de prueba:
@@ -137,7 +139,7 @@ npm run dev -- --port 5174
 #### Terminal 1 - Backend:
 ```bash
 cd D:/TRAE/ReSolVelo/Resolvelo
-npm run start:dev
+npm run start:dev:3006
 ```
 
 #### Terminal 2 - Frontend:

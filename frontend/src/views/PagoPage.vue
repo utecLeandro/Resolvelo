@@ -1,4 +1,4 @@
-<template>
+﻿﻿<template>
   <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
@@ -10,7 +10,7 @@
       <!-- Loading State -->
       <div v-if="cargando" class="flex justify-center items-center py-12">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <span class="ml-3 text-gray-600">Cargando información de la reserva...</span>
+        <span class="ml-3 text-gray-600">Cargando informació³n de la reserva...</span>
       </div>
 
       <!-- Error State -->
@@ -37,10 +37,10 @@
             </svg>
           </div>
           <div class="ml-3">
-            <h3 class="text-lg font-medium text-green-800">¡Pago Exitoso!</h3>
+            <h3 class="text-lg font-medium text-green-800">Â¡Pago Exitoso!</h3>
             <div class="mt-2 text-sm text-green-700">
               <p>Tu pago ha sido procesado correctamente.</p>
-              <p class="mt-1"><strong>ID de Transacción:</strong> {{ resultadoPago?.transaccionId }}</p>
+              <p class="mt-1"><strong>ID de Transacció³n:</strong> {{ resultadoPago?.transaccionId }}</p>
               <p><strong>Referencia:</strong> {{ resultadoPago?.referenciaExterna }}</p>
               <p><strong>Mensaje:</strong> {{ resultadoPago?.mensaje }}</p>
             </div>
@@ -78,7 +78,7 @@
                 <span class="font-medium">{{ formatearFecha(reserva.fechaFin) }}</span>
               </div>
               <div class="flex justify-between text-sm mt-1">
-                <span class="text-gray-600">Duración:</span>
+                <span class="text-gray-600">Duració³n:</span>
                 <span class="font-medium">{{ calcularDias() }} día(s)</span>
               </div>
             </div>
@@ -98,7 +98,7 @@
 
         <!-- Formulario de pago -->
         <div class="bg-white rounded-lg shadow-md p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">Información de Pago</h2>
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Informació³n de Pago</h2>
           
           <form @submit.prevent="procesarPago" class="space-y-4">
             <div>
@@ -111,6 +111,7 @@
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               >
+                <option value="MERCADO_PAGO">Mercado Pago</option>
                 <option value="TARJETA_CREDITO">Tarjeta de Crédito</option>
                 <option value="TARJETA_DEBITO">Tarjeta de Débito</option>
                 <option value="TRANSFERENCIA">Transferencia Bancaria</option>
@@ -120,7 +121,7 @@
 
             <div>
               <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-1">
-                Descripción (Opcional)
+                Descripció³n (Opcional)
               </label>
               <textarea
                 id="descripcion"
@@ -131,8 +132,17 @@
               ></textarea>
             </div>
 
-            <!-- Simulación Notice -->
+            <!-- Simulació³n Notice -->
 
+
+            <!-- Aviso de apertura de MP y monitoreo -->
+            <div v-if="monitoreandoPago" class="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <p class="text-sm text-blue-700">
+                Abrimos Mercado Pago en una nueva pestaña. Esta página está monitoreando tu transacción
+                (ID: <span class="font-mono">{{ transaccionIdMp || '...' }}</span>) y te redirigirá automáticamente
+                a Mis Reservas cuando el pago se acredite.
+              </p>
+            </div>
 
             <button
               type="submit"
@@ -147,7 +157,7 @@
                 Procesando pago...
               </span>
               <span v-else>
-                Procesar Pago - ${{ calcularTotal() }}
+                Proceder al pago - ${{ calcularTotal() }}
               </span>
             </button>
           </form>
@@ -158,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { reservasService } from '@/services/api'
 import { transaccionesService, type RespuestaPagoDto } from '@/services/transacciones.service'
@@ -175,8 +185,14 @@ const procesandoPago = ref(false)
 const pagoExitoso = ref(false)
 const resultadoPago = ref<RespuestaPagoDto | null>(null)
 
+// Fallback: monitoreo de estado de pago via backend
+const monitoreandoPago = ref(false)
+const transaccionIdMp = ref<string>('')
+let pollingTimer: number | null = null
+let pollingInicio = 0
+
 const formPago = ref({
-  metodoPago: 'TARJETA_CREDITO',
+  metodoPago: 'MERCADO_PAGO',
   descripcion: ''
 })
 
@@ -239,35 +255,101 @@ const procesarPago = async () => {
     procesandoPago.value = true
     error.value = ''
 
-    // Procesar el pago
-    const resultado = await transaccionesService.procesarPago({
-      reservaId: reserva.value.id,
-      metodoPago: formPago.value.metodoPago,
-      descripcion: formPago.value.descripcion || `Pago de reserva para ${reserva.value.publicacion.titulo}`
-    })
+    // Crear preferencia de Mercado Pago y redirigir al checkout
+    const pref = await transaccionesService.crearPreferenciaMercadoPago(
+      reserva.value.id,
+      formPago.value.descripcion || `Pago de reserva para ${reserva.value.publicacion.titulo}`
+    )
 
-    // Si el pago fue exitoso, activar la reserva
-    if (resultado.success) {
-      try {
-        await reservasService.activarReserva(reserva.value.id)
-        console.log('Reserva activada exitosamente')
-        
-        // Recargar los datos de la reserva para mostrar el nuevo estado
-        await cargarReserva()
-      } catch (activarError: any) {
-        console.error('Error al activar la reserva:', activarError)
-        // No fallar el pago por esto, solo mostrar una advertencia
-        console.warn('El pago se procesó correctamente, pero hubo un problema al activar la reserva')
-      }
+    // Si el backend indica ok=false o faltan URLs, intentamos mostrar un mensaje claro
+    if (!pref || pref.ok !== true) {
+      throw new Error(pref?.message || 'No se pudo crear la preferencia de pago')
     }
 
-    resultadoPago.value = resultado
-    pagoExitoso.value = true
+    // Guardamos el transaccionId para poder monitorear el estado vía webhook
+    if (pref?.transaccionId) {
+      transaccionIdMp.value = pref.transaccionId
+      localStorage.setItem('ultimoPago_transaccionId', pref.transaccionId)
+      localStorage.setItem('ultimoPago_reservaId', reserva.value.id)
+    }
 
+    // Iniciar polling en la pestaña original como fallback si MP no redirige
+    const iniciarPolling = () => {
+      if (!transaccionIdMp.value) return
+      if (pollingTimer) return
+      monitoreandoPago.value = true
+      pollingInicio = Date.now()
+      const intervaloMs = 4000
+      pollingTimer = window.setInterval(async () => {
+        try {
+          const tx = await transaccionesService.obtenerTransaccion(transaccionIdMp.value)
+          // Estados del backend: COMPLETADA (pago acreditado), PENDIENTE/EN_PROCESO
+          if (tx?.estado === 'COMPLETADA') {
+            // Redirigimos al flujo de éxito; Mercado Pago también puede redirigir, pero este fallback no depende de ello
+            if (pollingTimer) {
+              clearInterval(pollingTimer)
+              pollingTimer = null
+            }
+            monitoreandoPago.value = false
+            router.replace({ path: '/pago-exitoso', query: { external_reference: tx.id } })
+          } else {
+            // Intento activo: consultar directamente a MP por external_reference si sigue pendiente
+            try {
+              const txVerificada = await transaccionesService.verificarEstadoMercadoPagoPorTransaccion(transaccionIdMp.value)
+              if (txVerificada?.estado === 'COMPLETADA') {
+                if (pollingTimer) {
+                  clearInterval(pollingTimer)
+                  pollingTimer = null
+                }
+                monitoreandoPago.value = false
+                router.replace({ path: '/pago-exitoso', query: { external_reference: txVerificada.id } })
+                return
+              }
+            } catch (e) {
+              console.warn('Verificación directa en MP falló:', e)
+            }
+            // Auto-stop tras 3 minutos para evitar polling infinito
+            if (Date.now() - pollingInicio > 3 * 60 * 1000) {
+              if (pollingTimer) {
+                clearInterval(pollingTimer)
+                pollingTimer = null
+              }
+              monitoreandoPago.value = false
+            }
+          }
+        } catch (e) {
+          // No romper el flujo por errores temporales
+          console.warn('Polling pago: error obteniendo transacción', e)
+        }
+      }, intervaloMs)
+    }
+
+    if (!pref.redirectUrl) {
+      // Fallback por si la API devuelve los campos crudos
+      const fallbackUrl = (pref as any)?.sandbox_init_point || (pref as any)?.init_point
+      if (fallbackUrl) {
+        const mpWin = window.open(fallbackUrl, '_blank');
+        iniciarPolling()
+        if (!mpWin) {
+          // Fallback: si el navegador bloquea popups, navegamos en la misma pestaña
+          window.location.assign(fallbackUrl)
+        }
+        return
+      }
+      throw new Error('No se pudo obtener la URL de pago de Mercado Pago')
+    }
+    const mpWin = window.open(pref.redirectUrl, '_blank');
+    iniciarPolling()
+    if (!mpWin) {
+      // Fallback: si el navegador bloquea popups, navegamos en la misma pestaña
+      window.location.assign(pref.redirectUrl)
+    }
+    return
   } catch (err: any) {
-    console.error('Error procesando pago:', err)
-    error.value = err.response?.data?.message || 'Error al procesar el pago'
+    console.error('Error iniciando pago con Mercado Pago:', err)
+    error.value = err?.response?.data?.message || err?.message || 'No se pudo iniciar el pago con Mercado Pago'
   } finally {
+    // En caso de redirección exitosa, este finally no se ejecutará; se mantiene para errores previos
     procesandoPago.value = false
   }
 }
@@ -283,5 +365,12 @@ onMounted(async () => {
   }
   
   cargarReserva()
+})
+
+onBeforeUnmount(() => {
+  if (pollingTimer) {
+    clearInterval(pollingTimer)
+    pollingTimer = null
+  }
 })
 </script>

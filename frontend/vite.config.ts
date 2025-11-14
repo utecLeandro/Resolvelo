@@ -11,13 +11,14 @@ export default defineConfig({
     },
   },
   server: {
+    host: '127.0.0.1',
     cors: true,
     proxy: {
       '/api': {
         // Apunta al backend activo en desarrollo
-        // Ajustado a 3000 para alinear con el backend en start:dev (PORT=3000 en .env)
+        // Ajustado a 3006 para alinear con el backend dev actual
         // Si cambias el modo/puerto del backend, recuerda actualizar este valor
-        target: 'http://127.0.0.1:3000',
+        target: 'http://127.0.0.1:3006',
         changeOrigin: true,
         secure: false,
       },
