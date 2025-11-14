@@ -25,7 +25,7 @@ check_port() {
 # Verificar puertos necesarios
 echo "🔍 Verificando puertos..."
 declare -A ports=(
-    [3000]="Backend"
+    [3006]="Backend"
     [5174]="Frontend"
     [5433]="PostgreSQL"
     [6379]="Redis"
@@ -129,7 +129,7 @@ echo $BACKEND_PID > logs/backend.pid
 echo "⏳ Esperando a que el backend esté listo..."
 max_attempts=30
 attempt=0
-while ! check_port 3000; do
+while ! check_port 3006; do
     sleep 2
     attempt=$((attempt + 1))
     if [ $attempt -gt $max_attempts ]; then
@@ -175,7 +175,7 @@ echo ""
 echo "🎉 ¡ReSolVelo está listo!"
 echo "================================="
 echo "📱 Frontend:      http://localhost:5174"
-echo "🔧 Backend API:   http://localhost:3000/api"
+echo "🔧 Backend API:   http://localhost:3006/api"
 echo "🗄️  Prisma Studio: http://localhost:5555"
 echo ""
 echo "👥 Usuarios de prueba:"

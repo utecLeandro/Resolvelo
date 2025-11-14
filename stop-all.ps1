@@ -1,60 +1,74 @@
-# Script para detener todos los servicios de ReSolVelo
-# Ejecutar desde la raíz del proyecto: .\stop-all.ps1
+<#
+ ASCII-only stop script for ReSolVelo
+ Run from project root: .\stop-all.ps1
+#>
 
-Write-Host "🛑 Deteniendo ReSolVelo..." -ForegroundColor Red
-Write-Host "=================================" -ForegroundColor Red
+Write-Host 'Stopping ReSolVelo...' -ForegroundColor Red
+Write-Host '=================================' -ForegroundColor Red
 
-# Detener servicios de Docker
-Write-Host "🐳 Deteniendo servicios de Docker..." -ForegroundColor Yellow
+# Stop Docker services
+Write-Host 'Stopping Docker services...' -ForegroundColor Yellow
 try {
-    docker-compose down
-    Write-Host "✅ Servicios de Docker detenidos" -ForegroundColor Green
-}
-catch {
-    Write-Host "⚠️  Error al detener Docker (puede que no esté corriendo)" -ForegroundColor Yellow
+  docker-compose down
+  Write-Host 'Docker services stopped' -ForegroundColor Green
+} catch {
+  Write-Host ('Docker stop error (maybe not running): {0}' -f $_.Exception.Message) -ForegroundColor Yellow
 }
 
-# Detener procesos de Node.js en los puertos específicos
-$ports = @(3000, 5173, 5555)
+# Kill by ports (backend/frontend common and alternates)
+$ports = @(3006, 3004, 3011, 3010, 3000, 5173, 5555)
 foreach ($port in $ports) {
-    Write-Host "🔍 Buscando procesos en puerto $port..." -ForegroundColor Yellow
-    try {
-        $connections = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
-        foreach ($connection in $connections) {
-            $processId = $connection.OwningProcess
-            if ($processId -and $processId -ne 0) {
-                $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
-                if ($process) {
-                    Write-Host "🔪 Deteniendo proceso: $($process.ProcessName) (PID: $processId)" -ForegroundColor Red
-                    Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
-                }
-            }
+  Write-Host ('Scanning port {0}...' -f $port) -ForegroundColor Yellow
+  try {
+    $lines = netstat -ano -p TCP | Select-String (':{0}' -f $port) | ForEach-Object { $_.Line }
+    if ($lines -and $lines.Count -gt 0) {
+      $pids = @()
+      foreach ($line in $lines) {
+        $parts = $line -split '\s+'
+        if ($parts -and $parts.Length -gt 0) {
+          $pidStr = $parts[$parts.Length - 1]
+          if ($pidStr -match '^\d+$') { $pids += [int]$pidStr }
         }
+      }
+      $uniqPids = $pids | Sort-Object -Unique
+      foreach ($myPid in $uniqPids) {
+        try {
+          $proc = Get-Process -Id $myPid -ErrorAction SilentlyContinue
+          if ($proc) {
+            Write-Host ('Killing process {0} (PID: {1})' -f $proc.ProcessName, $myPid) -ForegroundColor Red
+            Stop-Process -Id $myPid -Force -ErrorAction SilentlyContinue
+          } else {
+            Write-Host ('taskkill PID {0} for port {1}' -f $myPid, $port) -ForegroundColor Red
+            taskkill /PID $myPid /F | Out-Null
+          }
+        } catch {}
+      }
+    } else {
+      Write-Host ('No connections on port {0}' -f $port) -ForegroundColor Yellow
     }
-    catch {
-        Write-Host "⚠️  No se encontraron procesos en puerto $port" -ForegroundColor Yellow
-    }
+  } catch {
+    Write-Host ('Error scanning port {0}: {1}' -f $port, $_.Exception.Message) -ForegroundColor Yellow
+  }
 }
 
-# Detener todos los procesos de Node.js
-Write-Host "🔍 Buscando procesos de Node.js..." -ForegroundColor Yellow
+# Kill all node processes (cleanup CLOSE_WAIT)
+Write-Host 'Scanning Node.js processes...' -ForegroundColor Yellow
 try {
-    $nodeProcesses = Get-Process -Name "node" -ErrorAction SilentlyContinue
-    foreach ($process in $nodeProcesses) {
-        Write-Host "🔪 Deteniendo proceso Node.js: $($process.Id)" -ForegroundColor Red
-        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-    }
-}
-catch {
-    Write-Host "⚠️  No se encontraron procesos de Node.js" -ForegroundColor Yellow
-}
-
-# Limpiar archivos temporales si existen
-if (Test-Path "logs") {
-    Write-Host "🧹 Limpiando archivos de logs..." -ForegroundColor Yellow
-    Remove-Item "logs\*.pid" -ErrorAction SilentlyContinue
+  $nodeProcesses = Get-Process -Name 'node' -ErrorAction SilentlyContinue
+  foreach ($process in $nodeProcesses) {
+    Write-Host ('Killing Node.js process PID: {0}' -f $process.Id) -ForegroundColor Red
+    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+  }
+} catch {
+  Write-Host 'No Node.js processes found' -ForegroundColor Yellow
 }
 
-Write-Host ""
-Write-Host "✅ Todos los servicios han sido detenidos" -ForegroundColor Green
-Write-Host "💡 Para volver a iniciar, ejecuta: .\start-all.ps1" -ForegroundColor Cyan
+# Clean logs
+if (Test-Path 'logs') {
+  Write-Host 'Cleaning log files...' -ForegroundColor Yellow
+  Remove-Item 'logs\*.pid' -ErrorAction SilentlyContinue
+}
+
+Write-Host ''
+Write-Host 'All services have been stopped' -ForegroundColor Green
+Write-Host 'To start again, run: .\start-all.ps1' -ForegroundColor Cyan

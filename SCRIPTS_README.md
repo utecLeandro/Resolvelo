@@ -1,5 +1,7 @@
 # 🚀 Scripts de Automatización - ReSolVelo
 
+> Nota (Windows): usa la carpeta "Resolvelo" como nombre canónico del proyecto. Evita usar variantes en minúscula como "resolvelo" para que los scripts y rutas funcionen de forma consistente.
+
 ## Inicio Rápido
 
 ### Para levantar todo el proyecto:

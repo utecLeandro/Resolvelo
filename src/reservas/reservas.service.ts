@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CrearReservaDto } from './dto/crear-reserva.dto';
 
 export interface UpdateReservaDto {
-  estado?: 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA' | 'RECHAZADA';
+  estado?: 'PENDIENTE' | 'CONFIRMADA' | 'EN_CURSO' | 'CANCELADA' | 'COMPLETADA' | 'RECHAZADA';
   fechaInicio?: string;
   fechaFin?: string;
   precioTotal?: number;
@@ -518,9 +518,9 @@ export class ReservasService {
   }
 
   async activarReserva(id: string) {
-    // El estado EN_CURSO no existe en el esquema actual de Prisma.
-    // Para mantener compatibilidad con el modelo, activamos la reserva como CONFIRMADA.
-    return this.actualizarReserva(id, { estado: 'CONFIRMADA' });
+    // Activar la reserva marcándola como EN_CURSO, alineado con el flujo de pago confirmado
+    // y los endpoints de Mercado Pago que establecen EN_CURSO al aprobarse.
+    return this.actualizarReserva(id, { estado: 'EN_CURSO' });
   }
 
   /**
@@ -533,8 +533,8 @@ export class ReservasService {
       const reservas = await this.prisma.reserva.findMany({
         where: { 
           propietarioId: propietarioId,
-          // El estado EN_CURSO no existe en el esquema actual, consideramos activas las CONFIRMADAS
-          estado: { in: ['CONFIRMADA'] }
+          // Consideramos activas las reservas CONFIRMADAS y EN_CURSO
+          estado: { in: ['CONFIRMADA', 'EN_CURSO'] }
         },
         include: {
           usuario: {

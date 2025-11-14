@@ -27,7 +27,7 @@ function Test-Port {
 # Verificar puertos necesarios
 Write-Host "Verificando puertos..." -ForegroundColor Yellow
 $ports = @{
-    3000 = "Backend"
+    3006 = "Backend"
     5174 = "Frontend" 
     5433 = "PostgreSQL"
     6379 = "Redis"
@@ -160,7 +160,7 @@ Write-Host "Iniciando servicios..." -ForegroundColor Green
 
 # Iniciar backend en segundo plano
 Write-Host "Iniciando backend..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD'; npm run start:dev" -WindowStyle Minimized
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD'; npm run start:dev:3006" -WindowStyle Minimized
 
 # Esperar a que el backend esté listo
 Write-Host "Esperando a que el backend esté listo..." -ForegroundColor Yellow
@@ -169,7 +169,7 @@ $attempt = 0
 do {
     Start-Sleep -Seconds 2
     $attempt++
-    $backendReady = Test-Port 3000
+$backendReady = Test-Port 3006
     if ($attempt -gt $maxAttempts) {
         Write-Host "Backend no está respondiendo después de $maxAttempts intentos" -ForegroundColor Red
         exit 1
@@ -204,7 +204,7 @@ Write-Host ""
 Write-Host "ReSolVelo está listo!" -ForegroundColor Green
 Write-Host "=================================" -ForegroundColor Green
 Write-Host "Frontend:      http://localhost:5174" -ForegroundColor Cyan
-Write-Host "Backend API:   http://localhost:3000/api" -ForegroundColor Cyan
+Write-Host "Backend API:   http://localhost:3006/api" -ForegroundColor Cyan
 Write-Host "Prisma Studio: http://localhost:5555" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Usuarios de prueba:" -ForegroundColor Yellow

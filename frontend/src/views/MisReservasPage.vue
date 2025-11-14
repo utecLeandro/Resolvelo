@@ -169,13 +169,21 @@
             <p class="mt-1 text-sm text-gray-500">Los instrumentos que estés alquilando actualmente aparecerán aquí.</p>
           </div>
           <div v-else>
-            <ReservaCard 
-              v-for="reserva in reservasActivas" 
-              :key="reserva.id" 
-              :reserva="reserva" 
-              :tipo="'activa'"
-              @contactar="contactarPropietario"
-            />
+            <div
+              v-for="reserva in reservasActivas"
+              :key="reserva.id"
+              :id="`reserva-${reserva.id}`"
+              :class="[
+                'mb-4',
+                highlightReservaId === reserva.id ? 'ring-2 ring-blue-400 rounded-lg transition-shadow duration-500' : ''
+              ]"
+            >
+              <ReservaCard 
+                :reserva="reserva" 
+                :tipo="'activa'"
+                @contactar="contactarPropietario"
+              />
+            </div>
           </div>
         </div>
 
@@ -223,8 +231,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { reservasService } from '../services/api'
 import ReservaCard from '../components/ReservaCard.vue'
 
@@ -264,10 +272,13 @@ interface ReservaArrendatario {
 
 // Composables
 const router = useRouter()
+const route = useRoute()
 
 // Estado reactivo
 const pestanaActiva = ref<'pendientes' | 'aprobadas' | 'activas' | 'completadas' | 'rechazadas'>('pendientes')
 const reservas = ref<ReservaArrendatario[]>([])
+const focusReservaId = ref<string | null>(null)
+const highlightReservaId = ref<string | null>(null)
 const cargando = ref(true)
 const error = ref<string | null>(null)
 const procesando = ref<string | null>(null)
@@ -314,6 +325,11 @@ const manejarActualizacionReserva = (event: CustomEvent) => {
       console.log(`Actualizando reserva ${reservaId} de ${reserva.estado} a ${nuevoEstado}`)
       reserva.estado = nuevoEstado
       console.log(`Reserva ${reservaId} actualizada a estado ${nuevoEstado}`)
+      // Enfocar y cambiar automáticamente a pestaña 'activas' cuando pasa a EN_CURSO/ACTIVA
+      if (nuevoEstado === 'EN_CURSO' || nuevoEstado === 'ACTIVA') {
+        pestanaActiva.value = 'activas'
+        focusReservaId.value = reservaId
+      }
     } else {
       console.log(`No se encontró la reserva con ID ${reservaId}`)
     }
@@ -326,6 +342,16 @@ const manejarActualizacionReserva = (event: CustomEvent) => {
 onMounted(async () => {
   await cargarMisReservas()
   
+  // Si venimos con query ?tab=activas, activar esa pestaña
+  const tab = (route.query.tab as string) || ''
+  const focus = (route.query.focus as string) || ''
+  if (tab === 'activas') {
+    pestanaActiva.value = 'activas'
+  }
+  if (focus) {
+    focusReservaId.value = focus
+  }
+
   // Configurar actualización automática cada 30 segundos
   intervalId = setInterval(async () => {
     if (!cargando.value) {
@@ -335,6 +361,26 @@ onMounted(async () => {
   
   // Escuchar eventos de actualización de reservas
   window.addEventListener('reserva-actualizada', manejarActualizacionReserva as EventListener)
+})
+
+// Resaltar y hacer scroll suave a la reserva enfocada
+watch(focusReservaId, async (id) => {
+  if (!id) return
+  await nextTick()
+  // Esperar un pequeño tiempo por si la lista acaba de cambiar de pestaña
+  setTimeout(() => {
+    const el = document.getElementById(`reserva-${id}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      highlightReservaId.value = id
+      // Quitar el resaltado luego de unos segundos
+      setTimeout(() => {
+        if (highlightReservaId.value === id) {
+          highlightReservaId.value = null
+        }
+      }, 2500)
+    }
+  }, 150)
 })
 
 // Métodos

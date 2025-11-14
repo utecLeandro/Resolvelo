@@ -1,5 +1,7 @@
 # 🎵 ReSolVelo - Plataforma de Alquiler de Equipos Musicales
 
+> Nota (Windows): la carpeta canónica del proyecto es "Resolvelo" (R mayúscula). Evita usar variantes en minúscula como "resolvelo" para reducir confusiones con rutas y scripts.
+
 ![ReSolVelo Logo](https://via.placeholder.com/800x200/1a1a1a/ffffff?text=ReSolVelo)
 
 ## 📖 Descripción
@@ -115,7 +117,7 @@
 1. **Clonar el repositorio**
    ```bash
    git clone https://github.com/tu-usuario/resolvelo.git
-   cd resolvelo
+   cd Resolvelo
    ```
 
 2. **Configurar variables de entorno**
@@ -200,7 +202,7 @@ npm run format       # Formatear código con Prettier
 ## 📁 Estructura del Proyecto
 
 ```
-resolvelo/
+Resolvelo/
 ├── src/
 │   ├── modules/           # Módulos de la aplicación
 │   │   ├── auth/         # Autenticación y autorización

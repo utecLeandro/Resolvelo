@@ -20,6 +20,8 @@ import PaginaInformativa from '../views/PaginaInformativa.vue'
 import TestApiPage from '../views/TestApiPage.vue'
 import RecuperarContrasenaPage from '../views/RecuperarContrasenaPage.vue'
 import ResetPasswordPage from '../views/ResetPasswordPage.vue'
+import PagoExitoso from '../views/PagoExitoso.vue'
+import PagoError from '../views/PagoError.vue'
 
 // Administración
 import AdminUsersPage from '../views/AdminUsersPage.vue'
@@ -146,6 +148,25 @@ const routes: RouteRecordRaw[] = [
     meta: {
       title: 'Procesar Pago - ReSolVelo',
       description: 'Completa el pago para confirmar tu reserva',
+    },
+  },
+  {
+    path: '/pago-exitoso',
+    name: 'PagoExitoso',
+    component: PagoExitoso,
+    meta: {
+      title: 'Pago Exitoso - ReSolVelo',
+      description: 'Resumen del pago realizado',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/pago-error',
+    name: 'PagoError',
+    component: PagoError,
+    meta: {
+      title: 'Error de Pago - ReSolVelo',
+      description: 'Hubo un problema procesando tu pago',
     },
   },
   { path: '/debug', name: 'Debug', component: DebugPage, meta: { title: 'Debug - ReSolVelo', description: 'Página de debug temporal' } },
