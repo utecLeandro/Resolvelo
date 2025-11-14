@@ -38,6 +38,15 @@ export interface Transaccion {
 }
 
 export const transaccionesService = {
+  async crearPreferenciaMercadoPago(reservaId: string, descripcion?: string): Promise<{ ok: boolean; preferenciaId?: string; transaccionId?: string; redirectUrl?: string; init_point?: string; sandbox_init_point?: string; message?: string }> {
+    // Forzar que 4xx sean tratados como error para poder manejar mensajes del backend correctamente
+    const response = await api.post(
+      '/transacciones/mercado-pago/crear-preferencia',
+      { reservaId, descripcion },
+      { validateStatus: (status) => status >= 200 && status < 300 }
+    )
+    return response.data
+  },
   async procesarPago(datos: ProcesarPagoDto): Promise<RespuestaPagoDto> {
     const response = await api.post('/transacciones/procesar-pago', datos)
     return response.data
@@ -50,6 +59,16 @@ export const transaccionesService = {
 
   async obtenerTransaccion(id: string): Promise<Transaccion> {
     const response = await api.get(`/transacciones/${id}`)
+    return response.data
+  },
+
+  async confirmarPagoMercadoPago(paymentId: string): Promise<Transaccion> {
+    const response = await api.post('/transacciones/mercado-pago/confirmar', { paymentId })
+    return response.data
+  },
+
+  async verificarEstadoMercadoPagoPorTransaccion(id: string): Promise<Transaccion> {
+    const response = await api.get(`/transacciones/mercado-pago/verificar/${id}`)
     return response.data
   }
 }

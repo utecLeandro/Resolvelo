@@ -101,6 +101,12 @@
             </div>
             
             <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ publicacion.titulo }}</h1>
+            <div v-if="publicacion.propietario" class="flex items-center text-sm text-gray-700 mt-1">
+              <div class="w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center mr-2">
+                {{ publicacion.propietario.nombre?.charAt(0) }}{{ publicacion.propietario.apellido?.charAt(0) }}
+              </div>
+              <span>Propietario: <span class="font-medium">{{ publicacion.propietario.nombre }} {{ publicacion.propietario.apellido }}</span></span>
+            </div>
             
             <!-- Calificación y estadísticas -->
             <div class="flex items-center space-x-4 text-sm text-gray-600">
@@ -194,14 +200,6 @@
               </p>
               <p v-else class="text-sm text-gray-500">Selecciona las fechas para calcular el total del alquiler.</p>
               <p v-if="comprobandoDisponibilidad" class="text-xs text-gray-500 mt-2">Verificando disponibilidad…</p>
-              <div v-if="reservasActivas && reservasActivas.length > 0" class="text-xs text-gray-600 mt-2">
-                <span class="font-medium">Fechas ocupadas próximas:</span>
-                <ul class="list-disc ml-4 mt-1 space-y-1">
-                  <li v-for="(r, i) in reservasActivas.slice(0, 3)" :key="i">
-                    {{ new Date(r.fechaInicio).toLocaleDateString() }} → {{ new Date(r.fechaFin).toLocaleDateString() }}
-                  </li>
-                </ul>
-              </div>
             </div>
           </div>
 
