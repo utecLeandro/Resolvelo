@@ -156,10 +156,13 @@ export class PublicacionesService {
       throw new NotFoundException('Publicación no encontrada');
     }
 
-    // Buscar el registro de Administrador asociado al usuario autenticado
-    const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: moderadorId } });
+    let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: moderadorId } });
     if (!admin) {
-      throw new ForbiddenException('El usuario autenticado no es administrador');
+      const usuario = await this.prisma.usuario.findUnique({ where: { id: moderadorId, activo: true } });
+      if (!usuario || (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')) {
+        throw new ForbiddenException('El usuario autenticado no es administrador');
+      }
+      admin = await this.prisma.administrador.create({ data: { usuarioId: moderadorId } });
     }
 
     const estadoAnterior = existente.estadoModeracion;
@@ -207,10 +210,13 @@ export class PublicacionesService {
       throw new NotFoundException('Publicación no encontrada');
     }
 
-    // Buscar el registro de Administrador asociado al usuario autenticado
-    const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: moderadorId } });
+    let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: moderadorId } });
     if (!admin) {
-      throw new ForbiddenException('El usuario autenticado no es administrador');
+      const usuario = await this.prisma.usuario.findUnique({ where: { id: moderadorId, activo: true } });
+      if (!usuario || (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')) {
+        throw new ForbiddenException('El usuario autenticado no es administrador');
+      }
+      admin = await this.prisma.administrador.create({ data: { usuarioId: moderadorId } });
     }
 
     const estadoAnterior = existente.estadoModeracion;

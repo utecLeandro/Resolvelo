@@ -9,7 +9,7 @@
     "start:dist": "node dist2/main.js",
     "start:prod": "node dist2/main.js",
     "start:dev": "ts-node-dev --clear --respawn --transpile-only src/main.ts",
-    "start:dev:3006": "set HOST=127.0.0.1 && set PORT=3006 && set FRONTEND_URL=http://127.0.0.1:5173 && set MP_SUCCESS_URL=http://127.0.0.1:5173/pago-exitoso && set MP_FAILURE_URL=http://127.0.0.1:5173/pago-error && set MP_PENDING_URL=http://127.0.0.1:5173/pago-exitoso && set MP_NOTIFICATION_URL=https://example.com/webhook && ts-node-dev --clear --respawn --transpile-only src/main.ts",
+    "start:dev:3006": "set HOST=127.0.0.1 && set PORT=3006 && set FRONTEND_URL=http://127.0.0.1:5174 && set MP_SUCCESS_URL=http://127.0.0.1:5174/pago-exitoso && set MP_FAILURE_URL=http://127.0.0.1:5174/pago-error && set MP_PENDING_URL=http://127.0.0.1:5174/pago-exitoso && set MP_NOTIFICATION_URL=https://example.com/webhook && ts-node-dev --clear --respawn --transpile-only src/main.ts",
     "build": "tsc -p tsconfig.build.json",
     "test": "jest --passWithNoTests",
     "test:e2e": "jest --config jest.config.js --runInBand",
