@@ -46,8 +46,8 @@
               ]"
             >
               Solicitudes Activas
-              <span v-if="reservasActivas.length > 0" class="ml-2 bg-green-100 text-green-600 py-0.5 px-2 rounded-full text-xs font-medium">
-                {{ reservasActivas.length }}
+              <span v-if="reservasActivasFiltradas.length > 0" class="ml-2 bg-green-100 text-green-600 py-0.5 px-2 rounded-full text-xs font-medium">
+                {{ reservasActivasFiltradas.length }}
               </span>
             </button>
             <button
@@ -519,6 +519,7 @@
             {{ cargandoReservasActivas ? 'Actualizando...' : 'Actualizar' }}
           </button>
         </div>
+        <p class="text-sm text-gray-600 mb-4">Se muestran reservas en curso con pago exitoso. No incluye confirmadas.</p>
 
         <!-- Estado de carga reservas activas -->
         <div v-if="cargandoReservasActivas" class="flex justify-center items-center py-12">
@@ -553,18 +554,18 @@
         </div>
 
         <!-- Sin reservas activas -->
-        <div v-else-if="reservasActivas.length === 0" class="text-center py-12">
+        <div v-else-if="reservasActivasFiltradas.length === 0" class="text-center py-12">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           <h3 class="mt-2 text-sm font-medium text-gray-900">No tienes reservas activas</h3>
-          <p class="mt-1 text-sm text-gray-500">Las reservas aprobadas y en curso aparecerán aquí.</p>
+          <p class="mt-1 text-sm text-gray-500">Las reservas pagadas y en curso aparecerán aquí.</p>
         </div>
 
         <!-- Lista de reservas activas -->
         <div v-else class="space-y-6">
           <div
-            v-for="reserva in reservasActivas"
+            v-for="reserva in reservasActivasFiltradas"
             :key="reserva.id"
             class="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-green-500"
           >
@@ -923,10 +924,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { publicacionesService, reservasService } from '../services/api'
 import type { Publicacion } from '../services/api'
+let bc: BroadcastChannel | null = null
 
 // Tipos para las solicitudes
 interface SolicitudReserva {
@@ -1084,12 +1086,61 @@ const solicitudesFiltradas = computed(() => {
   }
 })
 
+const reservasActivasFiltradas = computed(() => {
+  const rs = reservasActivas.value || []
+  return rs.filter(r => r.estado === 'EN_CURSO' && ((r.transacciones || []).some((tx: any) => tx.estado === 'COMPLETADA')))
+})
+
 // Cargar datos al montar el componente
 onMounted(async () => {
   console.log('🚀 MisPublicacionesPage montado')
   console.log('🔍 Estado inicial procesandoSolicitud:', procesandoSolicitud.value)
   await cargarPublicaciones()
   await cargarSolicitudesPendientes()
+  window.addEventListener('reserva-actualizada', manejarActualizacionPropietario as EventListener)
+  window.addEventListener('storage', storageListener)
+  try {
+    bc = new BroadcastChannel('resolvelo-events')
+    bc.onmessage = async (ev: MessageEvent) => {
+      const data = ev.data || {}
+      if (data?.tipo === 'reserva-actualizada' && (data?.nuevoEstado === 'EN_CURSO' || data?.accion === 'pago-aprobado')) {
+        pestanaActiva.value = 'reservas-activas'
+        await cargarReservasActivas()
+      }
+    }
+  } catch {}
+})
+
+const manejarActualizacionPropietario = async (event: CustomEvent) => {
+  try {
+    const { reservaId, nuevoEstado, accion } = event.detail || {}
+    if (nuevoEstado === 'EN_CURSO' || accion === 'pago-aprobado') {
+      pestanaActiva.value = 'reservas-activas'
+      await cargarReservasActivas()
+    }
+  } catch {}
+}
+
+const storageListener = async (ev: StorageEvent) => {
+  try {
+    if (ev.key !== 'reserva_actualizada_event') return
+    const val = ev.newValue
+    if (!val) return
+    const data = JSON.parse(val)
+    if (data?.nuevoEstado === 'EN_CURSO' || data?.accion === 'pago-aprobado') {
+      pestanaActiva.value = 'reservas-activas'
+      await cargarReservasActivas()
+    }
+  } catch {}
+}
+
+onUnmounted(() => {
+  window.removeEventListener('reserva-actualizada', manejarActualizacionPropietario as EventListener)
+  window.removeEventListener('storage', storageListener)
+  try {
+    if (bc) bc.close()
+    bc = null
+  } catch {}
 })
 
 // Métodos - Pestañas
@@ -1260,7 +1311,7 @@ const contactarArrendatario = (solicitud: SolicitudReserva) => {
     const url = `https://wa.me/${solicitud.arrendatario.telefono}?text=${encodeURIComponent(mensaje)}`
     window.open(url, '_blank')
   } else {
-    mostrarNotificacion('Información de contacto no disponible', 'warning')
+    mostrarNotificacion('Información de contacto no disponible', 'error')
   }
 }
 
@@ -1274,7 +1325,7 @@ const verDetallesSolicitud = (solicitud: SolicitudReserva) => {
   const fechaFin = formatearFecha(solicitud.fechaFin)
   const mensaje = `Solicitud de ${solicitud.arrendatario?.nombre} para ${solicitud.publicacion?.titulo} del ${fechaInicio} al ${fechaFin} por $${solicitud.precioTotal}`
   
-  mostrarNotificacion(mensaje, 'info')
+  mostrarNotificacion(mensaje, 'success')
 }
 
 // Métodos - Reservas Activas
