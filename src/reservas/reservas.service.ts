@@ -183,20 +183,23 @@ export class ReservasService {
       const fechaInicio = new Date(createReservaDto.fechaInicio);
       const fechaFin = new Date(createReservaDto.fechaFin);
       const ahora = new Date();
+      const hoyInicio = new Date(ahora);
+      hoyInicio.setHours(0, 0, 0, 0);
+      const inicioReservaDia = new Date(fechaInicio);
+      inicioReservaDia.setHours(0, 0, 0, 0);
 
       // Verificar que las fechas sean válidas
       if (isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
         throw new BadRequestException('Las fechas proporcionadas no son válidas');
       }
 
-      // Verificar que la fecha de inicio sea en el futuro
-      if (fechaInicio <= ahora) {
-        throw new BadRequestException('La fecha de inicio debe ser en el futuro');
+      if (inicioReservaDia < hoyInicio) {
+        throw new BadRequestException('La fecha de inicio debe ser hoy o futura');
       }
 
-      // Verificar que la fecha de fin sea posterior a la fecha de inicio
-      if (fechaFin <= fechaInicio) {
-        throw new BadRequestException('La fecha de fin debe ser posterior a la fecha de inicio');
+      // Verificar que la fecha de fin no sea anterior a la fecha de inicio (permitir mismo día)
+      if (fechaFin < fechaInicio) {
+        throw new BadRequestException('La fecha de fin no puede ser anterior a la fecha de inicio');
       }
 
       // 5. Verificar que no existan reservas conflictivas (solapamiento de fechas)

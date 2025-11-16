@@ -173,7 +173,7 @@
                   :text-input="false"
                   :range="true"
                   :partial-range="true"
-                  :min-range="1"
+                  :min-range="0"
                   :max-range="365"
                   :multi-calendars="true"
                   :disabled-dates="fechasDeshabilitadas"
@@ -538,7 +538,8 @@ const formatearISO = (d: Date) => {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  // Serializar como fecha local evitando el parsing UTC
+  return `${y}-${m}-${day}T00:00:00`
 }
 
 const formatearDDMMYYYY = (d: Date) => {

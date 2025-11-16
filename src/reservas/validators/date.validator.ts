@@ -17,17 +17,31 @@ import {
 export class IsFutureDateConstraint implements ValidatorConstraintInterface {
   validate(value: any, args: ValidationArguments) {
     if (!value) return false;
-    
+
+    const parseLocalDate = (v: any) => {
+      if (typeof v === 'string') {
+        const m = v.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})(?:[T ]([0-9]{2}):([0-9]{2}):([0-9]{2}))?$/);
+        if (m) {
+          const y = Number(m[1]);
+          const mo = Number(m[2]) - 1;
+          const d = Number(m[3]);
+          const hh = m[4] ? Number(m[4]) : 0;
+          const mm = m[5] ? Number(m[5]) : 0;
+          const ss = m[6] ? Number(m[6]) : 0;
+          return new Date(y, mo, d, hh, mm, ss);
+        }
+      }
+      return new Date(v);
+    };
+
     try {
-      const inputDate = new Date(value);
+      const inputDate = parseLocalDate(value);
       const now = new Date();
-      
-      // Verificar que la fecha sea válida
+
       if (isNaN(inputDate.getTime())) {
         return false;
       }
-      
-      // Verificar que sea desde el día actual (medianoche)
+
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       return inputDate >= today;
     } catch (error) {
@@ -47,23 +61,36 @@ export class IsFutureDateConstraint implements ValidatorConstraintInterface {
 export class IsAfterConstraint implements ValidatorConstraintInterface {
   validate(value: any, args: ValidationArguments) {
     if (!value) return false;
-    
+
     const [relatedPropertyName] = args.constraints;
     const relatedValue = (args.object as any)[relatedPropertyName];
-    
+
     if (!relatedValue) return false;
-    
+
+    const parseLocalDate = (v: any) => {
+      if (typeof v === 'string') {
+        const m = v.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})(?:[T ]([0-9]{2}):([0-9]{2}):([0-9]{2}))?$/);
+        if (m) {
+          const y = Number(m[1]);
+          const mo = Number(m[2]) - 1;
+          const d = Number(m[3]);
+          const hh = m[4] ? Number(m[4]) : 0;
+          const mm = m[5] ? Number(m[5]) : 0;
+          const ss = m[6] ? Number(m[6]) : 0;
+          return new Date(y, mo, d, hh, mm, ss);
+        }
+      }
+      return new Date(v);
+    };
+
     try {
-      const currentDate = new Date(value);
-      const relatedDate = new Date(relatedValue);
-      
-      // Verificar que ambas fechas sean válidas
+      const currentDate = parseLocalDate(value);
+      const relatedDate = parseLocalDate(relatedValue);
+
       if (isNaN(currentDate.getTime()) || isNaN(relatedDate.getTime())) {
         return false;
       }
-      
-      // Verificar que la fecha actual sea posterior o igual a la fecha relacionada
-      // Permitir alquileres de un solo día (fecha inicio = fecha fin)
+
       return currentDate >= relatedDate;
     } catch (error) {
       return false;
