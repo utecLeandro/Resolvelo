@@ -585,7 +585,14 @@ export const reservasService = {
   // Crear una nueva reserva
   async crearReserva(datos: CrearReservaRequest): Promise<any> {
     const response = await api.post('/usuarios/reservas/crear', datos)
-    return response.data
+    const data = response.data
+    if (response.status >= 400) {
+      throw { response: { data } }
+    }
+    if (data && data.success === false) {
+      throw { response: { data } }
+    }
+    return data
   },
 
   // Obtener solicitudes de alquiler pendientes para el propietario
@@ -652,6 +659,18 @@ export const reservasService = {
   // Activar una reserva (cambiar estado de CONFIRMADA a EN_CURSO)
   async activarReserva(reservaId: string): Promise<any> {
     const response = await api.post(`/usuarios/reservas/${reservaId}/activar`)
+    return response.data
+  },
+
+  // Alias por PUT directo al controlador de reservas
+  async activarReservaPut(reservaId: string): Promise<any> {
+    const response = await api.put(`/reservas/${reservaId}/activar`)
+    return response.data
+  },
+
+  // Cancelar una reserva (arrendatario)
+  async cancelarReserva(reservaId: string): Promise<any> {
+    const response = await api.patch(`/usuarios/reservas/${reservaId}/cancelar`)
     return response.data
   },
 }

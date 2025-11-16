@@ -277,7 +277,7 @@ export class PublicacionesService {
             }
           },
           imagenes: {
-            orderBy: { esPrincipal: 'desc' }
+            orderBy: { orden: 'asc' }
           },
           calificaciones: {
             include: {
@@ -596,8 +596,7 @@ export class PublicacionesService {
       const reservas = await this.prisma.reserva.findMany({
         where: {
           publicacionId: id,
-          // EN_CURSO no existe; consideramos activas PENDIENTE y CONFIRMADA
-          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA] },
+          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
         },
         select: { fechaInicio: true, fechaFin: true },
         orderBy: { fechaInicio: 'asc' },
@@ -624,8 +623,7 @@ export class PublicacionesService {
       const solapadas = await this.prisma.reserva.count({
         where: {
           publicacionId: id,
-          // EN_CURSO no existe en el esquema actual
-          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA] },
+          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
           NOT: {
             OR: [
               { fechaFin: { lte: fechaInicio } },
