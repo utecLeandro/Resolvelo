@@ -533,8 +533,13 @@ export class ReservasService {
       const reservas = await this.prisma.reserva.findMany({
         where: { 
           propietarioId: propietarioId,
-          // Consideramos activas las reservas CONFIRMADAS y EN_CURSO
-          estado: { in: ['CONFIRMADA', 'EN_CURSO'] }
+          estado: 'EN_CURSO',
+          transacciones: {
+            some: {
+              tipo: 'PAGO_RESERVA',
+              estado: 'COMPLETADA'
+            }
+          }
         },
         include: {
           usuario: {

@@ -10,7 +10,7 @@
       <!-- Loading State -->
       <div v-if="cargando" class="flex justify-center items-center py-12">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <span class="ml-3 text-gray-600">Cargando informació³n de la reserva...</span>
+        <span class="ml-3 text-gray-600">Cargando información de la reserva...</span>
       </div>
 
       <!-- Error State -->
@@ -37,10 +37,10 @@
             </svg>
           </div>
           <div class="ml-3">
-            <h3 class="text-lg font-medium text-green-800">Â¡Pago Exitoso!</h3>
+            <h3 class="text-lg font-medium text-green-800">¡Pago Exitoso!</h3>
             <div class="mt-2 text-sm text-green-700">
               <p>Tu pago ha sido procesado correctamente.</p>
-              <p class="mt-1"><strong>ID de Transacció³n:</strong> {{ resultadoPago?.transaccionId }}</p>
+              <p class="mt-1"><strong>ID de Transacción:</strong> {{ resultadoPago?.transaccionId }}</p>
               <p><strong>Referencia:</strong> {{ resultadoPago?.referenciaExterna }}</p>
               <p><strong>Mensaje:</strong> {{ resultadoPago?.mensaje }}</p>
             </div>
@@ -56,7 +56,7 @@
         </div>
       </div>
 
-      <!-- Payment Form -->
+      <!-- Payment Form / Brick -->
       <div v-else-if="reserva" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Resumen de la reserva -->
         <div class="bg-white rounded-lg shadow-md p-6">
@@ -78,7 +78,7 @@
                 <span class="font-medium">{{ formatearFecha(reserva.fechaFin) }}</span>
               </div>
               <div class="flex justify-between text-sm mt-1">
-                <span class="text-gray-600">Duració³n:</span>
+                <span class="text-gray-600">Duración:</span>
                 <span class="font-medium">{{ calcularDias() }} día(s)</span>
               </div>
             </div>
@@ -96,71 +96,13 @@
           </div>
         </div>
 
-        <!-- Formulario de pago -->
+        <!-- Checkout Bricks: Payment -->
         <div class="bg-white rounded-lg shadow-md p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">Informació³n de Pago</h2>
-          
-          <form @submit.prevent="procesarPago" class="space-y-4">
-            <div>
-              <label for="metodoPago" class="block text-sm font-medium text-gray-700 mb-1">
-                Método de Pago
-              </label>
-              <select
-                id="metodoPago"
-                v-model="formPago.metodoPago"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              >
-                <option value="MERCADO_PAGO">Mercado Pago</option>
-                <option value="TARJETA_CREDITO">Tarjeta de Crédito</option>
-                <option value="TARJETA_DEBITO">Tarjeta de Débito</option>
-                <option value="TRANSFERENCIA">Transferencia Bancaria</option>
-                <option value="PAYPAL">PayPal</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-1">
-                Descripció³n (Opcional)
-              </label>
-              <textarea
-                id="descripcion"
-                v-model="formPago.descripcion"
-                rows="3"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Notas adicionales sobre el pago..."
-              ></textarea>
-            </div>
-
-            <!-- Simulació³n Notice -->
-
-
-            <!-- Aviso de apertura de MP y monitoreo -->
-            <div v-if="monitoreandoPago" class="bg-blue-50 border border-blue-200 rounded-md p-3">
-              <p class="text-sm text-blue-700">
-                Abrimos Mercado Pago en una nueva pestaña. Esta página está monitoreando tu transacción
-                (ID: <span class="font-mono">{{ transaccionIdMp || '...' }}</span>) y te redirigirá automáticamente
-                a Mis Reservas cuando el pago se acredite.
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              :disabled="procesandoPago"
-              class="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span v-if="procesandoPago" class="flex items-center justify-center">
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Procesando pago...
-              </span>
-              <span v-else>
-                Proceder al pago - ${{ calcularTotal() }}
-              </span>
-            </button>
-          </form>
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Información de Pago</h2>
+          <div id="paymentBrick_container"></div>
+          <div v-if="brickError" class="mt-4 bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
+            {{ brickError }}
+          </div>
         </div>
       </div>
     </div>
@@ -176,7 +118,7 @@ import { useAuth } from '@/composables/useAuth'
 
 const route = useRoute()
 const router = useRouter()
-const { usuarioAutenticado, datosUsuario, verificarAutenticacion } = useAuth()
+const { usuarioAutenticado, verificarAutenticacion, datosUsuario } = useAuth()
 
 const cargando = ref(true)
 const error = ref('')
@@ -190,18 +132,31 @@ const monitoreandoPago = ref(false)
 const transaccionIdMp = ref<string>('')
 let pollingTimer: number | null = null
 let pollingInicio = 0
+let ws: WebSocket | null = null
+const preferenciaId = ref<string>('')
+const mpPublicKey = ref<string>('')
+const brickError = ref<string>('')
 
 const formPago = ref({
   metodoPago: 'MERCADO_PAGO',
   descripcion: ''
 })
 
+function sanitizeId(id: string): string {
+  const limpio = (id || '').trim()
+  if (!/^[a-zA-Z0-9]+$/.test(limpio)) {
+    throw new Error('ID de reserva no válido')
+  }
+  return limpio
+}
+
 const cargarReserva = async () => {
   try {
     cargando.value = true
     error.value = ''
     
-    const reservaId = route.params.id as string
+    const reservaIdRaw = route.params.id as string
+    const reservaId = sanitizeId(reservaIdRaw)
     
     if (!reservaId) {
       throw new Error('ID de reserva no válido')
@@ -250,107 +205,82 @@ const formatearFecha = (fecha: string) => {
   })
 }
 
-const procesarPago = async () => {
+const renderPaymentBrick = async () => {
   try {
-    procesandoPago.value = true
-    error.value = ''
+    brickError.value = ''
+    // Cargar SDK si no existe
+    const ensureScript = () => new Promise<void>((resolve, reject) => {
+      if ((window as any).MercadoPago) return resolve()
+      const s = document.createElement('script')
+      s.src = 'https://sdk.mercadopago.com/js/v2'
+      s.onload = () => resolve()
+      s.onerror = () => reject(new Error('No se pudo cargar el SDK de Mercado Pago'))
+      document.head.appendChild(s)
+    })
+    await ensureScript()
 
-    // Crear preferencia de Mercado Pago y redirigir al checkout
-    const pref = await transaccionesService.crearPreferenciaMercadoPago(
-      reserva.value.id,
-      formPago.value.descripcion || `Pago de reserva para ${reserva.value.publicacion.titulo}`
-    )
-
-    // Si el backend indica ok=false o faltan URLs, intentamos mostrar un mensaje claro
-    if (!pref || pref.ok !== true) {
-      throw new Error(pref?.message || 'No se pudo crear la preferencia de pago')
+    // Obtener public key
+    mpPublicKey.value = (import.meta.env.VITE_MP_PUBLIC_KEY || '').trim()
+    if (!mpPublicKey.value) {
+      mpPublicKey.value = await transaccionesService.obtenerMpPublicKey()
+    }
+    if (!mpPublicKey.value) {
+      throw new Error('Falta configurar la clave pública de Mercado Pago')
     }
 
-    // Guardamos el transaccionId para poder monitorear el estado vía webhook
-    if (pref?.transaccionId) {
-      transaccionIdMp.value = pref.transaccionId
-      localStorage.setItem('ultimoPago_transaccionId', pref.transaccionId)
-      localStorage.setItem('ultimoPago_reservaId', reserva.value.id)
+    const mp = new (window as any).MercadoPago(mpPublicKey.value, { locale: 'es-UY' })
+    const bricksBuilder = mp.bricks()
+    const payer = {
+      firstName: datosUsuario.value?.nombre || '',
+      lastName: datosUsuario.value?.apellido || '',
+      email: datosUsuario.value?.email || '',
     }
-
-    // Iniciar polling en la pestaña original como fallback si MP no redirige
-    const iniciarPolling = () => {
-      if (!transaccionIdMp.value) return
-      if (pollingTimer) return
-      monitoreandoPago.value = true
-      pollingInicio = Date.now()
-      const intervaloMs = 4000
-      pollingTimer = window.setInterval(async () => {
-        try {
-          const tx = await transaccionesService.obtenerTransaccion(transaccionIdMp.value)
-          // Estados del backend: COMPLETADA (pago acreditado), PENDIENTE/EN_PROCESO
-          if (tx?.estado === 'COMPLETADA') {
-            // Redirigimos al flujo de éxito; Mercado Pago también puede redirigir, pero este fallback no depende de ello
-            if (pollingTimer) {
-              clearInterval(pollingTimer)
-              pollingTimer = null
-            }
-            monitoreandoPago.value = false
-            router.replace({ path: '/pago-exitoso', query: { external_reference: tx.id } })
-          } else {
-            // Intento activo: consultar directamente a MP por external_reference si sigue pendiente
-            try {
-              const txVerificada = await transaccionesService.verificarEstadoMercadoPagoPorTransaccion(transaccionIdMp.value)
-              if (txVerificada?.estado === 'COMPLETADA') {
-                if (pollingTimer) {
-                  clearInterval(pollingTimer)
-                  pollingTimer = null
+    const settings: any = {
+      initialization: {
+        amount: calcularTotal(),
+        preferenceId: preferenciaId.value,
+        payer,
+      },
+      customization: {
+        visual: { style: { theme: 'default' } },
+        paymentMethods: {
+          creditCard: 'all',
+          debitCard: 'all',
+          ticket: 'all',
+          bankTransfer: 'all',
+          wallet_purchase: 'all',
+          maxInstallments: 1,
+        },
+      },
+      callbacks: {
+        onReady: () => {},
+        onSubmit: ({ selectedPaymentMethod, formData }: any) => {
+          return new Promise<void>((resolve, reject) => {
+            transaccionesService.procesarPagoBrick({ formData: { ...formData, transaction_amount: calcularTotal() }, transaccionId: transaccionIdMp.value, preferenceId: preferenciaId.value })
+              .then(async (tx) => {
+                if (tx?.estado === 'COMPLETADA') {
+                  await finalizarFlujoAprobado(tx.id)
+                } else if (tx?.estado === 'PENDIENTE') {
+                  router.replace({ path: '/pago-exitoso', query: { external_reference: transaccionIdMp.value, status: 'pending' } })
+                } else {
+                  router.replace({ path: '/pago-error', query: { status: (tx?.estado || 'error').toLowerCase() } })
                 }
-                monitoreandoPago.value = false
-                router.replace({ path: '/pago-exitoso', query: { external_reference: txVerificada.id } })
-                return
-              }
-            } catch (e) {
-              console.warn('Verificación directa en MP falló:', e)
-            }
-            // Auto-stop tras 3 minutos para evitar polling infinito
-            if (Date.now() - pollingInicio > 3 * 60 * 1000) {
-              if (pollingTimer) {
-                clearInterval(pollingTimer)
-                pollingTimer = null
-              }
-              monitoreandoPago.value = false
-            }
-          }
-        } catch (e) {
-          // No romper el flujo por errores temporales
-          console.warn('Polling pago: error obteniendo transacción', e)
-        }
-      }, intervaloMs)
+                resolve()
+              })
+              .catch((err) => {
+                brickError.value = err?.response?.data?.message || err?.message || 'Error procesando el pago'
+                reject()
+              })
+          })
+        },
+        onError: (error: any) => {
+          brickError.value = error?.message || 'Error en el Brick de pago'
+        },
+      },
     }
-
-    if (!pref.redirectUrl) {
-      // Fallback por si la API devuelve los campos crudos
-      const fallbackUrl = (pref as any)?.sandbox_init_point || (pref as any)?.init_point
-      if (fallbackUrl) {
-        const mpWin = window.open(fallbackUrl, '_blank');
-        iniciarPolling()
-        if (!mpWin) {
-          // Fallback: si el navegador bloquea popups, navegamos en la misma pestaña
-          window.location.assign(fallbackUrl)
-        }
-        return
-      }
-      throw new Error('No se pudo obtener la URL de pago de Mercado Pago')
-    }
-    const mpWin = window.open(pref.redirectUrl, '_blank');
-    iniciarPolling()
-    if (!mpWin) {
-      // Fallback: si el navegador bloquea popups, navegamos en la misma pestaña
-      window.location.assign(pref.redirectUrl)
-    }
-    return
-  } catch (err: any) {
-    console.error('Error iniciando pago con Mercado Pago:', err)
-    error.value = err?.response?.data?.message || err?.message || 'No se pudo iniciar el pago con Mercado Pago'
-  } finally {
-    // En caso de redirección exitosa, este finally no se ejecutará; se mantiene para errores previos
-    procesandoPago.value = false
+    ;(window as any).paymentBrickController = await bricksBuilder.create('payment', 'paymentBrick_container', settings)
+  } catch (e: any) {
+    brickError.value = e?.message || 'No se pudo inicializar el Brick de pago'
   }
 }
 
@@ -365,6 +295,32 @@ onMounted(async () => {
   }
   
   cargarReserva()
+  // Una vez cargada la reserva, crear preferencia y renderizar Brick
+  const esperarReserva = () => new Promise<void>((resolve) => {
+    const tm = setInterval(() => {
+      if (reserva.value) {
+        clearInterval(tm)
+        resolve()
+      }
+    }, 50)
+  })
+  await esperarReserva()
+  try {
+    const pref = await transaccionesService.crearPreferenciaMercadoPago(
+      reserva.value.id,
+      formPago.value.descripcion || `Pago de reserva para ${reserva.value.publicacion.titulo}`
+    )
+    if (!pref || pref.ok !== true) {
+      throw new Error(pref?.message || 'No se pudo crear la preferencia de pago')
+    }
+    transaccionIdMp.value = String(pref.transaccionId || '')
+    preferenciaId.value = String(pref.preferenciaId || '')
+    localStorage.setItem('ultimoPago_transaccionId', transaccionIdMp.value)
+    localStorage.setItem('ultimoPago_reservaId', reserva.value.id)
+    await renderPaymentBrick()
+  } catch (err: any) {
+    error.value = err?.response?.data?.message || err?.message || 'No se pudo inicializar el pago'
+  }
 })
 
 onBeforeUnmount(() => {
@@ -373,4 +329,79 @@ onBeforeUnmount(() => {
     pollingTimer = null
   }
 })
+
+// Utilidades y flujos de finalización
+const ensureHttpsUrl = (url: string): string => {
+  try {
+    const u = new URL(url)
+    if (u.protocol === 'http:') {
+      u.protocol = 'https:'
+    }
+    return u.toString()
+  } catch {
+    return url.replace(/^http:\/\//i, 'https://')
+  }
+}
+
+const setupWebSocket = (transaccionId: string) => {
+  try {
+    const wsBase = (import.meta.env.VITE_WS_URL || '').trim()
+    if (!wsBase) return
+    const token = localStorage.getItem('access_token') || ''
+    const url = `${wsBase}?transaccionId=${encodeURIComponent(transaccionId)}${token ? `&token=${encodeURIComponent(token)}` : ''}`
+    ws = new WebSocket(url)
+    ws.onmessage = (evt) => {
+      try {
+        const data = JSON.parse(evt.data)
+        if (data?.tipo === 'pago' && data?.estado === 'COMPLETADA' && data?.transaccionId) {
+          finalizarFlujoAprobado(data.transaccionId)
+        }
+      } catch {}
+    }
+    ws.onerror = () => {}
+    ws.onclose = () => {}
+  } catch {}
+}
+
+const finalizarFlujoAprobado = async (transaccionId: string) => {
+  try {
+    let tx = await transaccionesService.completarTransaccion(transaccionId)
+    if (!tx || tx.estado !== 'COMPLETADA') {
+      tx = await transaccionesService.verificarEstadoMercadoPagoPorTransaccion(transaccionId)
+      if (!tx || tx.estado !== 'COMPLETADA') {
+        throw new Error('El pago no está aprobado aún')
+      }
+    }
+    const reservaId = tx?.reserva?.id || localStorage.getItem('ultimoPago_reservaId') || ''
+    try {
+      sessionStorage.setItem('paymentSuccess', JSON.stringify({
+        transaccionId,
+        reservaId,
+        monto: tx?.monto,
+        metodo: tx?.metodoPago,
+        fecha: tx?.fechaCompletado || new Date().toISOString()
+      }))
+      localStorage.setItem('reserva_actualizada_event', JSON.stringify({
+        reservaId,
+        nuevoEstado: 'EN_CURSO',
+        accion: 'pago-aprobado',
+        at: Date.now()
+      }))
+      try {
+        const bc = new BroadcastChannel('resolvelo-events')
+        bc.postMessage({ tipo: 'reserva-actualizada', reservaId, nuevoEstado: 'EN_CURSO', accion: 'pago-aprobado' })
+        bc.close()
+      } catch {}
+    } catch {}
+    if (pollingTimer) {
+      clearInterval(pollingTimer)
+      pollingTimer = null
+    }
+    monitoreandoPago.value = false
+    router.replace({ path: '/pago-exitoso', query: { external_reference: transaccionId, status: 'approved' } })
+  } catch (e: any) {
+    console.warn('finalizarFlujoAprobado error:', e)
+    router.replace({ path: '/pago-exitoso', query: { external_reference: transaccionId } })
+  }
+}
 </script>
