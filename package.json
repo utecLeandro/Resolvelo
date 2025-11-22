@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "jest --passWithNoTests",
+    "test:cov": "jest --passWithNoTests --coverage --coverageReporters=lcov",
     "test:e2e": "jest --config jest.config.js --runInBand",
     "prisma:generate": "prisma generate --schema context/schema.prisma",
     "prisma:db:push": "prisma db push --schema context/schema.prisma",
