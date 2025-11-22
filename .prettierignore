@@ -12,3 +12,5 @@ frontend/.vite
 docs
 **/*.md
 **/*.json5
+# Ignorar workflow problemático para evitar errores de parseo de YAML en Prettier
+.github/workflows/backend-app-runner.yml

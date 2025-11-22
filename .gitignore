@@ -34,6 +34,7 @@ secrets/
 # ARCHIVOS DE CONSTRUCCIÓN Y DISTRIBUCIÓN
 # ==========================================================================
 dist/
+dist2/
 build/
 .next/
 out/
