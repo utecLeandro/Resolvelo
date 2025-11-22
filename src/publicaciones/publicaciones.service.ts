@@ -162,7 +162,7 @@ export class PublicacionesService {
       if (!usuario || (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')) {
         throw new ForbiddenException('El usuario autenticado no es administrador');
       }
-      admin = await this.prisma.administrador.create({ data: { usuario: { connect: { id: moderadorId } } } });
+      admin = await this.prisma.administrador.create({ data: { usuario: { connect: { id: moderadorId } }, fechaActualizacion: new Date() } });
     }
 
     const estadoAnterior = existente.estadoModeracion;
@@ -216,7 +216,7 @@ export class PublicacionesService {
       if (!usuario || (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')) {
         throw new ForbiddenException('El usuario autenticado no es administrador');
       }
-      admin = await this.prisma.administrador.create({ data: { usuario: { connect: { id: moderadorId } } } });
+      admin = await this.prisma.administrador.create({ data: { usuario: { connect: { id: moderadorId } }, fechaActualizacion: new Date() } });
     }
 
     const estadoAnterior = existente.estadoModeracion;
