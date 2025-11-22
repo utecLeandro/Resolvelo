@@ -94,56 +94,51 @@ jobs:
 
       - name: Update or Create App Runner service
         id: apprunner
+        env:
+          IMAGE_URI: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          SOURCE_CONFIGURATION: |
+            {
+              "ImageRepository": {
+                "ImageIdentifier": "__IMAGE_URI__",
+                "ImageRepositoryType": "ECR",
+                "ImageConfiguration": {
+                  "Port": "3000",
+                  "RuntimeEnvironmentVariables": [
+                    {"Name": "NODE_ENV", "Value": "production"},
+                    {"Name": "PORT", "Value": "3000"}
+                  ],
+                  "RuntimeEnvironmentSecrets": [
+                    {"Name": "DATABASE_URL", "Value": "__DB_SECRET_ARN__"},
+                    {"Name": "JWT_SECRET", "Value": "__JWT_SECRET_ARN__"}
+                  ]
+                }
+              }
+            }
+          NETWORK_CONFIGURATION: |
+            {
+              "EgressConfiguration": {"EgressType": "VPC"},
+              "VpcConnectorArn": "${VPC_CONNECTOR_ARN}"
+            }
         run: |
           set -euo pipefail
-          IMAGE_URI=${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           echo "Using image: $IMAGE_URI"
 
-          # Intentar actualizar el servicio existente
           set +e
           aws apprunner describe-service --service-arn "$APP_RUNNER_SERVICE_ARN"
           DESCRIBE_RC=$?
           set -e
 
-          SRC_CFG=$(cat <<JSON
-          {
-            "ImageRepository": {
-              "ImageIdentifier": "__IMAGE_URI__",
-              "ImageRepositoryType": "ECR",
-              "ImageConfiguration": {
-                "Port": "3000",
-                "RuntimeEnvironmentVariables": [
-                  {"Name": "NODE_ENV", "Value": "production"},
-                  {"Name": "PORT", "Value": "3000"}
-                ],
-                "RuntimeEnvironmentSecrets": [
-                  {"Name": "DATABASE_URL", "Value": "__DB_SECRET_ARN__"},
-                  {"Name": "JWT_SECRET", "Value": "__JWT_SECRET_ARN__"}
-                ]
-              }
-            }
-          }
-JSON
-          )
-
+          SRC_CFG="$SOURCE_CONFIGURATION"
           SRC_CFG=${SRC_CFG/__IMAGE_URI__/$IMAGE_URI}
           SRC_CFG=${SRC_CFG/__DB_SECRET_ARN__/${DB_SECRET_ARN}}
           SRC_CFG=${SRC_CFG/__JWT_SECRET_ARN__/${JWT_SECRET_ARN}}
 
           if [ "$DESCRIBE_RC" -eq 0 ]; then
-            echo "Updating existing App Runner service..."
             aws apprunner update-service \
               --service-arn "$APP_RUNNER_SERVICE_ARN" \
               --source-configuration "$SRC_CFG"
           else
-            echo "Creating new App Runner service..."
-            NET_CFG=$(cat <<JSON
-            {
-              "EgressConfiguration": {"EgressType": "VPC"},
-              "VpcConnectorArn": "${VPC_CONNECTOR_ARN}"
-            }
-JSON
-            )
+            NET_CFG="$NETWORK_CONFIGURATION"
             aws apprunner create-service \
               --service-name "resolvelo-backend" \
               --source-configuration "$SRC_CFG" \
