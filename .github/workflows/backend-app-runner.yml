@@ -105,7 +105,7 @@ jobs:
           DESCRIBE_RC=$?
           set -e
 
-          SRC_CFG=$(cat <<'JSON'
+          SRC_CFG=$(cat <<JSON
           {
             "ImageRepository": {
               "ImageIdentifier": "__IMAGE_URI__",
