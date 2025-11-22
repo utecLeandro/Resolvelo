@@ -2,6 +2,7 @@
  * Punto de entrada de la aplicación NestJS.
  * Se configura la app con buenas prácticas de seguridad y CORS.
  */
+// Comentario de despliegue: cambio mínimo para disparar workflow en develop
 import "dotenv/config"; // Carga variables de entorno desde .env
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
