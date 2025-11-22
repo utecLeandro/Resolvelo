@@ -36,6 +36,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate configuration (develop)
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          echo "🔎 Validando configuración requerida para deploy en App Runner (develop)"
+          missing=0
+          check() {
+            var="$1"
+            if [ -z "${!var:-}" ]; then
+              echo "❌ Falta variable: $var"
+              missing=1
+            else
+              echo "✅ $var configurada"
+            fi
+          }
+
+          check AWS_REGION
+          check ECR_REPOSITORY
+          check APP_RUNNER_SERVICE_ARN
+          check AWS_DEPLOY_ROLE_ARN
+          # Opcionales según topología
+          echo "ℹ️ Variables opcionales (no bloquean si faltan)"
+          [ -z "${VPC_CONNECTOR_ARN:-}" ] && echo "⚠️ VPC_CONNECTOR_ARN no configurada" || echo "✅ VPC_CONNECTOR_ARN configurada"
+          [ -z "${AUTO_SCALING_CONFIG_ARN:-}" ] && echo "⚠️ AUTO_SCALING_CONFIG_ARN no configurada" || echo "✅ AUTO_SCALING_CONFIG_ARN configurada"
+          # Secretos de entorno (requeridos)
+          check DB_SECRET_ARN
+          check JWT_SECRET_ARN
+
+          if [ "$missing" -ne 0 ]; then
+            echo "🚫 Configuración incompleta. Revisa Secrets/Vars del repositorio."
+            exit 1
+          fi
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
