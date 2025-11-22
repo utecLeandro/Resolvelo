@@ -6,6 +6,9 @@
 name: Backend Deploy to App Runner
 
 on:
+  # Permite ejecutar manualmente desde la UI de GitHub Actions
+  workflow_dispatch:
+  # Despliegue automático al pushear a develop con cambios relevantes
   push:
     branches: ["develop"]
     paths:
@@ -57,8 +60,6 @@ jobs:
 
       - name: Update or Create App Runner service
         id: apprunner
-        env:
-          IMAGE_URI: ${{ steps.deploy.outputs.image_uri || steps.apprunner.outputs.image_uri || '' }}
         run: |
           set -euo pipefail
           IMAGE_URI=${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
