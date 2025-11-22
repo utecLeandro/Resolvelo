@@ -55,7 +55,6 @@ jobs:
 
           check AWS_REGION
           check ECR_REPOSITORY
-          check APP_RUNNER_SERVICE_ARN
           check AWS_DEPLOY_ROLE_ARN
           # Opcionales según topología
           echo "ℹ️ Variables opcionales (no bloquean si faltan)"
@@ -68,6 +67,10 @@ jobs:
           if [ "$missing" -ne 0 ]; then
             echo "🚫 Configuración incompleta. Revisa Secrets/Vars del repositorio."
             exit 1
+          fi
+
+          if [ -z "${APP_RUNNER_SERVICE_ARN:-}" ]; then
+            echo "ℹ️ APP_RUNNER_SERVICE_ARN no configurada: se intentará crear el servicio y obtener el ARN automáticamente"
           fi
 
       - name: Configure AWS credentials (OIDC)
@@ -123,10 +126,15 @@ jobs:
           set -euo pipefail
           echo "Using image: $IMAGE_URI"
 
-          set +e
-          aws apprunner describe-service --service-arn "$APP_RUNNER_SERVICE_ARN"
-          DESCRIBE_RC=$?
-          set -e
+          DESCRIBE_RC=1
+          if [ -n "${APP_RUNNER_SERVICE_ARN:-}" ]; then
+            set +e
+            aws apprunner describe-service --service-arn "$APP_RUNNER_SERVICE_ARN"
+            DESCRIBE_RC=$?
+            set -e
+          else
+            echo "No hay ARN configurado, se asumirá creación de servicio"
+          fi
 
           SRC_CFG="$SOURCE_CONFIGURATION"
           SRC_CFG=${SRC_CFG/__IMAGE_URI__/$IMAGE_URI}
@@ -139,11 +147,14 @@ jobs:
               --source-configuration "$SRC_CFG"
           else
             NET_CFG="$NETWORK_CONFIGURATION"
-            aws apprunner create-service \
+            SERVICE_ARN=$(aws apprunner create-service \
               --service-name "resolvelo-backend" \
               --source-configuration "$SRC_CFG" \
               --network-configuration "$NET_CFG" \
-              ${AUTO_SCALING_CONFIG_ARN:+--auto-scaling-configuration-arn "$AUTO_SCALING_CONFIG_ARN"}
+              ${AUTO_SCALING_CONFIG_ARN:+--auto-scaling-configuration-arn "$AUTO_SCALING_CONFIG_ARN"} \
+              --query 'Service.ServiceArn' --output text)
+            echo "ServiceArn creado: $SERVICE_ARN"
+            echo "service_arn=$SERVICE_ARN" >> $GITHUB_OUTPUT
           fi
 
       - name: Output service status
