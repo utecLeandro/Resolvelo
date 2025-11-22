@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from "@nestjs/common";
 
 @Injectable()
 export class AdminGuard implements CanActivate {
@@ -7,14 +12,18 @@ export class AdminGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('Acceso restringido: usuario no autenticado');
+      throw new ForbiddenException(
+        "Acceso restringido: usuario no autenticado",
+      );
     }
 
     const rol = user.rol;
-    if (rol === 'ADMINISTRADOR' || rol === 'SUPER_ADMIN') {
+    if (rol === "ADMINISTRADOR" || rol === "SUPER_ADMIN") {
       return true;
     }
 
-    throw new ForbiddenException('Acceso restringido: requiere rol de administrador');
+    throw new ForbiddenException(
+      "Acceso restringido: requiere rol de administrador",
+    );
   }
 }

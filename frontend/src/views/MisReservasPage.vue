@@ -4,7 +4,9 @@
       <!-- Header -->
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Mis Reservas</h1>
-        <p class="mt-1 text-sm text-gray-600">Gestiona tus reservas de instrumentos musicales</p>
+        <p class="mt-1 text-sm text-gray-600">
+          Gestiona tus reservas de instrumentos musicales
+        </p>
       </div>
 
       <!-- Pestañas -->
@@ -17,11 +19,14 @@
                 pestanaActiva === 'pendientes'
                   ? 'border-yellow-500 text-yellow-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm',
               ]"
             >
               Pendientes de Aprobación
-              <span v-if="reservasPendientes.length > 0" class="ml-2 bg-yellow-100 text-yellow-600 py-0.5 px-2 rounded-full text-xs font-medium">
+              <span
+                v-if="reservasPendientes.length > 0"
+                class="ml-2 bg-yellow-100 text-yellow-600 py-0.5 px-2 rounded-full text-xs font-medium"
+              >
                 {{ reservasPendientes.length }}
               </span>
             </button>
@@ -31,11 +36,14 @@
                 pestanaActiva === 'aprobadas'
                   ? 'border-green-500 text-green-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm',
               ]"
             >
               Aprobadas
-              <span v-if="reservasAprobadas.length > 0" class="ml-2 bg-green-100 text-green-600 py-0.5 px-2 rounded-full text-xs font-medium">
+              <span
+                v-if="reservasAprobadas.length > 0"
+                class="ml-2 bg-green-100 text-green-600 py-0.5 px-2 rounded-full text-xs font-medium"
+              >
                 {{ reservasAprobadas.length }}
               </span>
             </button>
@@ -45,11 +53,14 @@
                 pestanaActiva === 'activas'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm',
               ]"
             >
               Activas
-              <span v-if="reservasActivas.length > 0" class="ml-2 bg-blue-100 text-blue-600 py-0.5 px-2 rounded-full text-xs font-medium">
+              <span
+                v-if="reservasActivas.length > 0"
+                class="ml-2 bg-blue-100 text-blue-600 py-0.5 px-2 rounded-full text-xs font-medium"
+              >
                 {{ reservasActivas.length }}
               </span>
             </button>
@@ -59,11 +70,14 @@
                 pestanaActiva === 'completadas'
                   ? 'border-gray-500 text-gray-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm',
               ]"
             >
               Completadas
-              <span v-if="reservasCompletadas.length > 0" class="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs font-medium">
+              <span
+                v-if="reservasCompletadas.length > 0"
+                class="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs font-medium"
+              >
                 {{ reservasCompletadas.length }}
               </span>
             </button>
@@ -73,11 +87,14 @@
                 pestanaActiva === 'rechazadas'
                   ? 'border-red-500 text-red-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm',
               ]"
             >
               Rechazadas
-              <span v-if="reservasRechazadas.length > 0" class="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs font-medium">
+              <span
+                v-if="reservasRechazadas.length > 0"
+                class="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs font-medium"
+              >
                 {{ reservasRechazadas.length }}
               </span>
             </button>
@@ -87,20 +104,35 @@
 
       <!-- Estado de carga -->
       <div v-if="cargando" class="flex justify-center items-center py-12">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"
+        ></div>
         <span class="ml-3 text-gray-600">Cargando reservas...</span>
       </div>
 
       <!-- Error -->
-      <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+      <div
+        v-else-if="error"
+        class="bg-red-50 border border-red-200 rounded-md p-4 mb-6"
+      >
         <div class="flex">
           <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            <svg
+              class="h-5 w-5 text-red-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clip-rule="evenodd"
+              />
             </svg>
           </div>
           <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">Error al cargar reservas</h3>
+            <h3 class="text-sm font-medium text-red-800">
+              Error al cargar reservas
+            </h3>
             <p class="mt-1 text-sm text-red-700">{{ error }}</p>
           </div>
         </div>
@@ -111,28 +143,52 @@
         <!-- Reservas Pendientes -->
         <div v-if="pestanaActiva === 'pendientes'">
           <div v-if="reservasPendientes.length === 0" class="text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              class="mx-auto h-12 w-12 text-yellow-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">No tienes reservas pendientes</h3>
-            <p class="mt-1 text-sm text-gray-500">Cuando solicites alquilar un instrumento aparecerá aquí.</p>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">
+              No tienes reservas pendientes
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              Cuando solicites alquilar un instrumento aparecerá aquí.
+            </p>
             <div class="mt-6">
               <router-link
                 to="/catalogo"
                 class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  class="-ml-1 mr-2 h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
                 Explorar catálogo
               </router-link>
             </div>
           </div>
           <div v-else>
-            <ReservaCard 
-              v-for="reserva in reservasPendientes" 
-              :key="reserva.id" 
-              :reserva="reserva" 
+            <ReservaCard
+              v-for="reserva in reservasPendientes"
+              :key="reserva.id"
+              :reserva="reserva"
               :tipo="'pendiente'"
               @cancelar="cancelarReserva"
             />
@@ -142,17 +198,31 @@
         <!-- Reservas Aprobadas -->
         <div v-if="pestanaActiva === 'aprobadas'">
           <div v-if="reservasAprobadas.length === 0" class="text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              class="mx-auto h-12 w-12 text-green-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">No tienes reservas aprobadas</h3>
-            <p class="mt-1 text-sm text-gray-500">Las reservas aprobadas que requieren pago aparecerán aquí.</p>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">
+              No tienes reservas aprobadas
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              Las reservas aprobadas que requieren pago aparecerán aquí.
+            </p>
           </div>
           <div v-else>
-            <ReservaCard 
-              v-for="reserva in reservasAprobadas" 
-              :key="reserva.id" 
-              :reserva="reserva" 
+            <ReservaCard
+              v-for="reserva in reservasAprobadas"
+              :key="reserva.id"
+              :reserva="reserva"
               :tipo="'aprobada'"
               @pagar="procesarPago"
             />
@@ -162,11 +232,25 @@
         <!-- Reservas Activas -->
         <div v-if="pestanaActiva === 'activas'">
           <div v-if="reservasActivas.length === 0" class="text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            <svg
+              class="mx-auto h-12 w-12 text-blue-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+              />
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">No tienes reservas activas</h3>
-            <p class="mt-1 text-sm text-gray-500">Los instrumentos que estés alquilando actualmente aparecerán aquí.</p>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">
+              No tienes reservas activas
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              Los instrumentos que estés alquilando actualmente aparecerán aquí.
+            </p>
           </div>
           <div v-else>
             <div
@@ -175,11 +259,13 @@
               :id="`reserva-${reserva.id}`"
               :class="[
                 'mb-4',
-                highlightReservaId === reserva.id ? 'ring-2 ring-blue-400 rounded-lg transition-shadow duration-500' : ''
+                highlightReservaId === reserva.id
+                  ? 'ring-2 ring-blue-400 rounded-lg transition-shadow duration-500'
+                  : '',
               ]"
             >
-              <ReservaCard 
-                :reserva="reserva" 
+              <ReservaCard
+                :reserva="reserva"
                 :tipo="'activa'"
                 @contactar="contactarPropietario"
               />
@@ -189,18 +275,35 @@
 
         <!-- Reservas Completadas -->
         <div v-if="pestanaActiva === 'completadas'">
-          <div v-if="reservasCompletadas.length === 0" class="text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div
+            v-if="reservasCompletadas.length === 0"
+            class="text-center py-12"
+          >
+            <svg
+              class="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">No tienes reservas completadas</h3>
-            <p class="mt-1 text-sm text-gray-500">Los alquileres que hayas completado aparecerán aquí.</p>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">
+              No tienes reservas completadas
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              Los alquileres que hayas completado aparecerán aquí.
+            </p>
           </div>
           <div v-else>
-            <ReservaCard 
-              v-for="reserva in reservasCompletadas" 
-              :key="reserva.id" 
-              :reserva="reserva" 
+            <ReservaCard
+              v-for="reserva in reservasCompletadas"
+              :key="reserva.id"
+              :reserva="reserva"
               :tipo="'completada'"
               @calificar="calificarReserva"
             />
@@ -210,17 +313,31 @@
         <!-- Reservas Rechazadas -->
         <div v-if="pestanaActiva === 'rechazadas'">
           <div v-if="reservasRechazadas.length === 0" class="text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              class="mx-auto h-12 w-12 text-red-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">No tienes reservas rechazadas</h3>
-            <p class="mt-1 text-sm text-gray-500">Las solicitudes rechazadas aparecerán aquí.</p>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">
+              No tienes reservas rechazadas
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              Las solicitudes rechazadas aparecerán aquí.
+            </p>
           </div>
           <div v-else>
-            <ReservaCard 
-              v-for="reserva in reservasRechazadas" 
-              :key="reserva.id" 
-              :reserva="reserva" 
+            <ReservaCard
+              v-for="reserva in reservasRechazadas"
+              :key="reserva.id"
+              :reserva="reserva"
               :tipo="'rechazada'"
             />
           </div>
@@ -231,242 +348,264 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { reservasService } from '../services/api'
-import ReservaCard from '../components/ReservaCard.vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { reservasService } from "../services/api";
+import ReservaCard from "../components/ReservaCard.vue";
 
 // Tipos para las reservas
 interface ReservaArrendatario {
-  id: string
-  fechaInicio: string
-  fechaFin: string
-  precioTotal: number
-  telefonoContacto?: string
-  estado: 'PENDIENTE' | 'APROBADA' | 'ACTIVA' | 'COMPLETADA' | 'RECHAZADA' | 'CANCELADA'
-  motivoRechazo?: string
-  fechaCreacion: string
+  id: string;
+  fechaInicio: string;
+  fechaFin: string;
+  precioTotal: number;
+  telefonoContacto?: string;
+  estado:
+    | "PENDIENTE"
+    | "APROBADA"
+    | "ACTIVA"
+    | "COMPLETADA"
+    | "RECHAZADA"
+    | "CANCELADA";
+  motivoRechazo?: string;
+  fechaCreacion: string;
   publicacion: {
-    id: string
-    titulo: string
-    descripcion: string
-    precioPorDia: number
-    categoria: string
-    direccion: string
-    ciudad: string
-    departamento: string
-    imagenes: string[]
+    id: string;
+    titulo: string;
+    descripcion: string;
+    precioPorDia: number;
+    categoria: string;
+    direccion: string;
+    ciudad: string;
+    departamento: string;
+    imagenes: string[];
     propietario: {
-      nombre: string
-      apellido: string
-      email: string
-      telefono?: string
-    }
-  }
+      nombre: string;
+      apellido: string;
+      email: string;
+      telefono?: string;
+    };
+  };
   transaccion?: {
-    id: string
-    estado: string
-    fechaPago?: string
-  }
+    id: string;
+    estado: string;
+    fechaPago?: string;
+  };
 }
 
 // Composables
-const router = useRouter()
-const route = useRoute()
+const router = useRouter();
+const route = useRoute();
 
 // Estado reactivo
-const pestanaActiva = ref<'pendientes' | 'aprobadas' | 'activas' | 'completadas' | 'rechazadas'>('pendientes')
-const reservas = ref<ReservaArrendatario[]>([])
-const focusReservaId = ref<string | null>(null)
-const highlightReservaId = ref<string | null>(null)
-const cargando = ref(true)
-const error = ref<string | null>(null)
-const procesando = ref<string | null>(null)
+const pestanaActiva = ref<
+  "pendientes" | "aprobadas" | "activas" | "completadas" | "rechazadas"
+>("pendientes");
+const reservas = ref<ReservaArrendatario[]>([]);
+const focusReservaId = ref<string | null>(null);
+const highlightReservaId = ref<string | null>(null);
+const cargando = ref(true);
+const error = ref<string | null>(null);
+const procesando = ref<string | null>(null);
 
 // Computed para filtrar reservas por estado
-const reservasPendientes = computed(() => 
-  (reservas.value || []).filter(r => r.estado === 'PENDIENTE')
-)
+const reservasPendientes = computed(() =>
+  (reservas.value || []).filter((r) => r.estado === "PENDIENTE"),
+);
 
-const reservasAprobadas = computed(() => 
-  (reservas.value || []).filter(r => r.estado === 'CONFIRMADA')
-)
+const reservasAprobadas = computed(() =>
+  (reservas.value || []).filter((r) => r.estado === "CONFIRMADA"),
+);
 
-const reservasActivas = computed(() => 
-  (reservas.value || []).filter(r => r.estado === 'ACTIVA' || r.estado === 'EN_CURSO')
-)
+const reservasActivas = computed(() =>
+  (reservas.value || []).filter(
+    (r) => r.estado === "ACTIVA" || r.estado === "EN_CURSO",
+  ),
+);
 
-const reservasCompletadas = computed(() => 
-  (reservas.value || []).filter(r => r.estado === 'COMPLETADA')
-)
+const reservasCompletadas = computed(() =>
+  (reservas.value || []).filter((r) => r.estado === "COMPLETADA"),
+);
 
-const reservasRechazadas = computed(() => 
-  (reservas.value || []).filter(r => r.estado === 'RECHAZADA')
-)
+const reservasRechazadas = computed(() =>
+  (reservas.value || []).filter((r) => r.estado === "RECHAZADA"),
+);
 
 // Actualización automática cada 30 segundos
-let intervalId: NodeJS.Timeout | null = null
+let intervalId: NodeJS.Timeout | null = null;
 
 // Función para manejar actualizaciones de reservas en tiempo real
 const manejarActualizacionReserva = (event: CustomEvent) => {
-  console.log('Evento reserva-actualizada recibido:', event.detail)
-  
-  const { reservaId, nuevoEstado } = event.detail
-  
-  console.log('Buscando reserva con ID:', reservaId)
-  console.log('Reservas actuales:', reservas.value)
-  
+  console.log("Evento reserva-actualizada recibido:", event.detail);
+
+  const { reservaId, nuevoEstado } = event.detail;
+
+  console.log("Buscando reserva con ID:", reservaId);
+  console.log("Reservas actuales:", reservas.value);
+
   // Actualizar el estado local de la reserva
   if (reservas.value && Array.isArray(reservas.value)) {
-    const reserva = reservas.value.find(r => r.id === reservaId)
-    console.log('Reserva encontrada:', reserva)
-    
+    const reserva = reservas.value.find((r) => r.id === reservaId);
+    console.log("Reserva encontrada:", reserva);
+
     if (reserva) {
-      console.log(`Actualizando reserva ${reservaId} de ${reserva.estado} a ${nuevoEstado}`)
-      reserva.estado = nuevoEstado
-      console.log(`Reserva ${reservaId} actualizada a estado ${nuevoEstado}`)
+      console.log(
+        `Actualizando reserva ${reservaId} de ${reserva.estado} a ${nuevoEstado}`,
+      );
+      reserva.estado = nuevoEstado;
+      console.log(`Reserva ${reservaId} actualizada a estado ${nuevoEstado}`);
       // Enfocar y cambiar automáticamente a pestaña 'activas' cuando pasa a EN_CURSO/ACTIVA
-      if (nuevoEstado === 'EN_CURSO' || nuevoEstado === 'ACTIVA') {
-        pestanaActiva.value = 'activas'
-        focusReservaId.value = reservaId
+      if (nuevoEstado === "EN_CURSO" || nuevoEstado === "ACTIVA") {
+        pestanaActiva.value = "activas";
+        focusReservaId.value = reservaId;
       }
     } else {
-      console.log(`No se encontró la reserva con ID ${reservaId}`)
+      console.log(`No se encontró la reserva con ID ${reservaId}`);
     }
   } else {
-    console.log('reservas.value no es un array válido:', reservas.value)
+    console.log("reservas.value no es un array válido:", reservas.value);
   }
-}
+};
 
 // Cargar datos al montar el componente
 onMounted(async () => {
-  await cargarMisReservas()
-  
+  await cargarMisReservas();
+
   // Si venimos con query ?tab=activas, activar esa pestaña
-  const tab = (route.query.tab as string) || ''
-  const focus = (route.query.focus as string) || ''
-  if (tab === 'activas') {
-    pestanaActiva.value = 'activas'
+  const tab = (route.query.tab as string) || "";
+  const focus = (route.query.focus as string) || "";
+  if (tab === "activas") {
+    pestanaActiva.value = "activas";
   }
   if (focus) {
-    focusReservaId.value = focus
+    focusReservaId.value = focus;
   }
 
   // Configurar actualización automática cada 30 segundos
   intervalId = setInterval(async () => {
     if (!cargando.value) {
-      await cargarMisReservas()
+      await cargarMisReservas();
     }
-  }, 30000)
-  
+  }, 30000);
+
   // Escuchar eventos de actualización de reservas
-  window.addEventListener('reserva-actualizada', manejarActualizacionReserva as EventListener)
-})
+  window.addEventListener(
+    "reserva-actualizada",
+    manejarActualizacionReserva as EventListener,
+  );
+});
 
 // Resaltar y hacer scroll suave a la reserva enfocada
 watch(focusReservaId, async (id) => {
-  if (!id) return
-  await nextTick()
+  if (!id) return;
+  await nextTick();
   // Esperar un pequeño tiempo por si la lista acaba de cambiar de pestaña
   setTimeout(() => {
-    const el = document.getElementById(`reserva-${id}`)
+    const el = document.getElementById(`reserva-${id}`);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      highlightReservaId.value = id
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      highlightReservaId.value = id;
       // Quitar el resaltado luego de unos segundos
       setTimeout(() => {
         if (highlightReservaId.value === id) {
-          highlightReservaId.value = null
+          highlightReservaId.value = null;
         }
-      }, 2500)
+      }, 2500);
     }
-  }, 150)
-})
+  }, 150);
+});
 
 // Métodos
 const cargarMisReservas = async () => {
   try {
-    cargando.value = true
-    error.value = null
-    
-    const response = await reservasService.obtenerMisReservas()
-    
+    cargando.value = true;
+    error.value = null;
+
+    const response = await reservasService.obtenerMisReservas();
+
     // Manejar la respuesta del backend
     if (response.success) {
-      reservas.value = Array.isArray(response.data) ? response.data : []
+      reservas.value = Array.isArray(response.data) ? response.data : [];
     } else {
-      throw new Error(response.message || 'Error al obtener las reservas')
+      throw new Error(response.message || "Error al obtener las reservas");
     }
   } catch (err: any) {
-    console.error('Error al cargar reservas:', err)
-    error.value = err.message || 'Error al cargar las reservas'
-    reservas.value = [] // Asegurar que siempre sea un array
+    console.error("Error al cargar reservas:", err);
+    error.value = err.message || "Error al cargar las reservas";
+    reservas.value = []; // Asegurar que siempre sea un array
   } finally {
-    cargando.value = false
+    cargando.value = false;
   }
-}
+};
 
 const cancelarReserva = async (reservaId: string) => {
-  const confirmacion = confirm('¿Estás seguro de que quieres cancelar esta reserva?')
-  if (!confirmacion) return
+  const confirmacion = confirm(
+    "¿Estás seguro de que quieres cancelar esta reserva?",
+  );
+  if (!confirmacion) return;
 
   try {
-    procesando.value = reservaId
-    await reservasService.cancelarReserva(reservaId)
-    
+    procesando.value = reservaId;
+    await reservasService.cancelarReserva(reservaId);
+
     // Actualizar el estado local
     if (reservas.value && Array.isArray(reservas.value)) {
-      const reserva = reservas.value.find(r => r.id === reservaId)
+      const reserva = reservas.value.find((r) => r.id === reservaId);
       if (reserva) {
-        reserva.estado = 'CANCELADA'
+        reserva.estado = "CANCELADA";
       }
     }
-    
-    alert('Reserva cancelada exitosamente')
+
+    alert("Reserva cancelada exitosamente");
   } catch (err: any) {
-    console.error('Error al cancelar reserva:', err)
-    alert(err.response?.data?.message || 'Error al cancelar la reserva')
+    console.error("Error al cancelar reserva:", err);
+    alert(err.response?.data?.message || "Error al cancelar la reserva");
   } finally {
-    procesando.value = null
+    procesando.value = null;
   }
-}
+};
 
 const procesarPago = async (reservaId: string) => {
   try {
-    procesando.value = reservaId
+    procesando.value = reservaId;
     // Aquí implementaremos la lógica de pago
-    router.push(`/pago/${reservaId}`)
+    router.push(`/pago/${reservaId}`);
   } catch (err: any) {
-    console.error('Error al procesar pago:', err)
-    alert(err.response?.data?.message || 'Error al procesar el pago')
+    console.error("Error al procesar pago:", err);
+    alert(err.response?.data?.message || "Error al procesar el pago");
   } finally {
-    procesando.value = null
+    procesando.value = null;
   }
-}
+};
 
 const contactarPropietario = (reserva: ReservaArrendatario) => {
   // Implementar lógica de contacto (chat, email, etc.)
-  const mensaje = `Hola ${reserva.publicacion.propietario.nombre}, me gustaría contactarte sobre el alquiler de ${reserva.publicacion.titulo}.`
-  const email = reserva.publicacion.propietario.email
-  const subject = `Consulta sobre alquiler - ${reserva.publicacion.titulo}`
-  
-  window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(mensaje)}`)
-}
+  const mensaje = `Hola ${reserva.publicacion.propietario.nombre}, me gustaría contactarte sobre el alquiler de ${reserva.publicacion.titulo}.`;
+  const email = reserva.publicacion.propietario.email;
+  const subject = `Consulta sobre alquiler - ${reserva.publicacion.titulo}`;
+
+  window.open(
+    `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(mensaje)}`,
+  );
+};
 
 const calificarReserva = (reservaId: string) => {
   // Implementar sistema de calificaciones
-  router.push(`/calificar/${reservaId}`)
-}
+  router.push(`/calificar/${reservaId}`);
+};
 
 // Limpiar el intervalo y listeners cuando el componente se desmonte
 onUnmounted(() => {
   if (intervalId) {
-    clearInterval(intervalId)
+    clearInterval(intervalId);
   }
-  
+
   // Remover el listener de eventos
-  window.removeEventListener('reserva-actualizada', manejarActualizacionReserva as EventListener)
-})
+  window.removeEventListener(
+    "reserva-actualizada",
+    manejarActualizacionReserva as EventListener,
+  );
+});
 </script>
 
 <style scoped>

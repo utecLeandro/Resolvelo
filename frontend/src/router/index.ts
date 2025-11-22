@@ -1,210 +1,292 @@
 // Enrutador principal de la aplicación
 // Rutas públicas y protegidas, incluyendo panel de administración.
 
-import { createRouter, createWebHistory } from 'vue-router'
-import type { RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory } from "vue-router";
+import type { RouteRecordRaw } from "vue-router";
 
 // Vistas principales
-import LoginPage from '../views/LoginPage.vue'
-import RegisterPage from '../views/RegisterPage.vue'
-import PendingVerification from '../views/PendingVerification.vue'
-import CatalogoPage from '../views/CatalogoPage.vue'
-import DetallePublicacion from '../views/DetallePublicacion.vue'
-import PerfilPage from '../views/PerfilPage.vue'
-import CrearPublicacionPage from '../views/CrearPublicacionPage.vue'
-import MisPublicacionesPage from '../views/MisPublicacionesPage.vue'
-import MisReservasPage from '../views/MisReservasPage.vue'
-import PagoPage from '../views/PagoPage.vue'
-import DebugPage from '../views/DebugPage.vue'
-import PaginaInformativa from '../views/PaginaInformativa.vue'
-import TestApiPage from '../views/TestApiPage.vue'
-import RecuperarContrasenaPage from '../views/RecuperarContrasenaPage.vue'
-import ResetPasswordPage from '../views/ResetPasswordPage.vue'
-import PagoExitoso from '../views/PagoExitoso.vue'
-import PagoError from '../views/PagoError.vue'
+import LoginPage from "../views/LoginPage.vue";
+import RegisterPage from "../views/RegisterPage.vue";
+import PendingVerification from "../views/PendingVerification.vue";
+import CatalogoPage from "../views/CatalogoPage.vue";
+import DetallePublicacion from "../views/DetallePublicacion.vue";
+import PerfilPage from "../views/PerfilPage.vue";
+import CrearPublicacionPage from "../views/CrearPublicacionPage.vue";
+import MisPublicacionesPage from "../views/MisPublicacionesPage.vue";
+import MisReservasPage from "../views/MisReservasPage.vue";
+import PagoPage from "../views/PagoPage.vue";
+import DebugPage from "../views/DebugPage.vue";
+import PaginaInformativa from "../views/PaginaInformativa.vue";
+import TestApiPage from "../views/TestApiPage.vue";
+import RecuperarContrasenaPage from "../views/RecuperarContrasenaPage.vue";
+import ResetPasswordPage from "../views/ResetPasswordPage.vue";
+import PagoExitoso from "../views/PagoExitoso.vue";
+import PagoError from "../views/PagoError.vue";
 
 // Administración
-import AdminUsersPage from '../views/AdminUsersPage.vue'
-import AdminHomePage from '../views/AdminHomePage.vue'
-import AdminPublicacionesPage from '../views/AdminPublicacionesPage.vue'
+import AdminUsersPage from "../views/AdminUsersPage.vue";
+import AdminHomePage from "../views/AdminHomePage.vue";
+import AdminPublicacionesPage from "../views/AdminPublicacionesPage.vue";
 
 // Definición de rutas de la aplicación
 const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: '/catalogo' },
+  { path: "/", redirect: "/catalogo" },
 
   // Administración
   {
-    path: '/admin',
-    name: 'Admin',
+    path: "/admin",
+    name: "Admin",
     component: AdminHomePage,
     meta: {
-      title: 'Administración - ReSolVelo',
-      description: 'Panel principal de administración',
+      title: "Administración - ReSolVelo",
+      description: "Panel principal de administración",
       requiresAuth: true,
     },
   },
   {
-    path: '/admin/usuarios',
-    name: 'AdminUsuarios',
+    path: "/admin/usuarios",
+    name: "AdminUsuarios",
     component: AdminUsersPage,
     meta: {
-      title: 'Gestión de Usuarios - ReSolVelo',
-      description: 'Panel para listar y habilitar/deshabilitar usuarios',
+      title: "Gestión de Usuarios - ReSolVelo",
+      description: "Panel para listar y habilitar/deshabilitar usuarios",
       requiresAuth: true,
     },
   },
   {
-    path: '/admin/publicaciones',
-    name: 'AdminPublicaciones',
+    path: "/admin/publicaciones",
+    name: "AdminPublicaciones",
     component: AdminPublicacionesPage,
     meta: {
-      title: 'Gestión de Publicaciones - ReSolVelo',
-      description: 'Listado y moderación de publicaciones',
+      title: "Gestión de Publicaciones - ReSolVelo",
+      description: "Listado y moderación de publicaciones",
       requiresAuth: true,
     },
   },
 
   // Catálogo y flujo público
   {
-    path: '/catalogo',
-    name: 'Catalogo',
+    path: "/catalogo",
+    name: "Catalogo",
     component: CatalogoPage,
     meta: {
-      title: 'Catálogo de Instrumentos - ReSolVelo',
-      description: 'Explora nuestra selección de instrumentos disponibles para alquiler',
+      title: "Catálogo de Instrumentos - ReSolVelo",
+      description:
+        "Explora nuestra selección de instrumentos disponibles para alquiler",
     },
   },
   {
-    path: '/publicacion/:id',
-    name: 'DetallePublicacion',
+    path: "/publicacion/:id",
+    name: "DetallePublicacion",
     component: DetallePublicacion,
     meta: {
-      title: 'Detalle del Instrumento - ReSolVelo',
-      description: 'Información detallada del instrumento musical',
+      title: "Detalle del Instrumento - ReSolVelo",
+      description: "Información detallada del instrumento musical",
     },
   },
-  { path: '/login', name: 'Login', component: LoginPage },
+  { path: "/login", name: "Login", component: LoginPage },
   {
-    path: '/recuperar-contraseña',
-    name: 'RecuperarContrasena',
+    path: "/recuperar-contraseña",
+    name: "RecuperarContrasena",
     component: RecuperarContrasenaPage,
     meta: {
-      title: 'Recuperación de contraseña - ReSolVelo',
-      description: 'Solicita un enlace para restablecer tu contraseña',
+      title: "Recuperación de contraseña - ReSolVelo",
+      description: "Solicita un enlace para restablecer tu contraseña",
     },
   },
   {
-    path: '/reset-password',
-    name: 'ResetPassword',
+    path: "/reset-password",
+    name: "ResetPassword",
     component: ResetPasswordPage,
     meta: {
-      title: 'Restablecer contraseña - ReSolVelo',
-      description: 'Ingresa una nueva contraseña para tu cuenta',
+      title: "Restablecer contraseña - ReSolVelo",
+      description: "Ingresa una nueva contraseña para tu cuenta",
     },
   },
-  { path: '/registro', name: 'Registro', component: RegisterPage },
-  { path: '/verificacion-pendiente', name: 'VerificaciónPendiente', component: PendingVerification },
+  { path: "/registro", name: "Registro", component: RegisterPage },
   {
-    path: '/perfil',
-    name: 'Perfil',
+    path: "/verificacion-pendiente",
+    name: "VerificaciónPendiente",
+    component: PendingVerification,
+  },
+  {
+    path: "/perfil",
+    name: "Perfil",
     component: PerfilPage,
     meta: {
-      title: 'Mi perfil - ReSolVelo',
-      description: 'Actualiza tu información de perfil',
+      title: "Mi perfil - ReSolVelo",
+      description: "Actualiza tu información de perfil",
     },
   },
   {
-    path: '/crear-publicacion',
-    name: 'CrearPublicacion',
+    path: "/crear-publicacion",
+    name: "CrearPublicacion",
     component: CrearPublicacionPage,
     meta: {
-      title: 'Crear Publicación - ReSolVelo',
-      description: 'Publica tu instrumento musical para alquiler',
+      title: "Crear Publicación - ReSolVelo",
+      description: "Publica tu instrumento musical para alquiler",
     },
   },
-  { path: '/editar-publicacion/:id', name: 'EditarPublicacion', component: () => import('../views/EditarPublicacionPage.vue'), meta: { requiresAuth: true } },
   {
-    path: '/mis-publicaciones',
-    name: 'MisPublicaciones',
+    path: "/editar-publicacion/:id",
+    name: "EditarPublicacion",
+    component: () => import("../views/EditarPublicacionPage.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/mis-publicaciones",
+    name: "MisPublicaciones",
     component: MisPublicacionesPage,
     meta: {
-      title: 'Panel del Propietario - ReSolVelo',
-      description: 'Gestiona tus publicaciones y solicitudes de alquiler',
+      title: "Panel del Propietario - ReSolVelo",
+      description: "Gestiona tus publicaciones y solicitudes de alquiler",
     },
   },
   {
-    path: '/mis-reservas',
-    name: 'MisReservas',
+    path: "/mis-reservas",
+    name: "MisReservas",
     component: MisReservasPage,
     meta: {
-      title: 'Mis Reservas - ReSolVelo',
-      description: 'Gestiona tus reservas de instrumentos musicales',
+      title: "Mis Reservas - ReSolVelo",
+      description: "Gestiona tus reservas de instrumentos musicales",
     },
   },
   {
-    path: '/pago/:id',
-    name: 'Pago',
+    path: "/pago/:id",
+    name: "Pago",
     component: PagoPage,
     meta: {
-      title: 'Procesar Pago - ReSolVelo',
-      description: 'Completa el pago para confirmar tu reserva',
+      title: "Procesar Pago - ReSolVelo",
+      description: "Completa el pago para confirmar tu reserva",
     },
   },
   {
-    path: '/pago-exitoso',
-    name: 'PagoExitoso',
+    path: "/pago-exitoso",
+    name: "PagoExitoso",
     component: PagoExitoso,
     meta: {
-      title: 'Pago Exitoso - ReSolVelo',
-      description: 'Resumen del pago realizado',
+      title: "Pago Exitoso - ReSolVelo",
+      description: "Resumen del pago realizado",
       requiresAuth: true,
     },
   },
   {
-    path: '/pago-error',
-    name: 'PagoError',
+    path: "/pago-error",
+    name: "PagoError",
     component: PagoError,
     meta: {
-      title: 'Error de Pago - ReSolVelo',
-      description: 'Hubo un problema procesando tu pago',
+      title: "Error de Pago - ReSolVelo",
+      description: "Hubo un problema procesando tu pago",
     },
   },
-  { path: '/debug', name: 'Debug', component: DebugPage, meta: { title: 'Debug - ReSolVelo', description: 'Página de debug temporal' } },
-  { path: '/test-api', name: 'TestApi', component: TestApiPage, meta: { title: 'Test API - ReSolVelo', description: 'Página de test para debuggear API' } },
-  { path: '/como-funciona', name: 'ComoFunciona', component: PaginaInformativa, meta: { title: 'Cómo funciona - ReSolVelo', description: 'Cómo funciona la plataforma' } },
-  { path: '/preguntas-frecuentes', name: 'PreguntasFrecuentes', component: PaginaInformativa, meta: { title: 'Preguntas Frecuentes - ReSolVelo', description: 'Respuestas a preguntas comunes' } },
-  { path: '/contacto', name: 'Contacto', component: PaginaInformativa, meta: { title: 'Contacto - ReSolVelo', description: 'Contacta a nuestro equipo de soporte' } },
-  { path: '/centro-ayuda', name: 'CentroAyuda', component: PaginaInformativa, meta: { title: 'Centro de Ayuda - ReSolVelo', description: 'Recursos y guías' } },
-  { path: '/politicas-seguridad', name: 'PoliticasSeguridad', component: PaginaInformativa, meta: { title: 'Políticas de Seguridad - ReSolVelo', description: 'Medidas de seguridad y protección' } },
-  { path: '/terminos-condiciones', name: 'TerminosCondiciones', component: PaginaInformativa, meta: { title: 'Términos y Condiciones - ReSolVelo', description: 'Términos y condiciones de uso' } },
-  { path: '/politica-privacidad', name: 'PoliticaPrivacidad', component: PaginaInformativa, meta: { title: 'Política de Privacidad - ReSolVelo', description: 'Cómo protegemos tu privacidad' } },
-]
+  {
+    path: "/debug",
+    name: "Debug",
+    component: DebugPage,
+    meta: {
+      title: "Debug - ReSolVelo",
+      description: "Página de debug temporal",
+    },
+  },
+  {
+    path: "/test-api",
+    name: "TestApi",
+    component: TestApiPage,
+    meta: {
+      title: "Test API - ReSolVelo",
+      description: "Página de test para debuggear API",
+    },
+  },
+  {
+    path: "/como-funciona",
+    name: "ComoFunciona",
+    component: PaginaInformativa,
+    meta: {
+      title: "Cómo funciona - ReSolVelo",
+      description: "Cómo funciona la plataforma",
+    },
+  },
+  {
+    path: "/preguntas-frecuentes",
+    name: "PreguntasFrecuentes",
+    component: PaginaInformativa,
+    meta: {
+      title: "Preguntas Frecuentes - ReSolVelo",
+      description: "Respuestas a preguntas comunes",
+    },
+  },
+  {
+    path: "/contacto",
+    name: "Contacto",
+    component: PaginaInformativa,
+    meta: {
+      title: "Contacto - ReSolVelo",
+      description: "Contacta a nuestro equipo de soporte",
+    },
+  },
+  {
+    path: "/centro-ayuda",
+    name: "CentroAyuda",
+    component: PaginaInformativa,
+    meta: {
+      title: "Centro de Ayuda - ReSolVelo",
+      description: "Recursos y guías",
+    },
+  },
+  {
+    path: "/politicas-seguridad",
+    name: "PoliticasSeguridad",
+    component: PaginaInformativa,
+    meta: {
+      title: "Políticas de Seguridad - ReSolVelo",
+      description: "Medidas de seguridad y protección",
+    },
+  },
+  {
+    path: "/terminos-condiciones",
+    name: "TerminosCondiciones",
+    component: PaginaInformativa,
+    meta: {
+      title: "Términos y Condiciones - ReSolVelo",
+      description: "Términos y condiciones de uso",
+    },
+  },
+  {
+    path: "/politica-privacidad",
+    name: "PoliticaPrivacidad",
+    component: PaginaInformativa,
+    meta: {
+      title: "Política de Privacidad - ReSolVelo",
+      description: "Cómo protegemos tu privacidad",
+    },
+  },
+];
 
 // Creación del router con historial HTML5
 const router = createRouter({
   history: createWebHistory(),
   routes,
-})
+});
 
 // Guard de navegación: gestión de redirect tras login y protección de rutas
 router.beforeEach((to, from, next) => {
   // Si el usuario va al login
-  if (to.name === 'Login') {
-    const redirectParam = to.query.redirect as string
+  if (to.name === "Login") {
+    const redirectParam = to.query.redirect as string;
     if (redirectParam) {
-      sessionStorage.setItem('rutaAnteriorLogin', redirectParam)
+      sessionStorage.setItem("rutaAnteriorLogin", redirectParam);
     } else {
       const rutasAuth = new Set([
-        'Login',
-        'Registro',
-        'VerificaciónPendiente',
-        'RecuperarContrasena',
-        'ResetPassword',
-      ])
+        "Login",
+        "Registro",
+        "VerificaciónPendiente",
+        "RecuperarContrasena",
+        "ResetPassword",
+      ]);
       if (from.name && !rutasAuth.has(String(from.name))) {
-        const rutaAnterior = from.fullPath
-        if (rutaAnterior && rutaAnterior !== '/') {
-          sessionStorage.setItem('rutaAnteriorLogin', rutaAnterior)
+        const rutaAnterior = from.fullPath;
+        if (rutaAnterior && rutaAnterior !== "/") {
+          sessionStorage.setItem("rutaAnteriorLogin", rutaAnterior);
         }
       }
     }
@@ -212,13 +294,13 @@ router.beforeEach((to, from, next) => {
 
   // Proteger rutas que requieren autenticación
   if (to.meta && (to.meta as any).requiresAuth) {
-    const token = localStorage.getItem('access_token')
+    const token = localStorage.getItem("access_token");
     if (!token) {
-      const redirect = encodeURIComponent(to.fullPath)
-      return next({ name: 'Login', query: { redirect } })
+      const redirect = encodeURIComponent(to.fullPath);
+      return next({ name: "Login", query: { redirect } });
     }
   }
-  next()
-})
+  next();
+});
 
-export default router
+export default router;

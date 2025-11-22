@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { PublicacionesController } from './publicaciones.controller';
-import { PublicacionesService } from './publicaciones.service';
-import { PrismaModule } from '../prisma/prisma.module';
+import { Module } from "@nestjs/common";
+import { PublicacionesController } from "./publicaciones.controller";
+import { PublicacionesService } from "./publicaciones.service";
+import { PrismaModule } from "../prisma/prisma.module";
 
 /**
  * Módulo de Publicaciones

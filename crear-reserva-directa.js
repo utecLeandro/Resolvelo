@@ -1,44 +1,50 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
 async function crearReservaDirecta() {
   try {
-    console.log('🔧 Creando reserva directa en la base de datos...');
+    console.log("🔧 Creando reserva directa en la base de datos...");
 
     // 1. Obtener usuarios
     const usuarios = await prisma.usuario.findMany({
-      select: { id: true, email: true, nombre: true }
+      select: { id: true, email: true, nombre: true },
     });
-    console.log('👥 Usuarios disponibles:', usuarios);
+    console.log("👥 Usuarios disponibles:", usuarios);
 
     // 2. Obtener publicaciones
     const publicaciones = await prisma.publicacion.findMany({
-      select: { id: true, titulo: true, propietarioId: true }
+      select: { id: true, titulo: true, propietarioId: true },
     });
-    console.log('📋 Publicaciones disponibles:', publicaciones);
+    console.log("📋 Publicaciones disponibles:", publicaciones);
 
     if (usuarios.length < 2 || publicaciones.length === 0) {
-      console.log('❌ No hay suficientes usuarios o publicaciones');
+      console.log("❌ No hay suficientes usuarios o publicaciones");
       return;
     }
 
     // 3. Buscar usuario test@test.com
-    const usuarioTest = usuarios.find(u => u.email === 'test@test.com');
+    const usuarioTest = usuarios.find((u) => u.email === "test@test.com");
     if (!usuarioTest) {
-      console.log('❌ Usuario test@test.com no encontrado');
+      console.log("❌ Usuario test@test.com no encontrado");
       return;
     }
 
     // 4. Buscar una publicación que NO sea del usuario test
-    const publicacion = publicaciones.find(p => p.propietarioId !== usuarioTest.id);
+    const publicacion = publicaciones.find(
+      (p) => p.propietarioId !== usuarioTest.id,
+    );
     if (!publicacion) {
-      console.log('❌ No hay publicaciones de otros usuarios');
+      console.log("❌ No hay publicaciones de otros usuarios");
       return;
     }
 
-    console.log(`✅ Usando publicación: ${publicacion.titulo} (ID: ${publicacion.id})`);
-    console.log(`✅ Usuario solicitante: ${usuarioTest.email} (ID: ${usuarioTest.id})`);
+    console.log(
+      `✅ Usando publicación: ${publicacion.titulo} (ID: ${publicacion.id})`,
+    );
+    console.log(
+      `✅ Usuario solicitante: ${usuarioTest.email} (ID: ${usuarioTest.id})`,
+    );
 
     // 5. Crear reserva en estado CONFIRMADA
     const fechaInicio = new Date();
@@ -53,27 +59,26 @@ async function crearReservaDirecta() {
         propietarioId: publicacion.propietarioId,
         fechaInicio: fechaInicio,
         fechaFin: fechaFin,
-        estado: 'CONFIRMADA',
-        notasUsuario: 'Reserva de prueba para testing de activación',
-        precioTotal: 100.00,
-        comisionPlataforma: 10.00,
-        tipoEntrega: 'RETIRO_LOCAL',
+        estado: "CONFIRMADA",
+        notasUsuario: "Reserva de prueba para testing de activación",
+        precioTotal: 100.0,
+        comisionPlataforma: 10.0,
+        tipoEntrega: "RETIRO_LOCAL",
         fechaCreacion: new Date(),
-        fechaActualizacion: new Date()
-      }
+        fechaActualizacion: new Date(),
+      },
     });
 
-    console.log('✅ Reserva creada exitosamente:', {
+    console.log("✅ Reserva creada exitosamente:", {
       id: reserva.id,
       estado: reserva.estado,
       fechaInicio: reserva.fechaInicio,
-      fechaFin: reserva.fechaFin
+      fechaFin: reserva.fechaFin,
     });
 
-    console.log('\n🎯 Ahora puedes ejecutar el test de activación!');
-
+    console.log("\n🎯 Ahora puedes ejecutar el test de activación!");
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.error("❌ Error:", error);
   } finally {
     await prisma.$disconnect();
   }

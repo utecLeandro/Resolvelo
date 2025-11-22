@@ -4,13 +4,6 @@
     "outDir": "./dist2",
     "module": "commonjs"
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "dist2",
-    "frontend"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "dist2", "frontend"]
 }

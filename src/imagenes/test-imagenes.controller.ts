@@ -1,13 +1,12 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get } from "@nestjs/common";
 
-@Controller('test-imagenes')
+@Controller("test-imagenes")
 export class TestImagenesController {
-  
-  @Get('test')
+  @Get("test")
   getTest() {
-    return { 
-      message: 'Test controlador de imágenes funcionando',
-      timestamp: new Date().toISOString()
+    return {
+      message: "Test controlador de imágenes funcionando",
+      timestamp: new Date().toISOString(),
     };
   }
 }

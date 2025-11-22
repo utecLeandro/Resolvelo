@@ -1,13 +1,12 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get } from "@nestjs/common";
 
-@Controller('simple-test')
+@Controller("simple-test")
 export class SimpleTestController {
-  
-  @Get('test')
+  @Get("test")
   getTest(): any {
-    return { 
-      message: 'Simple test funcionando',
-      timestamp: new Date().toISOString()
+    return {
+      message: "Simple test funcionando",
+      timestamp: new Date().toISOString(),
     };
   }
 }

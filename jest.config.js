@@ -3,16 +3,16 @@
  * Priorizamos el idioma español y comentarios claros.
  */
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  rootDir: '.',
-  testRegex: '.*\\.(spec|e2e-spec)\\.ts$',
-  moduleFileExtensions: ['js', 'json', 'ts'],
-  coverageDirectory: './coverage',
-  collectCoverageFrom: ['src/**/*.ts'],
+  preset: "ts-jest",
+  testEnvironment: "node",
+  rootDir: ".",
+  testRegex: ".*\\.(spec|e2e-spec)\\.ts$",
+  moduleFileExtensions: ["js", "json", "ts"],
+  coverageDirectory: "./coverage",
+  collectCoverageFrom: ["src/**/*.ts"],
   globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.json',
+    "ts-jest": {
+      tsconfig: "tsconfig.json",
     },
   },
 };

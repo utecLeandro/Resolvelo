@@ -1,44 +1,61 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { authService } from '../services/api'
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { authService } from "../services/api";
 
-const router = useRouter()
-const email = ref('')
-const isLoading = ref(false)
-const message = ref('')
-const error = ref('')
+const router = useRouter();
+const email = ref("");
+const isLoading = ref(false);
+const message = ref("");
+const error = ref("");
 
-const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
+const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 
 const onSubmit = async () => {
-  error.value = ''
-  message.value = ''
+  error.value = "";
+  message.value = "";
   if (!isValidEmail(email.value)) {
-    error.value = 'Ingresa un email válido.'
-    return
+    error.value = "Ingresa un email válido.";
+    return;
   }
-  isLoading.value = true
+  isLoading.value = true;
   try {
-    const res = await authService.forgotPassword(email.value)
-    message.value = res.message || 'Si el email existe, se enviarán instrucciones para recuperar la contraseña.'
+    const res = await authService.forgotPassword(email.value);
+    message.value =
+      res.message ||
+      "Si el email existe, se enviarán instrucciones para recuperar la contraseña.";
   } catch (e: any) {
-    error.value = e?.message || 'No se pudo procesar la solicitud.'
+    error.value = e?.message || "No se pudo procesar la solicitud.";
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
+};
 </script>
 
 <template>
-  <div class="min-h-[calc(100vh-4rem)] w-full flex items-center justify-center bg-gray-50 px-4 py-12">
-    <div class="w-full max-w-lg bg-white shadow rounded-2xl border border-gray-200 p-8">
-      <h1 class="text-2xl font-semibold text-gray-900 mb-2">Recuperación de contraseña</h1>
-      <p class="text-gray-600 mb-6">Ingresa tu correo para recibir un enlace de restablecimiento.</p>
+  <div
+    class="min-h-[calc(100vh-4rem)] w-full flex items-center justify-center bg-gray-50 px-4 py-12"
+  >
+    <div
+      class="w-full max-w-lg bg-white shadow rounded-2xl border border-gray-200 p-8"
+    >
+      <h1 class="text-2xl font-semibold text-gray-900 mb-2">
+        Recuperación de contraseña
+      </h1>
+      <p class="text-gray-600 mb-6">
+        Ingresa tu correo para recibir un enlace de restablecimiento.
+      </p>
 
-      <form @submit.prevent="onSubmit" class="space-y-4" aria-describedby="form-error" :aria-busy="isLoading">
+      <form
+        @submit.prevent="onSubmit"
+        class="space-y-4"
+        aria-describedby="form-error"
+        :aria-busy="isLoading"
+      >
         <div>
-          <label for="email" class="block text-sm font-medium text-gray-800">Correo electrónico</label>
+          <label for="email" class="block text-sm font-medium text-gray-800"
+            >Correo electrónico</label
+          >
           <input
             id="email"
             v-model.trim="email"
@@ -55,20 +72,31 @@ const onSubmit = async () => {
           class="w-full h-12 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="!isValidEmail(email) || isLoading"
         >
-          {{ isLoading ? 'Enviando…' : 'Enviar instrucciones' }}
+          {{ isLoading ? "Enviando…" : "Enviar instrucciones" }}
         </button>
 
-        <p v-if="error" id="form-error" class="text-red-600 text-sm" aria-live="polite">{{ error }}</p>
-        <p v-if="message" class="text-green-600 text-sm" aria-live="polite">{{ message }}</p>
+        <p
+          v-if="error"
+          id="form-error"
+          class="text-red-600 text-sm"
+          aria-live="polite"
+        >
+          {{ error }}
+        </p>
+        <p v-if="message" class="text-green-600 text-sm" aria-live="polite">
+          {{ message }}
+        </p>
 
         <div class="mt-6 text-center">
-          <router-link to="/login" class="text-sm text-blue-600 hover:text-blue-700">Volver al inicio de sesión</router-link>
+          <router-link
+            to="/login"
+            class="text-sm text-blue-600 hover:text-blue-700"
+            >Volver al inicio de sesión</router-link
+          >
         </div>
       </form>
     </div>
   </div>
-  
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

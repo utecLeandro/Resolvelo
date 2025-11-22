@@ -1,13 +1,13 @@
-import { IsEmail, IsString, MinLength } from 'class-validator'
+import { IsEmail, IsString, MinLength } from "class-validator";
 
 export class ResetPasswordDto {
-  @IsEmail({}, { message: 'Email inválido' })
-  email!: string
+  @IsEmail({}, { message: "Email inválido" })
+  email!: string;
 
   @IsString()
-  token!: string
+  token!: string;
 
   @IsString()
-  @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
-  newPassword!: string
+  @MinLength(6, { message: "La contraseña debe tener al menos 6 caracteres" })
+  newPassword!: string;
 }

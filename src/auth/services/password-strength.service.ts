@@ -2,12 +2,12 @@
  * Servicio para evaluar la fortaleza de contraseñas.
  * Implementa criterios OWASP para validación de contraseñas seguras.
  */
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 
 export interface ResultadoFortaleza {
   esValida: boolean;
   puntuacion: number; // 0-100
-  nivel: 'muy_debil' | 'debil' | 'media' | 'fuerte' | 'muy_fuerte';
+  nivel: "muy_debil" | "debil" | "media" | "fuerte" | "muy_fuerte";
   sugerencias: string[];
   errores: string[];
 }
@@ -21,14 +21,14 @@ export class PasswordStrengthService {
     const resultado: ResultadoFortaleza = {
       esValida: true,
       puntuacion: 0,
-      nivel: 'muy_debil',
+      nivel: "muy_debil",
       sugerencias: [],
-      errores: []
+      errores: [],
     };
 
     if (!password) {
       resultado.esValida = false;
-      resultado.errores.push('La contraseña es requerida');
+      resultado.errores.push("La contraseña es requerida");
       return resultado;
     }
 
@@ -36,7 +36,7 @@ export class PasswordStrengthService {
 
     // Verificar longitud mínima (OWASP recomienda 8+ caracteres)
     if (password.length < 8) {
-      resultado.errores.push('La contraseña debe tener al menos 8 caracteres');
+      resultado.errores.push("La contraseña debe tener al menos 8 caracteres");
       resultado.esValida = false;
     } else if (password.length >= 8) {
       puntuacion += 10;
@@ -57,28 +57,30 @@ export class PasswordStrengthService {
     const tieneEspecial = /[@$!%*?&]/.test(password);
 
     if (!tieneMinuscula) {
-      resultado.errores.push('Debe contener al menos una letra minúscula');
+      resultado.errores.push("Debe contener al menos una letra minúscula");
       resultado.esValida = false;
     } else {
       puntuacion += 15;
     }
 
     if (!tieneMayuscula) {
-      resultado.errores.push('Debe contener al menos una letra mayúscula');
+      resultado.errores.push("Debe contener al menos una letra mayúscula");
       resultado.esValida = false;
     } else {
       puntuacion += 15;
     }
 
     if (!tieneNumero) {
-      resultado.errores.push('Debe contener al menos un número');
+      resultado.errores.push("Debe contener al menos un número");
       resultado.esValida = false;
     } else {
       puntuacion += 15;
     }
 
     if (!tieneEspecial) {
-      resultado.errores.push('Debe contener al menos un carácter especial (@$!%*?&)');
+      resultado.errores.push(
+        "Debe contener al menos un carácter especial (@$!%*?&)",
+      );
       resultado.esValida = false;
     } else {
       puntuacion += 15;
@@ -86,21 +88,21 @@ export class PasswordStrengthService {
 
     // Verificar contraseñas comunes
     if (this.esContrasenaComun(password)) {
-      resultado.errores.push('No se permiten contraseñas comunes');
+      resultado.errores.push("No se permiten contraseñas comunes");
       resultado.esValida = false;
       puntuacion -= 20;
     }
 
     // Verificar patrones repetitivos
     if (this.tienePatronesRepetitivos(password)) {
-      resultado.errores.push('No se permiten patrones repetitivos');
+      resultado.errores.push("No se permiten patrones repetitivos");
       resultado.esValida = false;
       puntuacion -= 15;
     }
 
     // Verificar secuencias de teclado
     if (this.tieneSecuenciasTeclado(password)) {
-      resultado.errores.push('No se permiten secuencias de teclado');
+      resultado.errores.push("No se permiten secuencias de teclado");
       resultado.esValida = false;
       puntuacion -= 15;
     }
@@ -116,15 +118,15 @@ export class PasswordStrengthService {
 
     // Determinar nivel de fortaleza
     if (resultado.puntuacion >= 90) {
-      resultado.nivel = 'muy_fuerte';
+      resultado.nivel = "muy_fuerte";
     } else if (resultado.puntuacion >= 70) {
-      resultado.nivel = 'fuerte';
+      resultado.nivel = "fuerte";
     } else if (resultado.puntuacion >= 50) {
-      resultado.nivel = 'media';
+      resultado.nivel = "media";
     } else if (resultado.puntuacion >= 30) {
-      resultado.nivel = 'debil';
+      resultado.nivel = "debil";
     } else {
-      resultado.nivel = 'muy_debil';
+      resultado.nivel = "muy_debil";
     }
 
     // Generar sugerencias
@@ -138,11 +140,31 @@ export class PasswordStrengthService {
    */
   private esContrasenaComun(password: string): boolean {
     const contrasenasComunes = [
-      'password', '123456', '123456789', 'qwerty', 'abc123',
-      'password123', 'admin', 'letmein', 'welcome', 'monkey',
-      '1234567890', 'password1', '123123', 'admin123', 'iloveyou',
-      'princess', 'rockyou', '12345678', 'abc123', 'nicole',
-      'daniel', 'babygirl', 'monkey', 'lovely', 'jessica'
+      "password",
+      "123456",
+      "123456789",
+      "qwerty",
+      "abc123",
+      "password123",
+      "admin",
+      "letmein",
+      "welcome",
+      "monkey",
+      "1234567890",
+      "password1",
+      "123123",
+      "admin123",
+      "iloveyou",
+      "princess",
+      "rockyou",
+      "12345678",
+      "abc123",
+      "nicole",
+      "daniel",
+      "babygirl",
+      "monkey",
+      "lovely",
+      "jessica",
     ];
 
     return contrasenasComunes.includes(password.toLowerCase());
@@ -170,35 +192,53 @@ export class PasswordStrengthService {
    */
   private tieneSecuenciasTeclado(password: string): boolean {
     const secuenciasTeclado = [
-      'qwerty', 'qwertyuiop', 'asdfgh', 'asdfghjkl',
-      'zxcvbn', 'zxcvbnm', '1234567890'
+      "qwerty",
+      "qwertyuiop",
+      "asdfgh",
+      "asdfghjkl",
+      "zxcvbn",
+      "zxcvbnm",
+      "1234567890",
     ];
 
     const passwordLower = password.toLowerCase();
-    return secuenciasTeclado.some(secuencia => 
-      passwordLower.includes(secuencia)
+    return secuenciasTeclado.some((secuencia) =>
+      passwordLower.includes(secuencia),
     );
   }
 
   /**
    * Genera sugerencias para mejorar la contraseña
    */
-  private generarSugerencias(password: string, resultado: ResultadoFortaleza): void {
+  private generarSugerencias(
+    password: string,
+    resultado: ResultadoFortaleza,
+  ): void {
     if (password.length < 12) {
-      resultado.sugerencias.push('Considera usar al menos 12 caracteres para mayor seguridad');
+      resultado.sugerencias.push(
+        "Considera usar al menos 12 caracteres para mayor seguridad",
+      );
     }
 
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-      resultado.sugerencias.push('Incluye más variedad de caracteres especiales');
+      resultado.sugerencias.push(
+        "Incluye más variedad de caracteres especiales",
+      );
     }
 
-    if (resultado.nivel === 'debil' || resultado.nivel === 'muy_debil') {
-      resultado.sugerencias.push('Evita palabras del diccionario y información personal');
-      resultado.sugerencias.push('Usa una frase de contraseña con espacios y números');
+    if (resultado.nivel === "debil" || resultado.nivel === "muy_debil") {
+      resultado.sugerencias.push(
+        "Evita palabras del diccionario y información personal",
+      );
+      resultado.sugerencias.push(
+        "Usa una frase de contraseña con espacios y números",
+      );
     }
 
-    if (resultado.nivel !== 'muy_fuerte') {
-      resultado.sugerencias.push('Considera usar un gestor de contraseñas para generar contraseñas únicas');
+    if (resultado.nivel !== "muy_fuerte") {
+      resultado.sugerencias.push(
+        "Considera usar un gestor de contraseñas para generar contraseñas únicas",
+      );
     }
   }
 }

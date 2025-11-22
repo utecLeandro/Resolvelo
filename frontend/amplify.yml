@@ -1,0 +1,62 @@
+# Configuración de build y hosting para AWS Amplify
+# Explicaciones en español y nombres técnicos en inglés
+
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*
+
+# Reglas de redirección para SPA (todas las rutas no-archivo sirven index.html)
+redirects:
+  - source: "/<*>"
+    target: "/index.html"
+    status: "200"
+    condition: null
+
+# Encabezados de seguridad (OWASP) y políticas de caché
+customHeaders:
+  # Cache agresivo para assets estáticos versionados
+  - pattern: "**/*.js"
+    headers:
+      - key: Cache-Control
+        value: "public,max-age=31536000,immutable"
+  - pattern: "**/*.css"
+    headers:
+      - key: Cache-Control
+        value: "public,max-age=31536000,immutable"
+  - pattern: "**/*.{png,jpg,jpeg,svg,webp,ico}"
+    headers:
+      - key: Cache-Control
+        value: "public,max-age=31536000,immutable"
+
+  # index.html sin caché para evitar servir versiones antiguas
+  - pattern: "/index.html"
+    headers:
+      - key: Cache-Control
+        value: "no-cache"
+
+  # Headers de seguridad
+  - pattern: "/<*>"
+    headers:
+      - key: Content-Security-Policy
+        value: "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; frame-ancestors 'none';"
+      - key: X-Frame-Options
+        value: "DENY"
+      - key: X-Content-Type-Options
+        value: "nosniff"
+      - key: Referrer-Policy
+        value: "no-referrer"
+      - key: Strict-Transport-Security
+        value: "max-age=63072000; includeSubDomains; preload"

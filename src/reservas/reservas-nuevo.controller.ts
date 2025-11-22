@@ -1,9 +1,9 @@
-import { Controller, Get } from '@nestjs/common'
+import { Controller, Get } from "@nestjs/common";
 
-@Controller('reservas-nuevo')
+@Controller("reservas-nuevo")
 export class ReservasNuevoController {
-  @Get('test')
+  @Get("test")
   async test() {
-    return { message: 'Controlador de reservas funcionando!' }
+    return { message: "Controlador de reservas funcionando!" };
   }
 }

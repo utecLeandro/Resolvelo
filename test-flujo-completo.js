@@ -1,17 +1,17 @@
-const axios = require('axios');
+const axios = require("axios");
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = "http://localhost:3000/api";
 
 // Función para hacer login
 async function login(email, password) {
   try {
     const response = await axios.post(`${API_BASE}/auth/login`, {
       email,
-      password
+      password,
     });
     return response.data.access_token;
   } catch (error) {
-    console.error('Error en login:', error.response?.data || error.message);
+    console.error("Error en login:", error.response?.data || error.message);
     return null;
   }
 }
@@ -20,11 +20,14 @@ async function login(email, password) {
 async function obtenerInfoUsuario(token) {
   try {
     const response = await axios.get(`${API_BASE}/auth/profile`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   } catch (error) {
-    console.error('Error al obtener info del usuario:', error.response?.data || error.message);
+    console.error(
+      "Error al obtener info del usuario:",
+      error.response?.data || error.message,
+    );
     return null;
   }
 }
@@ -32,12 +35,18 @@ async function obtenerInfoUsuario(token) {
 // Función para obtener solicitudes pendientes
 async function obtenerSolicitudesPendientes(token) {
   try {
-    const response = await axios.get(`${API_BASE}/usuarios/reservas/mis-solicitudes`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await axios.get(
+      `${API_BASE}/usuarios/reservas/mis-solicitudes`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     return response.data.data || response.data;
   } catch (error) {
-    console.error('Error al obtener solicitudes pendientes:', error.response?.data || error.message);
+    console.error(
+      "Error al obtener solicitudes pendientes:",
+      error.response?.data || error.message,
+    );
     return [];
   }
 }
@@ -45,12 +54,18 @@ async function obtenerSolicitudesPendientes(token) {
 // Función para obtener mis reservas
 async function obtenerMisReservas(token) {
   try {
-    const response = await axios.get(`${API_BASE}/usuarios/reservas/mis-reservas`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await axios.get(
+      `${API_BASE}/usuarios/reservas/mis-reservas`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     return response.data.data || response.data;
   } catch (error) {
-    console.error('Error al obtener mis reservas:', error.response?.data || error.message);
+    console.error(
+      "Error al obtener mis reservas:",
+      error.response?.data || error.message,
+    );
     return [];
   }
 }
@@ -58,12 +73,18 @@ async function obtenerMisReservas(token) {
 // Función para obtener una publicación
 async function obtenerPublicacion(token, publicacionId) {
   try {
-    const response = await axios.get(`${API_BASE}/publicaciones/${publicacionId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await axios.get(
+      `${API_BASE}/publicaciones/${publicacionId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     return response.data.data || response.data;
   } catch (error) {
-    console.error('Error al obtener publicación:', error.response?.data || error.message);
+    console.error(
+      "Error al obtener publicación:",
+      error.response?.data || error.message,
+    );
     return null;
   }
 }
@@ -71,12 +92,19 @@ async function obtenerPublicacion(token, publicacionId) {
 // Función para crear una reserva
 async function crearReserva(token, datosReserva) {
   try {
-    const response = await axios.post(`${API_BASE}/usuarios/reservas/crear`, datosReserva, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await axios.post(
+      `${API_BASE}/usuarios/reservas/crear`,
+      datosReserva,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     return response.data;
   } catch (error) {
-    console.error('Error al crear reserva:', error.response?.data || error.message);
+    console.error(
+      "Error al crear reserva:",
+      error.response?.data || error.message,
+    );
     return null;
   }
 }
@@ -84,12 +112,19 @@ async function crearReserva(token, datosReserva) {
 // Función para aceptar una solicitud
 async function aceptarSolicitud(token, reservaId) {
   try {
-    const response = await axios.patch(`${API_BASE}/usuarios/reservas/${reservaId}/aceptar`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await axios.patch(
+      `${API_BASE}/usuarios/reservas/${reservaId}/aceptar`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     return response.data;
   } catch (error) {
-    console.error('Error al aceptar solicitud:', error.response?.data || error.message);
+    console.error(
+      "Error al aceptar solicitud:",
+      error.response?.data || error.message,
+    );
     return null;
   }
 }
@@ -97,58 +132,70 @@ async function aceptarSolicitud(token, reservaId) {
 // Función para rechazar una solicitud
 async function rechazarSolicitud(token, reservaId) {
   try {
-    const response = await axios.patch(`${API_BASE}/usuarios/reservas/${reservaId}/rechazar`, {
-      motivoRechazo: 'Fechas no disponibles - Prueba automatizada'
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await axios.patch(
+      `${API_BASE}/usuarios/reservas/${reservaId}/rechazar`,
+      {
+        motivoRechazo: "Fechas no disponibles - Prueba automatizada",
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     return response.data;
   } catch (error) {
-    console.error('Error al rechazar solicitud:', error.response?.data || error.message);
+    console.error(
+      "Error al rechazar solicitud:",
+      error.response?.data || error.message,
+    );
     return null;
   }
 }
 
 async function main() {
-  console.log('🧪 Iniciando pruebas del flujo completo de reservas...\n');
+  console.log("🧪 Iniciando pruebas del flujo completo de reservas...\n");
 
   // 1. Login de Federico (propietario)
-  console.log('1. Login de Federico (propietario)...');
-  const tokenFederico = await login('gtbump2012@gmail.com', 'FedericoTest2024!');
+  console.log("1. Login de Federico (propietario)...");
+  const tokenFederico = await login(
+    "gtbump2012@gmail.com",
+    "FedericoTest2024!",
+  );
   if (!tokenFederico) {
-    console.log('❌ Error en login de Federico');
+    console.log("❌ Error en login de Federico");
     return;
   }
-  console.log('✅ Federico logueado exitosamente\n');
+  console.log("✅ Federico logueado exitosamente\n");
 
   // 2. Login de María (arrendataria)
-  console.log('2. Login de María (arrendataria)...');
-  const tokenMaria = await login('maria@test.com', 'MariaTest2024!');
+  console.log("2. Login de María (arrendataria)...");
+  const tokenMaria = await login("maria@test.com", "MariaTest2024!");
   if (!tokenMaria) {
-    console.log('❌ Error en login de María');
+    console.log("❌ Error en login de María");
     return;
   }
-  console.log('✅ María logueada exitosamente\n');
+  console.log("✅ María logueada exitosamente\n");
 
   // 3. Obtener información de los usuarios
-  console.log('3. Obteniendo información de los usuarios...');
+  console.log("3. Obteniendo información de los usuarios...");
   const infoFederico = await obtenerInfoUsuario(tokenFederico);
   const infoMaria = await obtenerInfoUsuario(tokenMaria);
-  
+
   if (!infoFederico || !infoMaria) {
-    console.log('❌ Error al obtener información de los usuarios');
+    console.log("❌ Error al obtener información de los usuarios");
     return;
   }
-  console.log(`✅ Información obtenida - Federico: ${infoFederico.nombre} ${infoFederico.apellido}, María: ${infoMaria.nombre} ${infoMaria.apellido}\n`);
+  console.log(
+    `✅ Información obtenida - Federico: ${infoFederico.nombre} ${infoFederico.apellido}, María: ${infoMaria.nombre} ${infoMaria.apellido}\n`,
+  );
 
   // 4. María crea dos nuevas reservas
-  console.log('4. María crea dos nuevas reservas...');
-  
-  const publicacionId = 'cmgxzc40c000dn4c31q3loiai'; // ID del teclado de Federico (Yamaha PSR-E373)
+  console.log("4. María crea dos nuevas reservas...");
+
+  const publicacionId = "cmgxzc40c000dn4c31q3loiai"; // ID del teclado de Federico (Yamaha PSR-E373)
   const publicacion = await obtenerPublicacion(tokenMaria, publicacionId);
-  
+
   if (!publicacion) {
-    console.log('❌ No se pudo obtener la publicación');
+    console.log("❌ No se pudo obtener la publicación");
     return;
   }
 
@@ -160,14 +207,14 @@ async function main() {
     usuarioId: infoMaria.id,
     publicacionId: publicacionId,
     propietarioId: publicacion.propietarioId,
-    fechaInicio: '2026-06-15',
-    fechaFin: '2026-06-17',
+    fechaInicio: "2026-06-15",
+    fechaFin: "2026-06-17",
     precioTotal: precioTotal,
     comisionPlataforma: comisionPlataforma,
-    tipoEntrega: 'RETIRO',
-    direccionEntrega: 'Dirección de retiro',
-    telefonoContacto: '987654321',
-    notasUsuario: 'Primera reserva de prueba'
+    tipoEntrega: "RETIRO",
+    direccionEntrega: "Dirección de retiro",
+    telefonoContacto: "987654321",
+    notasUsuario: "Primera reserva de prueba",
   };
 
   // Segunda reserva
@@ -175,60 +222,67 @@ async function main() {
     usuarioId: infoMaria.id,
     publicacionId: publicacionId,
     propietarioId: publicacion.propietarioId,
-    fechaInicio: '2026-07-15',
-    fechaFin: '2026-07-17',
+    fechaInicio: "2026-07-15",
+    fechaFin: "2026-07-17",
     precioTotal: precioTotal,
     comisionPlataforma: comisionPlataforma,
-    tipoEntrega: 'RETIRO',
-    direccionEntrega: 'Dirección de retiro',
-    telefonoContacto: '987654321',
-    notasUsuario: 'Segunda reserva de prueba'
+    tipoEntrega: "RETIRO",
+    direccionEntrega: "Dirección de retiro",
+    telefonoContacto: "987654321",
+    notasUsuario: "Segunda reserva de prueba",
   };
 
   const reserva1 = await crearReserva(tokenMaria, datosReserva1);
   const reserva2 = await crearReserva(tokenMaria, datosReserva2);
 
   if (!reserva1 || !reserva2) {
-    console.log('❌ Error al crear las reservas');
+    console.log("❌ Error al crear las reservas");
     return;
   }
 
-  console.log(`✅ Primera reserva creada: ${reserva1?.data?.id || reserva1?.id || 'ID no disponible'}`);
-  console.log(`✅ Segunda reserva creada: ${reserva2?.data?.id || reserva2?.id || 'ID no disponible'}\n`);
+  console.log(
+    `✅ Primera reserva creada: ${reserva1?.data?.id || reserva1?.id || "ID no disponible"}`,
+  );
+  console.log(
+    `✅ Segunda reserva creada: ${reserva2?.data?.id || reserva2?.id || "ID no disponible"}\n`,
+  );
 
   // 5. Verificar solicitudes pendientes de Federico
-  console.log('5. Verificando solicitudes pendientes de Federico...');
-  const solicitudesPendientes = await obtenerSolicitudesPendientes(tokenFederico);
-  console.log(`📋 Federico tiene ${solicitudesPendientes.length} solicitudes pendientes\n`);
+  console.log("5. Verificando solicitudes pendientes de Federico...");
+  const solicitudesPendientes =
+    await obtenerSolicitudesPendientes(tokenFederico);
+  console.log(
+    `📋 Federico tiene ${solicitudesPendientes.length} solicitudes pendientes\n`,
+  );
 
   // 6. Federico acepta la primera solicitud
-  console.log('6. Federico acepta la primera solicitud...');
+  console.log("6. Federico acepta la primera solicitud...");
   const idReserva1 = reserva1?.data?.id || reserva1?.id;
   const resultadoAceptar = await aceptarSolicitud(tokenFederico, idReserva1);
   if (resultadoAceptar) {
-    console.log('✅ Primera solicitud aceptada exitosamente\n');
+    console.log("✅ Primera solicitud aceptada exitosamente\n");
   } else {
-    console.log('❌ Error al aceptar la primera solicitud\n');
+    console.log("❌ Error al aceptar la primera solicitud\n");
   }
 
   // 7. Federico rechaza la segunda solicitud
-  console.log('7. Federico rechaza la segunda solicitud...');
+  console.log("7. Federico rechaza la segunda solicitud...");
   const idReserva2 = reserva2?.data?.id || reserva2?.id;
   const resultadoRechazar = await rechazarSolicitud(tokenFederico, idReserva2);
   if (resultadoRechazar) {
-    console.log('✅ Segunda solicitud rechazada exitosamente\n');
+    console.log("✅ Segunda solicitud rechazada exitosamente\n");
   } else {
-    console.log('❌ Error al rechazar la segunda solicitud\n');
+    console.log("❌ Error al rechazar la segunda solicitud\n");
   }
 
   // 8. Verificar estado final de las reservas de María
-  console.log('8. Verificando estado final de las reservas de María...');
+  console.log("8. Verificando estado final de las reservas de María...");
   const reservasFinales = await obtenerMisReservas(tokenMaria);
   console.log(`📋 María tiene ${reservasFinales.length} reservas`);
-  
-  const reserva1Final = reservasFinales.find(r => r.id === reserva1.id);
-  const reserva2Final = reservasFinales.find(r => r.id === reserva2.id);
-  
+
+  const reserva1Final = reservasFinales.find((r) => r.id === reserva1.id);
+  const reserva2Final = reservasFinales.find((r) => r.id === reserva2.id);
+
   if (reserva1Final) {
     console.log(`   - Reserva 1 (${reserva1.id}): ${reserva1Final.estado}`);
   }
@@ -237,11 +291,13 @@ async function main() {
   }
 
   // 9. Verificar solicitudes pendientes finales de Federico
-  console.log('\n9. Verificando solicitudes pendientes finales de Federico...');
+  console.log("\n9. Verificando solicitudes pendientes finales de Federico...");
   const solicitudesFinales = await obtenerSolicitudesPendientes(tokenFederico);
-  console.log(`📋 Federico tiene ${solicitudesFinales.length} solicitudes pendientes\n`);
+  console.log(
+    `📋 Federico tiene ${solicitudesFinales.length} solicitudes pendientes\n`,
+  );
 
-  console.log('🎉 Pruebas del flujo completo completadas!');
+  console.log("🎉 Pruebas del flujo completo completadas!");
 }
 
 main().catch(console.error);

@@ -1,9 +1,9 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get } from "@nestjs/common";
 
-@Controller('simple')
+@Controller("simple")
 export class SimpleController {
   @Get()
   getHello() {
-    return { message: 'Simple module working!' };
+    return { message: "Simple module working!" };
   }
 }

@@ -8,18 +8,31 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidationArguments,
-} from 'class-validator';
+} from "class-validator";
 
 @ValidatorConstraint({ async: false })
-export class EsContrasenaSeguraConstraint implements ValidatorConstraintInterface {
+export class EsContrasenaSeguraConstraint
+  implements ValidatorConstraintInterface
+{
   validate(password: string, args: ValidationArguments) {
     if (!password) return false;
 
     // Lista de contraseñas comunes prohibidas (OWASP)
     const contrasenasComunes = [
-      'password', '123456', '123456789', 'qwerty', 'abc123',
-      'password123', 'admin', 'letmein', 'welcome', 'monkey',
-      '1234567890', 'password1', '123123', 'admin123'
+      "password",
+      "123456",
+      "123456789",
+      "qwerty",
+      "abc123",
+      "password123",
+      "admin",
+      "letmein",
+      "welcome",
+      "monkey",
+      "1234567890",
+      "password1",
+      "123123",
+      "admin123",
     ];
 
     // Verificar que no sea una contraseña común
@@ -46,7 +59,7 @@ export class EsContrasenaSeguraConstraint implements ValidatorConstraintInterfac
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'La contraseña no cumple con los criterios de seguridad: no debe ser una contraseña común, contener secuencias repetitivas o patrones de teclado';
+    return "La contraseña no cumple con los criterios de seguridad: no debe ser una contraseña común, contener secuencias repetitivas o patrones de teclado";
   }
 }
 

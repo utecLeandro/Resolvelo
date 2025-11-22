@@ -4,14 +4,11 @@
  * - Se puede extender el tema según guía Airbnb de UI.
  ****/
 module.exports = {
-  content: [
-    './index.html',
-    './src/**/*.{vue,ts,tsx}',
-  ],
+  content: ["./index.html", "./src/**/*.{vue,ts,tsx}"],
   theme: {
     extend: {
       // Paleta y tipografías podrían definirse aquí en el futuro
     },
   },
   plugins: [],
-}
+};

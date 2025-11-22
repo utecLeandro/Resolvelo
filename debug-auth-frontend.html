@@ -1,39 +1,44 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Debug Auth Frontend</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Debug Autenticación Frontend</h1>
     <div id="results"></div>
-    
+
     <script>
-        function debugAuth() {
-            const results = document.getElementById('results');
-            
-            // Verificar localStorage
-            const token = localStorage.getItem('access_token');
-            const userData = localStorage.getItem('user_data');
-            
-            results.innerHTML = `
+      function debugAuth() {
+        const results = document.getElementById("results");
+
+        // Verificar localStorage
+        const token = localStorage.getItem("access_token");
+        const userData = localStorage.getItem("user_data");
+
+        results.innerHTML = `
                 <h2>Estado de localStorage:</h2>
-                <p><strong>Token:</strong> ${token ? 'Presente' : 'No encontrado'}</p>
-                <p><strong>Token (primeros 50 chars):</strong> ${token ? token.substring(0, 50) + '...' : 'N/A'}</p>
-                <p><strong>User Data:</strong> ${userData ? 'Presente' : 'No encontrado'}</p>
-                <p><strong>User Data:</strong> ${userData || 'N/A'}</p>
+                <p><strong>Token:</strong> ${token ? "Presente" : "No encontrado"}</p>
+                <p><strong>Token (primeros 50 chars):</strong> ${token ? token.substring(0, 50) + "..." : "N/A"}</p>
+                <p><strong>User Data:</strong> ${userData ? "Presente" : "No encontrado"}</p>
+                <p><strong>User Data:</strong> ${userData || "N/A"}</p>
                 
                 <h2>Todas las claves en localStorage:</h2>
                 <ul>
-                    ${Object.keys(localStorage).map(key => `<li>${key}: ${localStorage.getItem(key)}</li>`).join('')}
+                    ${Object.keys(localStorage)
+                      .map(
+                        (key) =>
+                          `<li>${key}: ${localStorage.getItem(key)}</li>`,
+                      )
+                      .join("")}
                 </ul>
             `;
-        }
-        
-        // Ejecutar al cargar la página
-        debugAuth();
-        
-        // Actualizar cada 2 segundos
-        setInterval(debugAuth, 2000);
+      }
+
+      // Ejecutar al cargar la página
+      debugAuth();
+
+      // Actualizar cada 2 segundos
+      setInterval(debugAuth, 2000);
     </script>
-</body>
+  </body>
 </html>

@@ -1,0 +1,121 @@
+# Workflow de despliegue del backend a AWS App Runner vía ECR
+# - Construye y publica imagen Docker
+# - Actualiza/crea servicio App Runner
+# Requiere configurar OIDC con un Role en AWS e incluir secrets en GitHub
+
+name: Backend Deploy to App Runner
+
+on:
+  push:
+    branches: ["develop"]
+    paths:
+      - "Dockerfile"
+      - "src/**"
+      - ".github/workflows/backend-app-runner.yml"
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }} # ej: resolvelo-backend
+  APP_RUNNER_SERVICE_ARN: ${{ secrets.APP_RUNNER_SERVICE_ARN }}
+  VPC_CONNECTOR_ARN: ${{ secrets.VPC_CONNECTOR_ARN }}
+  AUTO_SCALING_CONFIG_ARN: ${{ secrets.AUTO_SCALING_CONFIG_ARN }}
+  DB_SECRET_ARN: ${{ secrets.DB_SECRET_ARN }} # Secrets Manager ARN para DATABASE_URL
+  JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }} # Secrets Manager ARN para JWT_SECRET
+
+jobs:
+  deploy:
+    name: Build & Deploy to App Runner
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          IMAGE_URI="$ECR_REGISTRY/${ECR_REPOSITORY}:$IMAGE_TAG"
+          echo "Building $IMAGE_URI"
+          docker build -t "$IMAGE_URI" -f Dockerfile .
+          docker push "$IMAGE_URI"
+          echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+
+      - name: Update or Create App Runner service
+        id: apprunner
+        env:
+          IMAGE_URI: ${{ steps.deploy.outputs.image_uri || steps.apprunner.outputs.image_uri || '' }}
+        run: |
+          set -euo pipefail
+          IMAGE_URI=${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          echo "Using image: $IMAGE_URI"
+
+          # Intentar actualizar el servicio existente
+          set +e
+          aws apprunner describe-service --service-arn "$APP_RUNNER_SERVICE_ARN"
+          DESCRIBE_RC=$?
+          set -e
+
+          SRC_CFG=$(cat <<'JSON'
+          {
+            "ImageRepository": {
+              "ImageIdentifier": "__IMAGE_URI__",
+              "ImageRepositoryType": "ECR",
+              "ImageConfiguration": {
+                "Port": "3000",
+                "RuntimeEnvironmentVariables": [
+                  {"Name": "NODE_ENV", "Value": "production"},
+                  {"Name": "PORT", "Value": "3000"}
+                ],
+                "RuntimeEnvironmentSecrets": [
+                  {"Name": "DATABASE_URL", "Value": "__DB_SECRET_ARN__"},
+                  {"Name": "JWT_SECRET", "Value": "__JWT_SECRET_ARN__"}
+                ]
+              }
+            }
+          }
+JSON
+          )
+
+          SRC_CFG=${SRC_CFG/__IMAGE_URI__/$IMAGE_URI}
+          SRC_CFG=${SRC_CFG/__DB_SECRET_ARN__/${DB_SECRET_ARN}}
+          SRC_CFG=${SRC_CFG/__JWT_SECRET_ARN__/${JWT_SECRET_ARN}}
+
+          if [ "$DESCRIBE_RC" -eq 0 ]; then
+            echo "Updating existing App Runner service..."
+            aws apprunner update-service \
+              --service-arn "$APP_RUNNER_SERVICE_ARN" \
+              --source-configuration "$SRC_CFG"
+          else
+            echo "Creating new App Runner service..."
+            NET_CFG=$(cat <<JSON
+            {
+              "EgressConfiguration": {"EgressType": "VPC"},
+              "VpcConnectorArn": "${VPC_CONNECTOR_ARN}"
+            }
+JSON
+            )
+            aws apprunner create-service \
+              --service-name "resolvelo-backend" \
+              --source-configuration "$SRC_CFG" \
+              --network-configuration "$NET_CFG" \
+              ${AUTO_SCALING_CONFIG_ARN:+--auto-scaling-configuration-arn "$AUTO_SCALING_CONFIG_ARN"}
+          fi
+
+      - name: Output service status
+        run: |
+          aws apprunner describe-service --service-arn "$APP_RUNNER_SERVICE_ARN" || true

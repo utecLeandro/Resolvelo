@@ -2,26 +2,35 @@
  * Controlador de autenticación.
  * Implementa el registro de usuario siguiendo TDD.
  */
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, Headers, UnauthorizedException } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { PasswordStrengthService } from './services/password-strength.service';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Get,
+  Headers,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { AuthService } from "./auth.service";
+import { LoginDto } from "./dto/login.dto";
+import { RegisterDto } from "./dto/register.dto";
+import { PasswordStrengthService } from "./services/password-strength.service";
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 
-@Controller('auth')
+@Controller("auth")
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly passwordStrengthService: PasswordStrengthService
+    private readonly passwordStrengthService: PasswordStrengthService,
   ) {}
 
   /**
    * Endpoint de registro de usuario.
    * Crea la cuenta en estado pendiente de verificación.
    */
-  @Post('register')
+  @Post("register")
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() body: RegisterDto) {
     return this.authService.register(body);
@@ -31,17 +40,17 @@ export class AuthController {
    * Endpoint de login de usuario./**
    * Autentica credenciales y devuelve token JWT.
    */
-  @Post('login')
+  @Post("login")
   @HttpCode(HttpStatus.OK)
   async login(@Body() body: LoginDto) {
-    console.log('🔐 Login request received:', { email: body.email });
+    console.log("🔐 Login request received:", { email: body.email });
     return this.authService.login(body);
   }
 
   /**
    * Valida la fortaleza de una contraseña en tiempo real.
    */
-  @Post('validar-contrasena')
+  @Post("validar-contrasena")
   @HttpCode(HttpStatus.OK)
   async validarContrasena(@Body() body: { password: string }) {
     return this.passwordStrengthService.evaluarFortaleza(body.password);
@@ -51,7 +60,7 @@ export class AuthController {
    * Inicia el flujo de recuperación de contraseña.
    * Genera token y envía email con instrucciones.
    */
-  @Post('forgot-password')
+  @Post("forgot-password")
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     return this.authService.iniciarRecuperacion(body.email);
@@ -61,21 +70,25 @@ export class AuthController {
    * Completa la recuperación de contraseña.
    * Valida token y actualiza la contraseña del usuario.
    */
-  @Post('reset-password')
+  @Post("reset-password")
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() body: ResetPasswordDto) {
-    return this.authService.resetearContrasena(body.email, body.token, body.newPassword);
+    return this.authService.resetearContrasena(
+      body.email,
+      body.token,
+      body.newPassword,
+    );
   }
 
   /**
    * Devuelve el perfil del usuario autenticado.
    * Usa token JWT en Authorization para extraer el userId.
    */
-  @Get('profile')
+  @Get("profile")
   @HttpCode(HttpStatus.OK)
-  async profile(@Headers('authorization') authHeader?: string) {
+  async profile(@Headers("authorization") authHeader?: string) {
     if (!authHeader) {
-      throw new UnauthorizedException('Falta encabezado Authorization');
+      throw new UnauthorizedException("Falta encabezado Authorization");
     }
     return this.authService.obtenerPerfilDesdeToken(authHeader);
   }

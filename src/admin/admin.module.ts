@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
-import { AdminController } from './admin.controller';
-import { AdminDebugController } from './admin-debug.controller';
-import { AdminService } from './admin.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { PublicacionesModule } from '../publicaciones/publicaciones.module';
+import { Module } from "@nestjs/common";
+import { AdminController } from "./admin.controller";
+import { AdminDebugController } from "./admin-debug.controller";
+import { AdminService } from "./admin.service";
+import { PrismaService } from "../prisma/prisma.service";
+import { PublicacionesModule } from "../publicaciones/publicaciones.module";
 
 @Module({
   imports: [PublicacionesModule],
@@ -13,6 +13,6 @@ import { PublicacionesModule } from '../publicaciones/publicaciones.module';
 })
 export class AdminModule {
   constructor() {
-    console.log('[AdminModule] Módulo de administración cargado');
+    console.log("[AdminModule] Módulo de administración cargado");
   }
 }
