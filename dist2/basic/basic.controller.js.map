@@ -1,1 +1,0 @@
-{"version":3,"file":"basic.controller.js","sourceRoot":"","sources":["../../src/basic/basic.controller.ts"],"names":[],"mappings":";;;;;;;;;;;;AAGA,2CAAiD;AAG1C,IAAM,eAAe,GAArB,MAAM,eAAe;IAK1B,QAAQ;QACN,OAAO,EAAE,OAAO,EAAE,gBAAgB,EAAE,CAAC;IACvC,CAAC;CACF,CAAA;AARY,0CAAe;AAK1B;IADC,IAAA,YAAG,GAAE;;;;+CAGL;0BAPU,eAAe;IAD3B,IAAA,mBAAU,EAAC,OAAO,CAAC;GACP,eAAe,CAQ3B"}
