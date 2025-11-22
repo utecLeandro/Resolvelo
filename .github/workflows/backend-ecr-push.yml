@@ -10,6 +10,8 @@ on:
         description: Tag de imagen a publicar (default develop)
         required: false
         default: develop
+  push:
+    branches: [develop]
 
 jobs:
   build-and-push:

@@ -8,13 +8,6 @@ name: Backend Deploy to App Runner
 on:
   # Permite ejecutar manualmente desde la UI de GitHub Actions
   workflow_dispatch:
-  # Despliegue automático al pushear a develop con cambios relevantes
-  push:
-    branches: ["develop"]
-    paths:
-      - "Dockerfile"
-      - "src/**"
-      - ".github/workflows/backend-app-runner.yml"
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
