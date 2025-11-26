@@ -21,7 +21,9 @@ env:
   AUTO_SCALING_CONFIG_ARN: ${{ secrets.AUTO_SCALING_CONFIG_ARN }}
   DB_SECRET_ARN: ${{ secrets.DB_SECRET_ARN }} # Secrets Manager ARN para DATABASE_URL
   JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }} # Secrets Manager ARN para JWT_SECRET
-  APP_RUNNER_INSTANCE_ROLE_ARN: ${{ secrets.APP_RUNNER_INSTANCE_ROLE_ARN }} # Nuevo secret requerido
+  APP_RUNNER_INSTANCE_ROLE_ARN: ${{ secrets.APP_RUNNER_INSTANCE_ROLE_ARN }} # Secret para Instance Role
+  # Rol para que App Runner pueda descargar la imagen de ECR (fallback al valor conocido si no hay secret)
+  APP_RUNNER_ECR_ACCESS_ROLE_ARN: ${{ secrets.APP_RUNNER_ECR_ACCESS_ROLE_ARN || 'arn:aws:iam::197946144414:role/service-role/AppRunnerECRAccessRole' }}
 
 jobs:
   deploy:
@@ -58,7 +60,10 @@ jobs:
           echo "ℹ️ Variables opcionales (no bloquean si faltan)"
           [ -z "${VPC_CONNECTOR_ARN:-}" ] && echo "⚠️ VPC_CONNECTOR_ARN no configurada" || echo "✅ VPC_CONNECTOR_ARN configurada"
           [ -z "${AUTO_SCALING_CONFIG_ARN:-}" ] && echo "⚠️ AUTO_SCALING_CONFIG_ARN no configurada" || echo "✅ AUTO_SCALING_CONFIG_ARN configurada"
-          [ -z "${APP_RUNNER_INSTANCE_ROLE_ARN:-}" ] && echo "⚠️ APP_RUNNER_INSTANCE_ROLE_ARN no configurada (Requerido para acceder a Secrets)" || echo "✅ APP_RUNNER_INSTANCE_ROLE_ARN configurada"
+
+          # Configuración de Roles (requeridos para ECR privado y Secrets)
+          check APP_RUNNER_INSTANCE_ROLE_ARN
+          check APP_RUNNER_ECR_ACCESS_ROLE_ARN
 
           # Secretos de entorno (requeridos)
           check DB_SECRET_ARN
@@ -120,9 +125,12 @@ jobs:
                   "DATABASE_URL": "%s",
                   "JWT_SECRET": "%s"
                 }
+              },
+              "AuthenticationConfiguration": {
+                "AccessRoleArn": "%s"
               }
             }
-          }' "$IMAGE_URI" "${DB_SECRET_ARN}" "${JWT_SECRET_ARN}" > source-config.json
+          }' "$IMAGE_URI" "${DB_SECRET_ARN}" "${JWT_SECRET_ARN}" "${APP_RUNNER_ECR_ACCESS_ROLE_ARN}" > source-config.json
 
           printf '{
             "InstanceRoleArn": "%s"
