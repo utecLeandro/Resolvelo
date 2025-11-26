@@ -121,11 +121,12 @@ jobs:
                   "JWT_SECRET": "%s"
                 }
               }
-            },
-            "InstanceConfiguration": {
-              "InstanceRoleArn": "%s"
             }
-          }' "$IMAGE_URI" "${DB_SECRET_ARN}" "${JWT_SECRET_ARN}" "${APP_RUNNER_INSTANCE_ROLE_ARN}" > source-config.json
+          }' "$IMAGE_URI" "${DB_SECRET_ARN}" "${JWT_SECRET_ARN}" > source-config.json
+
+          printf '{
+            "InstanceRoleArn": "%s"
+          }' "${APP_RUNNER_INSTANCE_ROLE_ARN}" > instance-config.json
 
           # Configuración de red (VPC Connector)
           if [ -n "${VPC_CONNECTOR_ARN:-}" ]; then
@@ -146,6 +147,7 @@ jobs:
           fi
 
           echo "📄 source-config.json generado"
+          echo "📄 instance-config.json generado"
           echo "📄 network-config.json generado"
 
           DESCRIBE_RC=1
@@ -162,12 +164,14 @@ jobs:
             echo "🔄 Actualizando servicio existente: $APP_RUNNER_SERVICE_ARN"
             aws apprunner update-service \
               --service-arn "$APP_RUNNER_SERVICE_ARN" \
-              --source-configuration file://source-config.json
+              --source-configuration file://source-config.json \
+              --instance-configuration file://instance-config.json
           else
             echo "🆕 Creando nuevo servicio App Runner: resolvelo-backend"
             SERVICE_ARN=$(aws apprunner create-service \
               --service-name "resolvelo-backend" \
               --source-configuration file://source-config.json \
+              --instance-configuration file://instance-config.json \
               --network-configuration file://network-config.json \
               ${AUTO_SCALING_CONFIG_ARN:+--auto-scaling-configuration-arn "$AUTO_SCALING_CONFIG_ARN"} \
               --query 'Service.ServiceArn' --output text)
