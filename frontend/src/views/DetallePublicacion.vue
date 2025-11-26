@@ -80,6 +80,28 @@
               </svg>
             </div>
           </div>
+          <section v-if="publicacion" class="mt-8 hidden lg:block" aria-label="Reseñas">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Reseñas</h2>
+            <div v-if="publicacion.calificaciones && publicacion.calificaciones.length > 0" class="space-y-4">
+              <div v-for="cal in publicacion.calificaciones" :key="cal.id" class="bg-white border border-gray-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <div class="flex items-center">
+                      <svg v-for="n in 5" :key="n" class="w-4 h-4" :class="n <= cal.puntuacion ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </div>
+                    <span class="text-sm text-gray-700" v-if="cal.usuarioCalificador">{{ cal.usuarioCalificador.nombre }} {{ cal.usuarioCalificador.apellido }}</span>
+                  </div>
+                  <span class="text-xs text-gray-500">{{ new Date(cal.fechaCreacion).toLocaleDateString('es-ES') }}</span>
+                </div>
+                <p v-if="cal.comentario" class="mt-2 text-sm text-gray-700">{{ cal.comentario }}</p>
+              </div>
+            </div>
+            <div v-else class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <p class="text-sm text-gray-600">Aún no hay reseñas para esta publicación.</p>
+            </div>
+          </section>
         </div>
 
         <!-- Información del instrumento -->
@@ -110,12 +132,16 @@
             
             <!-- Calificación y estadísticas -->
             <div class="flex items-center space-x-4 text-sm text-gray-600">
-              <div v-if="publicacion.calificacionPromedio" class="flex items-center">
+              <div v-if="calificacionPromedioNumero !== null" class="flex items-center">
+                <span class="mr-2">Calificación promedio:</span>
                 <svg class="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
-                <span class="font-medium">{{ publicacion.calificacionPromedio.toFixed(1) }}</span>
+                <span class="font-medium">{{ calificacionPromedioNumero!.toFixed(1) }}</span>
                 <span class="ml-1">({{ publicacion.totalCalificaciones }} reseñas)</span>
+              </div>
+              <div v-else class="text-gray-500">
+                Calificación promedio: Sin calificaciones
               </div>
               <span>•</span>
               <span>{{ publicacion.totalReservas }} alquileres</span>
@@ -266,7 +292,7 @@
                   : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'
               ]"
             >
-              Contactar para alquilar
+              Alquilar
             </button>
             <p v-if="!usuarioAutenticado" class="text-xs text-gray-500 text-center mt-2">
               Necesitas iniciar sesión para contactar al propietario
@@ -277,7 +303,32 @@
             <p v-if="!fechaInicio || !fechaFin" class="text-xs text-red-600 text-center mt-2">Selecciona un rango válido para continuar</p>
           </div>
         </div>
+
+        <!-- Reseñas (columna izquierda en escritorio, al final en móvil) -->
+        <section class="mt-8 lg:hidden" aria-label="Reseñas">
+          <h2 class="text-2xl font-bold text-gray-900 mb-4">Reseñas</h2>
+          <div v-if="publicacion.calificaciones && publicacion.calificaciones.length > 0" class="space-y-4">
+            <div v-for="cal in publicacion.calificaciones" :key="cal.id" class="bg-white border border-gray-200 rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <div class="flex items-center">
+                    <svg v-for="n in 5" :key="n" class="w-4 h-4" :class="n <= cal.puntuacion ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </div>
+                  <span class="text-sm text-gray-700" v-if="cal.usuarioCalificador">{{ cal.usuarioCalificador.nombre }} {{ cal.usuarioCalificador.apellido }}</span>
+                </div>
+                <span class="text-xs text-gray-500">{{ new Date(cal.fechaCreacion).toLocaleDateString('es-ES') }}</span>
+              </div>
+              <p v-if="cal.comentario" class="mt-2 text-sm text-gray-700">{{ cal.comentario }}</p>
+            </div>
+          </div>
+          <div v-else class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <p class="text-sm text-gray-600">Aún no hay reseñas para esta publicación.</p>
+          </div>
+        </section>
       </div>
+      
     </main>
   </div>
 </template>
@@ -286,7 +337,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EstadosUI from '../components/EstadosUI.vue'
-import { publicacionesService, reservasService } from '../services/api'
+import { publicacionesService, reservasService, calificacionesService } from '../services/api'
 import type { Publicacion, ReservaActiva, CrearReservaRequest } from '../services/api'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
@@ -476,9 +527,16 @@ const estadoTexto = computed(() => {
   return estados[publicacion.value.estadoEquipo] || publicacion.value.estadoEquipo
 })
 
-const tieneOpcionesEntrega = computed(() => {
-  return publicacion.value?.entregaDomicilio || publicacion.value?.retiroLocal
-})
+  const tieneOpcionesEntrega = computed(() => {
+    return publicacion.value?.entregaDomicilio || publicacion.value?.retiroLocal
+  })
+
+  const calificacionPromedioNumero = computed<number | null>(() => {
+    const raw: any = publicacion.value?.calificacionPromedio
+    if (raw === undefined || raw === null) return null
+    const num = typeof raw === 'number' ? raw : parseFloat(String(raw))
+    return Number.isFinite(num) ? num : null
+  })
 
 // Métodos
 const verificarAutenticacion = () => {
@@ -513,6 +571,14 @@ const cargarPublicacion = async () => {
     error.value = null
     
     publicacion.value = await publicacionesService.obtenerPublicacionPorId(id)
+    try {
+      const calRes = await calificacionesService.listarPorPublicacion(id, { take: 20, skip: 0 })
+      if (calRes?.success) {
+        publicacion.value.calificaciones = calRes.data
+      }
+    } catch (e) {
+      console.warn('No se pudieron cargar las calificaciones de la publicación:', e)
+    }
     // Cargar reservas activas de la publicación para informar fechas ocupadas
     try {
       reservasActivas.value = await publicacionesService.obtenerReservasActivasDePublicacion(id)
@@ -549,10 +615,11 @@ const formatearDDMMYYYY = (d: Date) => {
   return `${dd}/${mm}/${yyyy}`
 }
 
-const formatearRangoFechas = (rango: [Date, Date] | null) => {
-  if (!rango || !rango[0] || !rango[1]) return ''
-  const inicio = formatearDDMMYYYY(rango[0])
-  const fin = formatearDDMMYYYY(rango[1])
+const formatearRangoFechas = (dates: Date[]) => {
+  if (!dates || dates.length === 0) return ''
+  const inicio = formatearDDMMYYYY(dates[0] as Date)
+  const finDate = (dates[1] ?? dates[0]) as Date
+  const fin = formatearDDMMYYYY(finDate)
   return `${inicio} - ${fin}`
 }
 

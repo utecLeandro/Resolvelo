@@ -526,7 +526,7 @@ const limpiarTodosFiltros = () => {
 const formatoEtiquetaFecha = (iso?: string) => {
   if (!iso) return ''
   try {
-    const [y, m, d] = iso.split('-')
+    const [, m, d] = iso.split('-')
     return `${d}/${m}`
   } catch {
     return iso
