@@ -21,6 +21,7 @@ env:
   AUTO_SCALING_CONFIG_ARN: ${{ secrets.AUTO_SCALING_CONFIG_ARN }}
   DB_SECRET_ARN: ${{ secrets.DB_SECRET_ARN }} # Secrets Manager ARN para DATABASE_URL
   JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }} # Secrets Manager ARN para JWT_SECRET
+  APP_RUNNER_INSTANCE_ROLE_ARN: ${{ secrets.APP_RUNNER_INSTANCE_ROLE_ARN }} # Nuevo secret requerido
 
 jobs:
   deploy:
@@ -57,6 +58,8 @@ jobs:
           echo "ℹ️ Variables opcionales (no bloquean si faltan)"
           [ -z "${VPC_CONNECTOR_ARN:-}" ] && echo "⚠️ VPC_CONNECTOR_ARN no configurada" || echo "✅ VPC_CONNECTOR_ARN configurada"
           [ -z "${AUTO_SCALING_CONFIG_ARN:-}" ] && echo "⚠️ AUTO_SCALING_CONFIG_ARN no configurada" || echo "✅ AUTO_SCALING_CONFIG_ARN configurada"
+          [ -z "${APP_RUNNER_INSTANCE_ROLE_ARN:-}" ] && echo "⚠️ APP_RUNNER_INSTANCE_ROLE_ARN no configurada (Requerido para acceder a Secrets)" || echo "✅ APP_RUNNER_INSTANCE_ROLE_ARN configurada"
+
           # Secretos de entorno (requeridos)
           check DB_SECRET_ARN
           check JWT_SECRET_ARN
@@ -118,8 +121,11 @@ jobs:
                   "JWT_SECRET": "%s"
                 }
               }
+            },
+            "InstanceConfiguration": {
+              "InstanceRoleArn": "%s"
             }
-          }' "$IMAGE_URI" "${DB_SECRET_ARN}" "${JWT_SECRET_ARN}" > source-config.json
+          }' "$IMAGE_URI" "${DB_SECRET_ARN}" "${JWT_SECRET_ARN}" "${APP_RUNNER_INSTANCE_ROLE_ARN}" > source-config.json
 
           # Configuración de red (VPC Connector)
           if [ -n "${VPC_CONNECTOR_ARN:-}" ]; then
