@@ -126,15 +126,27 @@ jobs:
           EOF
 
           # Configuración de red (VPC Connector)
-          # VpcConnectorArn debe estar dentro de EgressConfiguration si EgressType es VPC
-          cat <<EOF > network-config.json
-          {
-            "EgressConfiguration": {
-              "EgressType": "VPC",
-              "VpcConnectorArn": "${VPC_CONNECTOR_ARN}"
+          # Si existe VPC_CONNECTOR_ARN, usamos EgressType=VPC, sino DEFAULT (pública)
+          if [ -n "${VPC_CONNECTOR_ARN:-}" ]; then
+            echo "ℹ️ Configurando salida a VPC: $VPC_CONNECTOR_ARN"
+            cat <<EOF > network-config.json
+            {
+              "EgressConfiguration": {
+                "EgressType": "VPC",
+                "VpcConnectorArn": "${VPC_CONNECTOR_ARN}"
+              }
             }
-          }
-          EOF
+EOF
+          else
+            echo "ℹ️ Configurando salida a Internet pública (DEFAULT)"
+            cat <<EOF > network-config.json
+            {
+              "EgressConfiguration": {
+                "EgressType": "DEFAULT"
+              }
+            }
+EOF
+          fi
 
           echo "📄 source-config.json generado"
           echo "📄 network-config.json generado"
