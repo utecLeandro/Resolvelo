@@ -96,63 +96,77 @@ jobs:
         id: apprunner
         env:
           IMAGE_URI: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-          SOURCE_CONFIGURATION: |
-            {
-              "ImageRepository": {
-                "ImageIdentifier": "__IMAGE_URI__",
-                "ImageRepositoryType": "ECR",
-                "ImageConfiguration": {
-                  "Port": "3000",
-                  "RuntimeEnvironmentVariables": [
-                    {"Name": "NODE_ENV", "Value": "production"},
-                    {"Name": "PORT", "Value": "3000"},
-                    {"Name": "PRISMA_MIGRATE_DEPLOY", "Value": "1"}
-                  ],
-                  "RuntimeEnvironmentSecrets": [
-                    {"Name": "DATABASE_URL", "Value": "__DB_SECRET_ARN__"},
-                    {"Name": "JWT_SECRET", "Value": "__JWT_SECRET_ARN__"}
-                  ]
-                }
-              }
-            }
-          NETWORK_CONFIGURATION: |
-            {
-              "EgressConfiguration": {"EgressType": "VPC"},
-              "VpcConnectorArn": "${VPC_CONNECTOR_ARN}"
-            }
         run: |
           set -euo pipefail
           echo "Using image: $IMAGE_URI"
 
+          # Preparar archivos de configuración JSON
+          # Se usan archivos temporales para evitar problemas de escape y formato en la CLI
+          # RuntimeEnvironmentVariables y Secrets deben ser mapas (diccionarios) clave-valor
+
+          cat <<EOF > source-config.json
+          {
+            "ImageRepository": {
+              "ImageIdentifier": "$IMAGE_URI",
+              "ImageRepositoryType": "ECR",
+              "ImageConfiguration": {
+                "Port": "3000",
+                "RuntimeEnvironmentVariables": {
+                  "NODE_ENV": "production",
+                  "PORT": "3000",
+                  "PRISMA_MIGRATE_DEPLOY": "1"
+                },
+                "RuntimeEnvironmentSecrets": {
+                  "DATABASE_URL": "${DB_SECRET_ARN}",
+                  "JWT_SECRET": "${JWT_SECRET_ARN}"
+                }
+              }
+            }
+          }
+          EOF
+
+          # Configuración de red (VPC Connector)
+          # VpcConnectorArn debe estar dentro de EgressConfiguration si EgressType es VPC
+          cat <<EOF > network-config.json
+          {
+            "EgressConfiguration": {
+              "EgressType": "VPC",
+              "VpcConnectorArn": "${VPC_CONNECTOR_ARN}"
+            }
+          }
+          EOF
+
+          echo "📄 source-config.json generado"
+          echo "📄 network-config.json generado"
+
           DESCRIBE_RC=1
           if [ -n "${APP_RUNNER_SERVICE_ARN:-}" ]; then
             set +e
-            aws apprunner describe-service --service-arn "$APP_RUNNER_SERVICE_ARN"
+            aws apprunner describe-service --service-arn "$APP_RUNNER_SERVICE_ARN" > /dev/null 2>&1
             DESCRIBE_RC=$?
             set -e
           else
-            echo "No hay ARN configurado, se asumirá creación de servicio"
+            echo "ℹ️ No hay ARN configurado, se procederá a crear el servicio"
           fi
 
-          SRC_CFG="$SOURCE_CONFIGURATION"
-          SRC_CFG=${SRC_CFG/__IMAGE_URI__/$IMAGE_URI}
-          SRC_CFG=${SRC_CFG/__DB_SECRET_ARN__/${DB_SECRET_ARN}}
-          SRC_CFG=${SRC_CFG/__JWT_SECRET_ARN__/${JWT_SECRET_ARN}}
-
           if [ "$DESCRIBE_RC" -eq 0 ]; then
+            echo "🔄 Actualizando servicio existente: $APP_RUNNER_SERVICE_ARN"
             aws apprunner update-service \
               --service-arn "$APP_RUNNER_SERVICE_ARN" \
-              --source-configuration "$SRC_CFG"
+              --source-configuration file://source-config.json
           else
-            NET_CFG="$NETWORK_CONFIGURATION"
+            echo "🆕 Creando nuevo servicio App Runner: resolvelo-backend"
             SERVICE_ARN=$(aws apprunner create-service \
               --service-name "resolvelo-backend" \
-              --source-configuration "$SRC_CFG" \
-              --network-configuration "$NET_CFG" \
+              --source-configuration file://source-config.json \
+              --network-configuration file://network-config.json \
               ${AUTO_SCALING_CONFIG_ARN:+--auto-scaling-configuration-arn "$AUTO_SCALING_CONFIG_ARN"} \
               --query 'Service.ServiceArn' --output text)
-            echo "ServiceArn creado: $SERVICE_ARN"
+            
+            echo "✅ Servicio creado con éxito. ServiceArn: $SERVICE_ARN"
             echo "service_arn=$SERVICE_ARN" >> $GITHUB_OUTPUT
+            
+            echo "⚠️ IMPORTANTE: Si es la primera vez, asegurate de guardar este ARN en el secret APP_RUNNER_SERVICE_ARN para futuros despliegues."
           fi
 
       - name: Output service status
