@@ -100,14 +100,11 @@ jobs:
           set -euo pipefail
           echo "Using image: $IMAGE_URI"
 
-          # Preparar archivos de configuración JSON
-          # Se usan archivos temporales para evitar problemas de escape y formato en la CLI
-          # RuntimeEnvironmentVariables y Secrets deben ser mapas (diccionarios) clave-valor
-
-          cat <<EOF > source-config.json
-          {
+          # Preparar archivos de configuración JSON usando printf para evitar problemas de sintaxis YAML/Heredoc
+          
+          printf '{
             "ImageRepository": {
-              "ImageIdentifier": "$IMAGE_URI",
+              "ImageIdentifier": "%s",
               "ImageRepositoryType": "ECR",
               "ImageConfiguration": {
                 "Port": "3000",
@@ -117,35 +114,29 @@ jobs:
                   "PRISMA_MIGRATE_DEPLOY": "1"
                 },
                 "RuntimeEnvironmentSecrets": {
-                  "DATABASE_URL": "${DB_SECRET_ARN}",
-                  "JWT_SECRET": "${JWT_SECRET_ARN}"
+                  "DATABASE_URL": "%s",
+                  "JWT_SECRET": "%s"
                 }
               }
             }
-          }
-          EOF
+          }' "$IMAGE_URI" "${DB_SECRET_ARN}" "${JWT_SECRET_ARN}" > source-config.json
 
           # Configuración de red (VPC Connector)
-          # Si existe VPC_CONNECTOR_ARN, usamos EgressType=VPC, sino DEFAULT (pública)
           if [ -n "${VPC_CONNECTOR_ARN:-}" ]; then
             echo "ℹ️ Configurando salida a VPC: $VPC_CONNECTOR_ARN"
-            cat <<EOF > network-config.json
-            {
+            printf '{
               "EgressConfiguration": {
                 "EgressType": "VPC",
-                "VpcConnectorArn": "${VPC_CONNECTOR_ARN}"
+                "VpcConnectorArn": "%s"
               }
-            }
-EOF
+            }' "$VPC_CONNECTOR_ARN" > network-config.json
           else
             echo "ℹ️ Configurando salida a Internet pública (DEFAULT)"
-            cat <<EOF > network-config.json
-            {
+            printf '{
               "EgressConfiguration": {
                 "EgressType": "DEFAULT"
               }
-            }
-EOF
+            }' > network-config.json
           fi
 
           echo "📄 source-config.json generado"
