@@ -125,10 +125,10 @@ jobs:
                   "DATABASE_URL": "%s",
                   "JWT_SECRET": "%s"
                 }
-              },
-              "AuthenticationConfiguration": {
-                "AccessRoleArn": "%s"
               }
+            },
+            "AuthenticationConfiguration": {
+              "AccessRoleArn": "%s"
             }
           }' "$IMAGE_URI" "${DB_SECRET_ARN}" "${JWT_SECRET_ARN}" "${APP_RUNNER_ECR_ACCESS_ROLE_ARN}" > source-config.json
 
