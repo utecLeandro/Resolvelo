@@ -101,7 +101,8 @@ jobs:
                   "Port": "3000",
                   "RuntimeEnvironmentVariables": [
                     {"Name": "NODE_ENV", "Value": "production"},
-                    {"Name": "PORT", "Value": "3000"}
+                    {"Name": "PORT", "Value": "3000"},
+                    {"Name": "PRISMA_MIGRATE_DEPLOY", "Value": "1"}
                   ],
                   "RuntimeEnvironmentSecrets": [
                     {"Name": "DATABASE_URL", "Value": "__DB_SECRET_ARN__"},

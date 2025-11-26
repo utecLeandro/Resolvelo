@@ -80,8 +80,16 @@ ENV PORT=3000
 # Comando de inicio con dumb-init para manejo correcto de señales
 ENTRYPOINT ["dumb-init", "--"]
 
-# Script de inicio que ejecuta migraciones y luego inicia la aplicación
-CMD ["sh", "-c", "npx prisma migrate deploy --schema context/schema.prisma && node dist/main"]
+# Variable para controlar si se ejecutan migraciones al iniciar
+# Por defecto NO se ejecutan para evitar fallos de despliegue cuando la BD no está lista
+ENV PRISMA_MIGRATE_DEPLOY=0
+
+# Copiar script de entrada que intenta migrar (opcional) y arranca la app
+COPY --from=build --chown=nestjs:nodejs /app/entrypoint.sh ./entrypoint.sh
+RUN chmod +x entrypoint.sh
+
+# Comando de inicio: usa dumb-init y el script de entrada
+CMD ["./entrypoint.sh"]
 
 # ============================================================================
 # ETIQUETAS DE METADATOS
