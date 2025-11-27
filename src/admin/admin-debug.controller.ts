@@ -18,7 +18,8 @@ export class AdminDebugController {
   async checkDb() {
     try {
       // 1. Verificar conexión básica
-      const connectionCheck = await this.prisma.$queryRaw`SELECT 1 as connected`;
+      const connectionCheck = await this.prisma
+        .$queryRaw`SELECT 1 as connected`;
 
       // 2. Listar tablas en el esquema public
       const tables: any[] = await this.prisma

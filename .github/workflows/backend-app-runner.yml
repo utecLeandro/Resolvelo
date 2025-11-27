@@ -6,6 +6,8 @@
 name: Backend Deploy to App Runner
 
 on:
+  push:
+    branches: [ "main", "develop" ]
   # Permite ejecutar manualmente desde la UI de GitHub Actions
   workflow_dispatch:
 
