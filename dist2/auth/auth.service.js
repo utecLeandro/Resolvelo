@@ -15,6 +15,7 @@ const jwt_1 = require("@nestjs/jwt");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const client_ses_1 = require("@aws-sdk/client-ses");
 const nodemailer = require("nodemailer");
 let AuthService = class AuthService {
     prisma;
@@ -199,27 +200,59 @@ let AuthService = class AuthService {
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         const resetLink = `${frontendUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
         try {
-            const transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST || 'localhost',
-                port: parseInt(process.env.SMTP_PORT || '1025', 10),
-                secure: process.env.SMTP_SECURE === 'true' ? true : false,
-                auth: (process.env.SMTP_USER || process.env.SMTP_PASS) ? {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS,
-                } : undefined,
-            });
-            await transporter.sendMail({
-                from: process.env.EMAIL_FROM || 'noreply@resolvelo.com',
-                to: email,
-                subject: 'Recuperación de contraseña - ReSolVelo',
-                html: `
+            const from = (process.env.EMAIL_FROM || 'noreply@resolvelo.com').trim();
+            const region = (process.env.AWS_REGION || 'us-east-1').trim();
+            try {
+                const ses = new client_ses_1.SESClient({ region });
+                const command = new client_ses_1.SendEmailCommand({
+                    Source: from,
+                    Destination: { ToAddresses: [email] },
+                    Message: {
+                        Subject: { Data: 'Recuperación de contraseña - ReSolVelo', Charset: 'UTF-8' },
+                        Body: {
+                            Html: {
+                                Data: `
           <p>Hola,</p>
           <p>Recibimos una solicitud para restablecer tu contraseña. Si fuiste tú, haz clic en el siguiente enlace:</p>
           <p><a href="${resetLink}">${resetLink}</a></p>
           <p>Este enlace expira en 1 hora. Si no solicitaste esto, ignora este mensaje.</p>
           <p>Equipo ReSolVelo</p>
         `,
-            });
+                                Charset: 'UTF-8',
+                            },
+                        },
+                    },
+                });
+                await ses.send(command);
+            }
+            catch (e1) {
+                try {
+                    const transporter = nodemailer.createTransport({
+                        host: process.env.SMTP_HOST || 'localhost',
+                        port: parseInt(process.env.SMTP_PORT || '1025', 10),
+                        secure: process.env.SMTP_SECURE === 'true',
+                        auth: (process.env.SMTP_USER || process.env.SMTP_PASS) ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+                        connectionTimeout: 2000,
+                        greetingTimeout: 2000,
+                        socketTimeout: 3000,
+                    });
+                    await transporter.sendMail({
+                        from: from,
+                        to: email,
+                        subject: 'Recuperación de contraseña - ReSolVelo',
+                        html: `
+          <p>Hola,</p>
+          <p>Recibimos una solicitud para restablecer tu contraseña. Si fuiste tú, haz clic en el siguiente enlace:</p>
+          <p><a href="${resetLink}">${resetLink}</a></p>
+          <p>Este enlace expira en 1 hora. Si no solicitaste esto, ignora este mensaje.</p>
+          <p>Equipo ReSolVelo</p>
+        `,
+                    });
+                }
+                catch (e2) {
+                    console.warn('No se pudo enviar email de recuperación (SMTP):', e2?.message);
+                }
+            }
         }
         catch (e) {
             console.warn('No se pudo enviar email de recuperación:', e?.message);

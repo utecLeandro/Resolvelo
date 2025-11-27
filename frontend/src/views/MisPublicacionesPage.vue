@@ -208,10 +208,11 @@
           :key="publicacion.id"
           class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
         >
-          <!-- Imagen placeholder -->
-          <div class="aspect-w-16 aspect-h-9 bg-gradient-to-br from-blue-50 to-indigo-100">
-            <div class="w-full h-48 flex items-center justify-center">
-              <svg class="h-12 w-12 text-blue-400 opacity-60" fill="currentColor" viewBox="0 0 24 24" :aria-label="publicacion.titulo">
+          <!-- Imagen de publicación -->
+          <div class="aspect-w-16 aspect-h-9 bg-white">
+            <div class="w-full h-48 flex items-center justify-center overflow-hidden">
+              <img v-if="obtenerImagenPrincipalUrl(publicacion.imagenes)" :src="obtenerImagenPrincipalUrl(publicacion.imagenes)" alt="Imagen de publicación" class="w-full h-full object-contain" @error="()=>{}" />
+              <svg v-else class="h-12 w-12 text-blue-400 opacity-60" fill="currentColor" viewBox="0 0 24 24" :aria-label="publicacion.titulo">
                 <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
               </svg>
             </div>
@@ -391,8 +392,9 @@
               <div class="flex items-start space-x-4">
                 <!-- Imagen de la publicación -->
                 <div class="flex-shrink-0">
-                  <div class="w-20 h-20 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center">
-                    <svg class="h-8 w-8 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                  <div class="w-20 h-20 bg-white rounded-lg flex items-center justify-center overflow-hidden">
+                    <img v-if="obtenerImagenPrincipalUrl(solicitud.publicacion.imagenes)" :src="obtenerImagenPrincipalUrl(solicitud.publicacion.imagenes)" alt="Imagen de publicación" class="w-full h-full object-contain" />
+                    <svg v-else class="h-8 w-8 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
                     </svg>
                   </div>
@@ -579,8 +581,9 @@
               <div class="flex items-start space-x-4">
                 <!-- Imagen de la publicación -->
                 <div class="flex-shrink-0">
-                  <div class="w-20 h-20 bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg flex items-center justify-center">
-                    <svg class="h-8 w-8 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                  <div class="w-20 h-20 bg-white rounded-lg flex items-center justify-center overflow-hidden">
+                    <img v-if="obtenerImagenPrincipalUrl(reserva.publicacion.imagenes)" :src="obtenerImagenPrincipalUrl(reserva.publicacion.imagenes)" alt="Imagen de publicación" class="w-full h-full object-contain" />
+                    <svg v-else class="h-8 w-8 text-green-500" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
                     </svg>
                   </div>
@@ -724,8 +727,9 @@
               <div class="flex items-start space-x-4">
                 <!-- Imagen de la publicación -->
                 <div class="flex-shrink-0">
-                  <div class="w-20 h-20 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center">
-                    <svg class="h-8 w-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                  <div class="w-20 h-20 bg-white rounded-lg flex items-center justify-center overflow-hidden">
+                    <img v-if="obtenerImagenPrincipalUrl(reserva.publicacion.imagenes)" :src="obtenerImagenPrincipalUrl(reserva.publicacion.imagenes)" alt="Imagen de publicación" class="w-full h-full object-contain" />
+                    <svg v-else class="h-8 w-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
                     </svg>
                   </div>
@@ -947,6 +951,7 @@ interface SolicitudReserva {
   publicacion: {
     titulo: string
     descripcion: string
+    imagenes?: Array<string | { url: string; esPrincipal?: boolean }>
   }
   usuario: {
     nombre: string
@@ -1064,7 +1069,13 @@ const comentarioCalificacion = ref('')
 const enviandoCalificacion = ref(false)
 
 // Computed
- 
+const obtenerImagenPrincipalUrl = (imagenes: any): string => {
+  if (!Array.isArray(imagenes) || imagenes.length === 0) return ''
+  const first = imagenes[0]
+  if (typeof first === 'string') return first || ''
+  const principal = (imagenes as any[]).find(i => i?.esPrincipal) || first
+  return principal?.url || ''
+}
 
 // Computed properties para publicaciones
 const publicacionesActivas = computed(() => (publicaciones.value || []).filter(p => p.estado === 'ACTIVA' && p.estadoModeracion === 'APROBADA'))

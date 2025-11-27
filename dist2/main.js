@@ -59,7 +59,7 @@ async function bootstrap() {
         express.use(bodyParser.json());
         const jwtService = app.get(jwt_1.JwtService);
         const prismaService = app.get(prisma_service_1.PrismaService);
-        const mensajesService = new mensajes_service_1.MensajesService(prismaService);
+        let mensajesService;
         express.get('/api/__routes', (_req, res) => {
             const stack = express._router?.stack || [];
             const routes = [];
@@ -102,6 +102,7 @@ async function bootstrap() {
             return sub;
         };
         const notificacionesService = app.get(notificaciones_service_1.NotificacionesService);
+        mensajesService = new mensajes_service_1.MensajesService(prismaService, notificacionesService);
         express.get('/api/notificaciones/stream', async (req, res) => {
             try {
                 const userId = await authUserId(req);

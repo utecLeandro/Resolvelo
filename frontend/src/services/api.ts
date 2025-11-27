@@ -665,6 +665,7 @@ export interface SolicitudReserva {
   publicacion: {
     titulo: string
     descripcion: string
+    imagenes?: ImagenPublicacion[]
   }
   usuario: {
     nombre: string

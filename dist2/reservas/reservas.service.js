@@ -47,10 +47,12 @@ let ReservasService = class ReservasService {
                         select: {
                             id: true,
                             titulo: true,
+                            descripcion: true,
                             categoria: true,
                             precioPorDia: true,
                             marca: true,
-                            modelo: true
+                            modelo: true,
+                            imagenes: { select: { id: true, url: true, esPrincipal: true } }
                         }
                     }
                 },
@@ -103,10 +105,12 @@ let ReservasService = class ReservasService {
                         select: {
                             id: true,
                             titulo: true,
+                            descripcion: true,
                             categoria: true,
                             precioPorDia: true,
                             marca: true,
-                            modelo: true
+                            modelo: true,
+                            imagenes: { select: { id: true, url: true, esPrincipal: true } }
                         }
                     }
                 },
@@ -341,6 +345,15 @@ let ReservasService = class ReservasService {
                             titulo: true,
                             precioPorDia: true,
                             descripcion: true,
+                            imagenes: {
+                                select: {
+                                    id: true,
+                                    url: true,
+                                    descripcion: true,
+                                    orden: true,
+                                    esPrincipal: true,
+                                }
+                            },
                         }
                     }
                 }

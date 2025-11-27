@@ -80,7 +80,7 @@ async function bootstrap() {
     express.use(bodyParser.json());
     const jwtService = app.get(JwtService);
     const prismaService = app.get(PrismaService);
-    const mensajesService = new MensajesService(prismaService);
+    let mensajesService: MensajesService;
     express.get('/api/__routes', (_req: Request, res: Response) => {
       const stack = express._router?.stack || [];
       const routes = [] as any[];
@@ -132,6 +132,7 @@ async function bootstrap() {
     };
 
     const notificacionesService = app.get(NotificacionesService)
+    mensajesService = new MensajesService(prismaService, notificacionesService)
 
     express.get('/api/notificaciones/stream', async (req: Request, res: Response) => {
       try {

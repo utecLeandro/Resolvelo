@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
   <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
@@ -65,6 +65,9 @@
           <div class="space-y-4">
             <div>
               <h3 class="font-medium text-gray-900">{{ reserva.publicacion.titulo }}</h3>
+              <div v-if="imagenPrincipalUrl" class="mt-3 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                <img :src="imagenPrincipalUrl" alt="Imagen principal" class="w-full h-48 object-cover" loading="lazy" />
+              </div>
               <p class="text-sm text-gray-600">{{ reserva.publicacion.descripcion }}</p>
             </div>
 
@@ -110,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { reservasService } from '@/services/api'
 import { transaccionesService, type RespuestaPagoDto } from '@/services/transacciones.service'
@@ -123,6 +126,12 @@ const { usuarioAutenticado, verificarAutenticacion, datosUsuario } = useAuth()
 const cargando = ref(true)
 const error = ref('')
 const reserva = ref<any>(null)
+const imagenPrincipalUrl = computed(() => {
+  const imgs = reserva.value?.publicacion?.imagenes || []
+  const principal = imgs.find((i: any) => i.esPrincipal)
+  const target = principal || imgs[0]
+  return target?.url || ''
+})
  
 const pagoExitoso = ref(false)
 const resultadoPago = ref<RespuestaPagoDto | null>(null)

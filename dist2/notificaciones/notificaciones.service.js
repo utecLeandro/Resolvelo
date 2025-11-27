@@ -14,6 +14,7 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const rxjs_1 = require("rxjs");
 const nodemailer = require("nodemailer");
+const client_ses_1 = require("@aws-sdk/client-ses");
 let NotificacionesService = class NotificacionesService {
     prisma;
     constructor(prisma) {
@@ -177,16 +178,40 @@ let NotificacionesService = class NotificacionesService {
             const usuario = await this.prisma.usuario.findUnique({ where: { id: usuarioId }, select: { email: true, nombre: true, notificacionesEmail: true } });
             if (!usuario?.email || usuario?.notificacionesEmail === false)
                 return;
-            const transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST || '127.0.0.1',
-                port: Number(process.env.SMTP_PORT || 1025),
-                secure: false,
-                auth: process.env.SMTP_USER && process.env.SMTP_PASS ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
-                connectionTimeout: 2000,
-                greetingTimeout: 2000,
-                socketTimeout: 3000,
-            });
-            await transporter.sendMail({ from: process.env.EMAIL_FROM || 'noreply@resolvelo.com', to: usuario.email, subject: asunto, html });
+            const from = (process.env.EMAIL_FROM || 'noreply@resolvelo.com').trim();
+            const region = (process.env.AWS_REGION || 'us-east-1').trim();
+            try {
+                const ses = new client_ses_1.SESClient({ region });
+                const command = new client_ses_1.SendEmailCommand({
+                    Source: from,
+                    Destination: { ToAddresses: [usuario.email] },
+                    Message: {
+                        Subject: { Data: asunto, Charset: 'UTF-8' },
+                        Body: { Html: { Data: html, Charset: 'UTF-8' } },
+                    },
+                });
+                await ses.send(command);
+            }
+            catch (e1) {
+                try {
+                    const transporter = nodemailer.createTransport({
+                        host: process.env.SMTP_HOST || '127.0.0.1',
+                        port: Number(process.env.SMTP_PORT || 1025),
+                        secure: false,
+                        auth: process.env.SMTP_USER && process.env.SMTP_PASS ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+                        connectionTimeout: 2000,
+                        greetingTimeout: 2000,
+                        socketTimeout: 3000,
+                    });
+                    await transporter.sendMail({ from, to: usuario.email, subject: asunto, html });
+                }
+                catch (e2) {
+                    try {
+                        console.warn('[Notificaciones] fallo email', e2?.message);
+                    }
+                    catch { }
+                }
+            }
         }
         catch (e) {
             try {

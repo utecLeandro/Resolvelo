@@ -1,4 +1,4 @@
-import api from './api'
+import api, { type ImagenPublicacion } from './api'
 
 export interface ProcesarPagoDto {
   reservaId: string
@@ -34,6 +34,7 @@ export interface Transaccion {
     publicacion: {
       titulo: string
       precioPorDia: number
+      imagenes?: ImagenPublicacion[]
     }
   }
 }

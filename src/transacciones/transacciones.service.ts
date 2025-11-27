@@ -204,7 +204,16 @@ export class TransaccionesService {
             publicacion: {
               select: {
                 titulo: true,
-                precioPorDia: true
+                precioPorDia: true,
+                imagenes: {
+                  select: {
+                    id: true,
+                    url: true,
+                    descripcion: true,
+                    orden: true,
+                    esPrincipal: true,
+                  }
+                }
               }
             },
             usuario: {

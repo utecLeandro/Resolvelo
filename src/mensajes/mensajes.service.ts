@@ -1,11 +1,11 @@
 import { Injectable, BadRequestException, ForbiddenException, HttpException, HttpStatus } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { NotificacionesService } from '../notificaciones/notificaciones.service'
 import { EnviarMensajeDto } from './dto/enviar-mensaje.dto'
-import * as nodemailer from 'nodemailer'
 
 @Injectable()
 export class MensajesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly notificaciones: NotificacionesService) {}
 
   async listarPorReserva(reservaId: string, usuarioId: string) {
     console.log('[MensajesService] listarPorReserva', { reservaId, usuarioId })
@@ -99,28 +99,12 @@ export class MensajesService {
 
   async enviarEmailNotificacionPrimerMensaje(reservaId: string, receptorId: string, mensajeId: string) {
     try {
-      const receptor = await this.prisma.usuario.findUnique({ where: { id: receptorId }, select: { email: true, nombre: true } })
-      if (!receptor?.email) return
       const reserva = await this.prisma.reserva.findUnique({ where: { id: reservaId }, include: { publicacion: { select: { titulo: true } } } })
       const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5174'
       const link = `${frontendBase}/mensajes/reserva/${encodeURIComponent(reservaId)}?m=${encodeURIComponent(mensajeId)}`
-
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || '127.0.0.1',
-        port: Number(process.env.SMTP_PORT || 1025),
-        secure: false,
-        auth: process.env.SMTP_USER && process.env.SMTP_PASS ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
-        connectionTimeout: 2000,
-        greetingTimeout: 2000,
-        socketTimeout: 3000,
-      })
-
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM || 'noreply@resolvelo.com',
-        to: receptor.email,
-        subject: `Nuevo mensaje sobre "${reserva?.publicacion?.titulo || 'tu reserva'}"`,
-        html: `<p>Tienes nuevos mensajes sin leer.</p><p><a href="${link}">Abrir chat</a></p>`,
-      })
+      const asunto = `Nuevo mensaje sobre "${reserva?.publicacion?.titulo || 'tu reserva'}"`
+      const html = `<p>Tienes nuevos mensajes sin leer.</p><p><a href="${link}">Abrir chat</a></p>`
+      await this.notificaciones.enviarEmail(receptorId, asunto, html)
     } catch (e) {
       console.warn('Fallo al enviar email de notificación:', (e as any)?.message)
     }

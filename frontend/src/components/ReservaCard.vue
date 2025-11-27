@@ -4,8 +4,9 @@
       <div class="flex items-start space-x-4">
         <!-- Imagen de la publicación -->
         <div class="flex-shrink-0">
-          <div class="w-24 h-24 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center">
-            <svg class="h-10 w-10 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+          <div class="w-24 h-24 bg-white rounded-lg flex items-center justify-center overflow-hidden">
+            <img v-if="imagenPrincipalUrl" :src="imagenPrincipalUrl" alt="Imagen de publicación" class="w-full h-full object-contain" @error="onErrorImagen" />
+            <svg v-else class="h-10 w-10 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
             </svg>
           </div>
@@ -215,7 +216,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 // Tipos
 interface ReservaArrendatario {
@@ -257,7 +258,7 @@ interface Props {
   tipo: 'pendiente' | 'aprobada' | 'activa' | 'completada' | 'rechazada'
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 // Emits
 const emit = defineEmits<{
@@ -311,6 +312,18 @@ const formatearPrecio = (precio: number): string => {
     maximumFractionDigits: 0
   }).format(precio)
 }
+
+const errorImg = ref(false)
+const imagenPrincipalUrl = computed(() => {
+  if (errorImg.value) return ''
+  const imgs: any = props.reserva?.publicacion?.imagenes || []
+  if (!Array.isArray(imgs) || imgs.length === 0) return ''
+  const first = imgs[0]
+  if (typeof first === 'string') return first || ''
+  const principal = imgs.find((i: any) => i?.esPrincipal) || first
+  return principal?.url || ''
+})
+const onErrorImagen = () => { errorImg.value = true }
 </script>
 
 <style scoped>

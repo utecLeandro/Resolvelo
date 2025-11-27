@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { Subject } from 'rxjs'
 import * as nodemailer from 'nodemailer'
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
 
 @Injectable()
 export class NotificacionesService {
@@ -172,16 +173,35 @@ export class NotificacionesService {
     try {
       const usuario = await this.prisma.usuario.findUnique({ where: { id: usuarioId }, select: { email: true, nombre: true, notificacionesEmail: true } })
       if (!usuario?.email || usuario?.notificacionesEmail === false) return
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || '127.0.0.1',
-        port: Number(process.env.SMTP_PORT || 1025),
-        secure: false,
-        auth: process.env.SMTP_USER && process.env.SMTP_PASS ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
-        connectionTimeout: 2000,
-        greetingTimeout: 2000,
-        socketTimeout: 3000,
-      })
-      await transporter.sendMail({ from: process.env.EMAIL_FROM || 'noreply@resolvelo.com', to: usuario.email, subject: asunto, html })
+      const from = (process.env.EMAIL_FROM || 'noreply@resolvelo.com').trim()
+      const region = (process.env.AWS_REGION || 'us-east-1').trim()
+      try {
+        const ses = new SESClient({ region })
+        const command = new SendEmailCommand({
+          Source: from,
+          Destination: { ToAddresses: [usuario.email] },
+          Message: {
+            Subject: { Data: asunto, Charset: 'UTF-8' },
+            Body: { Html: { Data: html, Charset: 'UTF-8' } },
+          },
+        })
+        await ses.send(command)
+      } catch (e1) {
+        try {
+          const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST || '127.0.0.1',
+            port: Number(process.env.SMTP_PORT || 1025),
+            secure: false,
+            auth: process.env.SMTP_USER && process.env.SMTP_PASS ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+            connectionTimeout: 2000,
+            greetingTimeout: 2000,
+            socketTimeout: 3000,
+          })
+          await transporter.sendMail({ from, to: usuario.email, subject: asunto, html })
+        } catch (e2) {
+          try { console.warn('[Notificaciones] fallo email', (e2 as any)?.message) } catch {}
+        }
+      }
     } catch (e) {
       try { console.warn('[Notificaciones] fallo email', (e as any)?.message) } catch {}
     }

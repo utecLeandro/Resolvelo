@@ -28,7 +28,9 @@
           <div class="space-y-3 text-sm">
             <div>
               <h3 class="font-medium text-gray-900">{{ transaccion.reserva?.publicacion?.titulo }}</h3>
-              
+              <div v-if="imagenPrincipalUrl" class="mt-3 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                <img :src="imagenPrincipalUrl" alt="Imagen principal" class="w-full h-48 object-cover" loading="lazy" />
+              </div>
             </div>
             <hr class="my-2">
             <div class="grid grid-cols-2 gap-4">
@@ -94,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { transaccionesService, type Transaccion } from '@/services/transacciones.service'
 
@@ -105,6 +107,13 @@ const transaccion = ref<Transaccion | null>(null)
 const mpPago = ref<{ id?: string; status?: string; amount?: number; date?: string; description?: string; external_reference?: string; method?: string; installments?: number; card_last4?: string; cardholder?: string; payer_email?: string; issuer_id?: string } | null>(null)
 let verificarTimer: number | null = null
 let intentosVerificar = 0
+
+const imagenPrincipalUrl = computed(() => {
+  const imgs = transaccion.value?.reserva?.publicacion?.imagenes || []
+  const principal = imgs.find((i: any) => i.esPrincipal)
+  const target = principal || imgs[0]
+  return target?.url || ''
+})
 
 const formatearFecha = (fecha?: string) => fecha ? new Date(fecha).toLocaleDateString('es-UY', { year: 'numeric', month: 'long', day: 'numeric' }) : '-'
 const calcularDias = (inicioStr: string, finStr: string) => {

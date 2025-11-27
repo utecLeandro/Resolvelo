@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const mensajes_controller_1 = require("./mensajes.controller");
 const mensajes_service_1 = require("./mensajes.service");
 const prisma_module_1 = require("../prisma/prisma.module");
+const notificaciones_module_1 = require("../notificaciones/notificaciones.module");
 let MensajesModule = class MensajesModule {
     onModuleInit() {
         try {
@@ -22,7 +23,7 @@ let MensajesModule = class MensajesModule {
 exports.MensajesModule = MensajesModule;
 exports.MensajesModule = MensajesModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
+        imports: [prisma_module_1.PrismaModule, notificaciones_module_1.NotificacionesModule],
         controllers: [mensajes_controller_1.MensajesController],
         providers: [mensajes_service_1.MensajesService],
         exports: [mensajes_service_1.MensajesService]

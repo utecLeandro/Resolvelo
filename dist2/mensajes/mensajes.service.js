@@ -12,11 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MensajesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
-const nodemailer = require("nodemailer");
+const notificaciones_service_1 = require("../notificaciones/notificaciones.service");
 let MensajesService = class MensajesService {
     prisma;
-    constructor(prisma) {
+    notificaciones;
+    constructor(prisma, notificaciones) {
         this.prisma = prisma;
+        this.notificaciones = notificaciones;
     }
     async listarPorReserva(reservaId, usuarioId) {
         console.log('[MensajesService] listarPorReserva', { reservaId, usuarioId });
@@ -110,27 +112,12 @@ let MensajesService = class MensajesService {
     }
     async enviarEmailNotificacionPrimerMensaje(reservaId, receptorId, mensajeId) {
         try {
-            const receptor = await this.prisma.usuario.findUnique({ where: { id: receptorId }, select: { email: true, nombre: true } });
-            if (!receptor?.email)
-                return;
             const reserva = await this.prisma.reserva.findUnique({ where: { id: reservaId }, include: { publicacion: { select: { titulo: true } } } });
             const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5174';
             const link = `${frontendBase}/mensajes/reserva/${encodeURIComponent(reservaId)}?m=${encodeURIComponent(mensajeId)}`;
-            const transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST || '127.0.0.1',
-                port: Number(process.env.SMTP_PORT || 1025),
-                secure: false,
-                auth: process.env.SMTP_USER && process.env.SMTP_PASS ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
-                connectionTimeout: 2000,
-                greetingTimeout: 2000,
-                socketTimeout: 3000,
-            });
-            await transporter.sendMail({
-                from: process.env.EMAIL_FROM || 'noreply@resolvelo.com',
-                to: receptor.email,
-                subject: `Nuevo mensaje sobre "${reserva?.publicacion?.titulo || 'tu reserva'}"`,
-                html: `<p>Tienes nuevos mensajes sin leer.</p><p><a href="${link}">Abrir chat</a></p>`,
-            });
+            const asunto = `Nuevo mensaje sobre "${reserva?.publicacion?.titulo || 'tu reserva'}"`;
+            const html = `<p>Tienes nuevos mensajes sin leer.</p><p><a href="${link}">Abrir chat</a></p>`;
+            await this.notificaciones.enviarEmail(receptorId, asunto, html);
         }
         catch (e) {
             console.warn('Fallo al enviar email de notificación:', e?.message);
@@ -178,5 +165,5 @@ let MensajesService = class MensajesService {
 exports.MensajesService = MensajesService;
 exports.MensajesService = MensajesService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, notificaciones_service_1.NotificacionesService])
 ], MensajesService);
