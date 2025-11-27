@@ -133,9 +133,7 @@
               <div>
                 <div class="font-medium">Ubicación</div>
                 <div>
-                  {{ reserva.publicacion.direccion }},
-                  {{ reserva.publicacion.ciudad }},
-                  {{ reserva.publicacion.departamento }}
+                  {{ reserva.publicacion.ubicacion }}
                 </div>
               </div>
             </div>

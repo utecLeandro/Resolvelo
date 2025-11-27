@@ -118,7 +118,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { usuarioService, publicacionesService } from "@/services/api";
+import { authService, publicacionesService } from "@/services/api";
 
 // Estados reactivos
 const tokenInfo = ref("");
@@ -162,7 +162,7 @@ async function verificarToken() {
   }
 
   try {
-    const perfil = await usuarioService.obtenerPerfil();
+    const perfil = await authService.perfil();
     tokenInfo.value = `Token válido ✅\nToken: ${token}\nUsuario: ${perfil.nombre} ${perfil.apellido} (${perfil.email})`;
   } catch (error) {
     tokenInfo.value = `Token inválido ❌\nToken: ${token}\nError: ${error}`;
@@ -171,7 +171,7 @@ async function verificarToken() {
 
 async function obtenerPerfilAPI() {
   try {
-    const perfil = await usuarioService.obtenerPerfil();
+    const perfil = await authService.perfil();
     perfilAPI.value = JSON.stringify(perfil, null, 2);
   } catch (error) {
     perfilAPI.value = `Error: ${error}`;

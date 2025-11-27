@@ -484,7 +484,7 @@ const hoy = (() => {
   fecha.setHours(0, 0, 0, 0); // Establecer a medianoche para evitar problemas de hora
   return fecha;
 })();
-const rangoFechas = ref<[Date, Date] | null>(null);
+const rangoFechas = ref<Date[] | null>(null);
 // Disponibilidad real
 const reservasActivas = ref<ReservaActiva[]>([]);
 const disponibilidadRango = ref<boolean | null>(null);
@@ -729,7 +729,7 @@ const formatearDDMMYYYY = (d: Date) => {
   return `${dd}/${mm}/${yyyy}`;
 };
 
-const formatearRangoFechas = (rango: [Date, Date] | null) => {
+const formatearRangoFechas = (rango: Date[] | null) => {
   if (!rango || !rango[0] || !rango[1]) return "";
   const inicio = formatearDDMMYYYY(rango[0]);
   const fin = formatearDDMMYYYY(rango[1]);

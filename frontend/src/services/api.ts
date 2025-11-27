@@ -320,6 +320,17 @@ export interface Publicacion {
     totalCalificaciones: number;
   };
   imagenes?: ImagenPublicacion[];
+  // Campo estadisticasReservas que viene del backend
+  estadisticasReservas?: {
+    total: number;
+    pendientes: number;
+    aprobadas: number;
+    confirmadas: number;
+    activas: number;
+    completadas: number;
+    rechazadas: number;
+    canceladas: number;
+  };
   // Campo _count que viene del backend
   _count?: {
     reservas: number;
