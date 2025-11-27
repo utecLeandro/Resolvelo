@@ -8,10 +8,10 @@
     @keydown.space.prevent="navegarADetalle"
     :aria-label="`Ver detalles de ${publicacion.titulo}`"
   >
-    <!-- Contenedor de icono musical -->
-    <div class="relative aspect-square overflow-hidden rounded-t-xl bg-gradient-to-br from-blue-50 to-indigo-100">
-      <!-- Icono musical -->
-      <div class="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+    <!-- Contenedor de imagen/icono -->
+    <div class="relative aspect-square overflow-hidden rounded-t-xl bg-white">
+      <img v-if="imagenPrincipalUrl" :src="imagenPrincipalUrl" class="w-full h-full object-contain" alt="Imagen principal" @error="onErrorImagen" />
+      <div v-else class="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
         <svg class="h-16 w-16 text-blue-400" fill="currentColor" viewBox="0 0 24 24" :aria-label="`Icono de ${publicacion.titulo}`">
           <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
         </svg>
@@ -115,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Publicacion } from '../services/api'
 
@@ -176,6 +176,15 @@ const formatearPrecio = (precio: number): string => {
     maximumFractionDigits: 0
   }).format(precio)
 }
+
+const errorImg = ref(false)
+const imagenPrincipalUrl = computed(() => {
+  if (errorImg.value) return ''
+  const imgs = props.publicacion.imagenes || []
+  const principal = imgs.find(i => i.esPrincipal) || imgs[0]
+  return principal?.url || ''
+})
+const onErrorImagen = () => { errorImg.value = true }
 </script>
 
 <style scoped>

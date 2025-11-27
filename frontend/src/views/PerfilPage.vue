@@ -188,7 +188,8 @@ const onAvatarMouseUp = () => {
 
 const onAvatarTouchStart = (e: TouchEvent) => {
   if (!avatarPreviewUrl.value) return
-  const t = e.touches[0]
+  const t = e.touches?.[0]
+  if (!t) return
   dragging.value = true
   dragStartX.value = t.clientX
   dragStartY.value = t.clientY
@@ -200,7 +201,8 @@ const onAvatarTouchStart = (e: TouchEvent) => {
 
 const onAvatarTouchMove = (e: TouchEvent) => {
   if (!dragging.value) return
-  const t = e.touches[0]
+  const t = e.touches?.[0]
+  if (!t) return
   const dx = t.clientX - dragStartX.value
   const dy = t.clientY - dragStartY.value
   avatarPosX.value = posStartX.value + dx

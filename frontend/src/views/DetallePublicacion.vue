@@ -58,8 +58,8 @@
         <!-- Galería de imágenes -->
         <div class="space-y-4">
           <!-- Imagen principal cuadrada -->
-          <div class="aspect-square bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl overflow-hidden flex items-center justify-center border-2 border-gray-200">
-            <img v-if="publicacion.imagenes && publicacion.imagenes.find(i => i.esPrincipal)" :src="publicacion.imagenes.find(i => i.esPrincipal)!.url" class="w-full h-full object-cover" alt="Imagen principal" />
+          <div class="aspect-square bg-white rounded-xl overflow-hidden relative flex items-center justify-center border-2 border-gray-200" @click="abrirZoom" role="button" tabindex="0" @keydown.enter="abrirZoom">
+            <img v-if="imagenesOrdenadas.length > 0" :src="imagenActualUrl" class="w-full h-full object-contain" alt="Imagen de publicación" />
             <div v-else class="text-center">
               <svg class="h-32 w-32 text-blue-400 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
@@ -67,13 +67,43 @@
               <p class="text-lg font-medium text-blue-600">{{ publicacion.titulo }}</p>
               <p class="text-sm text-gray-500">Imagen principal</p>
             </div>
+
+            <button
+              v-if="imagenesOrdenadas.length > 1"
+              @click.stop="prevImagen"
+              class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 rounded-full p-2 border border-gray-300 shadow"
+              aria-label="Imagen anterior"
+            >
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <button
+              v-if="imagenesOrdenadas.length > 1"
+              @click.stop="nextImagen"
+              class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 rounded-full p-2 border border-gray-300 shadow"
+              aria-label="Imagen siguiente"
+            >
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+
+          <div v-if="zoomAbierto" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center" @click.self="cerrarZoom">
+            <img :src="imagenActualUrl" class="max-w-[90vw] max-h-[90vh] object-contain" alt="Imagen ampliada" />
+            <button class="absolute top-4 right-4 bg-white/90 text-gray-800 rounded-full p-2 border border-gray-300 shadow" @click="cerrarZoom" aria-label="Cerrar">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
           </div>
           
           <!-- Imágenes adicionales -->
           <div class="grid grid-cols-5 gap-2">
-            <div v-for="img in (publicacion.imagenes || []).filter(i => !i.esPrincipal).slice(0,5)" :key="img.id" class="aspect-square rounded-lg overflow-hidden border border-gray-200">
-              <img :src="img.url" alt="Imagen de publicación" class="w-full h-full object-cover" />
-            </div>
+            <button
+              v-for="(thumb, idx) in thumbnails.slice(0,5)"
+              :key="thumb.id || idx"
+              type="button"
+              class="aspect-square rounded-lg overflow-hidden border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:shadow cursor-pointer"
+              @click="setImagenActual(thumb.id)"
+            >
+              <img :src="thumb.url" alt="Imagen de publicación" class="w-full h-full object-cover" />
+            </button>
           </div>
 
           <div v-if="publicacion && usuarioAutenticado && datosUsuario?.id === publicacion.propietario?.id" class="mt-6">
@@ -490,6 +520,54 @@ const totalEstimado = computed(() => {
   if (!publicacion.value) return 0
   if (!diasSeleccionados.value || mensajeErrorFechas.value) return 0
   return publicacion.value.precioPorDia * diasSeleccionados.value
+})
+
+// Imágenes y navegación
+const imagenesOrdenadas = computed(() => {
+  const imgs = publicacion.value?.imagenes || []
+  const principalIdx = imgs.findIndex((i: any) => i.esPrincipal)
+  if (principalIdx > -1) {
+    const principal = imgs[principalIdx]
+    const resto = imgs.filter((_: any, idx: number) => idx !== principalIdx)
+    return [principal, ...resto]
+  }
+  return imgs
+})
+
+const currentImageIndex = ref(0)
+const imagenActualUrl = computed(() => imagenesOrdenadas.value.length ? imagenesOrdenadas.value[currentImageIndex.value]?.url : '')
+
+const prevImagen = () => {
+  const total = imagenesOrdenadas.value.length
+  if (!total) return
+  currentImageIndex.value = (currentImageIndex.value - 1 + total) % total
+}
+
+const nextImagen = () => {
+  const total = imagenesOrdenadas.value.length
+  if (!total) return
+  currentImageIndex.value = (currentImageIndex.value + 1) % total
+}
+
+const setImagenActual = (id: string) => {
+  const idx = imagenesOrdenadas.value.findIndex((i: any) => i.id === id)
+  if (idx >= 0) currentImageIndex.value = idx
+}
+
+const thumbnails = computed(() => {
+  const arr = imagenesOrdenadas.value || []
+  return arr
+    .map((i: any) => ({ id: String(i?.id || ''), url: String(i?.url || '') }))
+    .filter((t: { id: string; url: string }) => !!t.id && !!t.url)
+})
+
+const zoomAbierto = ref(false)
+const abrirZoom = () => { if (imagenesOrdenadas.value.length > 0) zoomAbierto.value = true }
+const cerrarZoom = () => { zoomAbierto.value = false }
+
+watch(imagenesOrdenadas, (arr) => {
+  const principalIdx = arr.findIndex((i: any) => i.esPrincipal)
+  currentImageIndex.value = principalIdx >= 0 ? 0 : 0
 })
 
 // Computed properties
