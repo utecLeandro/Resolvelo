@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RolUsuario } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -144,5 +145,79 @@ export class AdminService {
     }
 
     return { message: 'Usuario verificado correctamente', usuario: actualizado };
+  }
+
+  async listarRoles() {
+    const roles = Object.values(RolUsuario).map((rol) => ({
+      clave: rol,
+      nombre: this.formatearRol(rol),
+    }));
+    return { roles };
+  }
+
+  async cambiarRolUsuario(adminUsuarioId: string, objetivoUsuarioId: string, rol: RolUsuario) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { id: objetivoUsuarioId } });
+    if (!usuario) {
+      throw new NotFoundException('Usuario objetivo no encontrado');
+    }
+
+    const valoresValidos = new Set(Object.values(RolUsuario));
+    if (!valoresValidos.has(rol)) {
+      throw new BadRequestException('Rol inválido');
+    }
+
+    if (usuario.email === 'gtbump2012@gmail.com' && rol !== 'ADMINISTRADOR' && rol !== 'SUPER_ADMIN') {
+      throw new BadRequestException('Este usuario posee privilegios permanentes. Debe ser ADMINISTRADOR o SUPER_ADMIN.');
+    }
+
+    const adminUser = await this.prisma.usuario.findUnique({ where: { id: adminUsuarioId } });
+    if (!adminUser) {
+      throw new ForbiddenException('Administrador no válido');
+    }
+    if (rol === 'SUPER_ADMIN' && adminUser.rol !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Solo un SUPER_ADMIN puede asignar el rol SUPER_ADMIN');
+    }
+
+    const rolAnterior = usuario.rol;
+    const actualizado = await this.prisma.usuario.update({
+      where: { id: objetivoUsuarioId },
+      data: { rol },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        rol: true,
+        activo: true,
+        estadoVerificacion: true,
+        fechaCreacion: true,
+      },
+    });
+
+    const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: adminUsuarioId } });
+    if (admin) {
+      await this.prisma.accionAdministrativa.create({
+        data: {
+          tipo: 'MODIFICAR_USUARIO' as any,
+          descripcion: 'Cambiar rol de usuario',
+          detalles: `Rol previo: ${rolAnterior} -> Nuevo rol: ${rol}`,
+          usuarioObjetivoId: objetivoUsuarioId,
+          administradorId: admin.id,
+          exitosa: true,
+        },
+      });
+    }
+
+    return { message: 'Rol de usuario actualizado', usuario: actualizado };
+  }
+
+  private formatearRol(rol: RolUsuario) {
+    switch (rol) {
+      case 'USUARIO': return 'Usuario';
+      case 'MODERADOR': return 'Moderador';
+      case 'ADMINISTRADOR': return 'Administrador';
+      case 'SUPER_ADMIN': return 'Super Admin';
+      default: return String(rol);
+    }
   }
 }

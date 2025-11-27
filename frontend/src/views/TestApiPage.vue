@@ -46,7 +46,7 @@ import axios from 'axios'
 import api from '@/services/api'
 
 const loading = ref(false)
-const result = ref(null)
+const result = ref<any | null>(null)
 const error = ref('')
 
 const testApi = async () => {

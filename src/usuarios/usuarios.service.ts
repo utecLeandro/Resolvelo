@@ -51,6 +51,7 @@ export class UsuariosService {
         apellido: data.apellido ?? undefined,
         telefono: data.telefono ?? undefined,
         direccion: data.direccion ?? undefined,
+        avatarUrl: data.avatarUrl ?? undefined,
       },
       select: {
         id: true,
@@ -59,6 +60,7 @@ export class UsuariosService {
         email: true,
         telefono: true,
         direccion: true,
+        avatarUrl: true,
       },
     })
 
@@ -66,5 +68,18 @@ export class UsuariosService {
       message: 'Perfil actualizado correctamente',
       usuario: actualizado,
     }
+  }
+
+  async actualizarAvatar(id: string, avatarUrl: string) {
+    const usuarioExistente = await this.prisma.usuario.findUnique({ where: { id } })
+    if (!usuarioExistente) {
+      throw new NotFoundException('Usuario no encontrado')
+    }
+    const actualizado = await this.prisma.usuario.update({
+      where: { id },
+      data: { avatarUrl },
+      select: { id: true, avatarUrl: true }
+    })
+    return actualizado
   }
 }

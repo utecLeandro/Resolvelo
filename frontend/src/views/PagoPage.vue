@@ -1,4 +1,4 @@
-﻿﻿<template>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
   <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
@@ -123,7 +123,7 @@ const { usuarioAutenticado, verificarAutenticacion, datosUsuario } = useAuth()
 const cargando = ref(true)
 const error = ref('')
 const reserva = ref<any>(null)
-const procesandoPago = ref(false)
+ 
 const pagoExitoso = ref(false)
 const resultadoPago = ref<RespuestaPagoDto | null>(null)
 
@@ -131,8 +131,8 @@ const resultadoPago = ref<RespuestaPagoDto | null>(null)
 const monitoreandoPago = ref(false)
 const transaccionIdMp = ref<string>('')
 let pollingTimer: number | null = null
-let pollingInicio = 0
-let ws: WebSocket | null = null
+ 
+ 
 const preferenciaId = ref<string>('')
 const mpPublicKey = ref<string>('')
 const brickError = ref<string>('')
@@ -254,7 +254,7 @@ const renderPaymentBrick = async () => {
       },
       callbacks: {
         onReady: () => {},
-        onSubmit: ({ selectedPaymentMethod, formData }: any) => {
+        onSubmit: ({ selectedPaymentMethod: _selectedPaymentMethod, formData }: any) => {
           return new Promise<void>((resolve, reject) => {
             transaccionesService.procesarPagoBrick({ formData: { ...formData, transaction_amount: calcularTotal() }, transaccionId: transaccionIdMp.value, preferenceId: preferenciaId.value })
               .then(async (tx) => {
@@ -263,7 +263,15 @@ const renderPaymentBrick = async () => {
                 } else if (tx?.estado === 'PENDIENTE') {
                   router.replace({ path: '/pago-exitoso', query: { external_reference: transaccionIdMp.value, status: 'pending' } })
                 } else {
-                  router.replace({ path: '/pago-error', query: { status: (tx?.estado || 'error').toLowerCase() } })
+                  let statusDetail = ''
+                  try {
+                    const raw = tx?.notasInternas || ''
+                    if (raw) {
+                      const p = JSON.parse(raw)
+                      statusDetail = String(p?.status_detail || '')
+                    }
+                  } catch {}
+                  router.replace({ path: '/pago-error', query: { status: (tx?.estado || 'error').toLowerCase(), status_detail: statusDetail } })
                 }
                 resolve()
               })
@@ -331,37 +339,9 @@ onBeforeUnmount(() => {
 })
 
 // Utilidades y flujos de finalización
-const ensureHttpsUrl = (url: string): string => {
-  try {
-    const u = new URL(url)
-    if (u.protocol === 'http:') {
-      u.protocol = 'https:'
-    }
-    return u.toString()
-  } catch {
-    return url.replace(/^http:\/\//i, 'https://')
-  }
-}
+ 
 
-const setupWebSocket = (transaccionId: string) => {
-  try {
-    const wsBase = (import.meta.env.VITE_WS_URL || '').trim()
-    if (!wsBase) return
-    const token = localStorage.getItem('access_token') || ''
-    const url = `${wsBase}?transaccionId=${encodeURIComponent(transaccionId)}${token ? `&token=${encodeURIComponent(token)}` : ''}`
-    ws = new WebSocket(url)
-    ws.onmessage = (evt) => {
-      try {
-        const data = JSON.parse(evt.data)
-        if (data?.tipo === 'pago' && data?.estado === 'COMPLETADA' && data?.transaccionId) {
-          finalizarFlujoAprobado(data.transaccionId)
-        }
-      } catch {}
-    }
-    ws.onerror = () => {}
-    ws.onclose = () => {}
-  } catch {}
-}
+ 
 
 const finalizarFlujoAprobado = async (transaccionId: string) => {
   try {

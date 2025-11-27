@@ -98,8 +98,8 @@
             <p class="text-sm text-red-700">{{ reserva.motivoRechazo }}</p>
           </div>
 
-          <!-- Información de pago para reservas aprobadas -->
-          <div v-if="reserva.estado === 'APROBADA'" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+          <!-- Información de pago para reservas confirmadas -->
+          <div v-if="reserva.estado === 'CONFIRMADA'" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
             <div class="flex items-center">
               <svg class="h-5 w-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
@@ -111,8 +111,8 @@
             </div>
           </div>
 
-          <!-- Información de transacción para reservas activas/completadas -->
-          <div v-if="(reserva.estado === 'ACTIVA' || reserva.estado === 'COMPLETADA') && reserva.transaccion" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <!-- Información de transacción para reservas en curso/completadas -->
+          <div v-if="(reserva.estado === 'EN_CURSO' || reserva.estado === 'COMPLETADA') && reserva.transaccion" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
             <h4 class="text-sm font-medium text-blue-800 mb-2">Información de pago</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
               <div>
@@ -224,7 +224,7 @@ interface ReservaArrendatario {
   fechaFin: string
   precioTotal: number
   telefonoContacto?: string
-  estado: 'PENDIENTE' | 'APROBADA' | 'ACTIVA' | 'COMPLETADA' | 'RECHAZADA' | 'CANCELADA'
+  estado: 'PENDIENTE' | 'CONFIRMADA' | 'EN_CURSO' | 'COMPLETADA' | 'RECHAZADA' | 'CANCELADA'
   motivoRechazo?: string
   fechaCreacion: string
   publicacion: {
@@ -233,7 +233,10 @@ interface ReservaArrendatario {
     descripcion: string
     precioPorDia: number
     categoria: string
-    ubicacion: string
+    direccion: string
+    ciudad: string
+    departamento: string
+    imagenes: string[]
     propietario: {
       nombre: string
       apellido: string
@@ -254,7 +257,7 @@ interface Props {
   tipo: 'pendiente' | 'aprobada' | 'activa' | 'completada' | 'rechazada'
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 // Emits
 const emit = defineEmits<{

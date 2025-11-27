@@ -6,7 +6,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '../services/api'
-import { Switch, Transition } from '@headlessui/vue'
+import { Switch } from '@headlessui/vue'
 
 const router = useRouter()
 

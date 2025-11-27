@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, HttpException, HttpStatus, Optional } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CrearReservaDto } from './dto/crear-reserva.dto';
+import { NotificacionesService } from '../notificaciones/notificaciones.service'
 
 export interface UpdateReservaDto {
   estado?: 'PENDIENTE' | 'CONFIRMADA' | 'EN_CURSO' | 'CANCELADA' | 'COMPLETADA' | 'RECHAZADA';
@@ -16,7 +17,7 @@ export interface UpdateReservaDto {
 
 @Injectable()
 export class ReservasService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, @Optional() private notificaciones?: NotificacionesService) {}
 
   async obtenerSolicitudesPendientes(propietarioId: string) {
     try {
@@ -274,6 +275,9 @@ export class ReservasService {
               id: true,
               titulo: true,
               precioPorDia: true,
+              categoria: true,
+              marca: true,
+              modelo: true,
             },
           },
           propietario: {
@@ -286,6 +290,9 @@ export class ReservasService {
         },
       });
 
+      if (this.notificaciones) {
+        await this.notificaciones.emitirReservaNueva(reserva.propietarioId, reserva)
+      }
       return {
         success: true,
         data: reserva,
@@ -489,6 +496,13 @@ export class ReservasService {
           }
         }
       });
+      try {
+        const anterior = (reservaExistente as any).estado || null
+        const actual = (reserva as any).estado
+        if (actual && anterior !== actual) {
+          await this.notificaciones.emitirCambioEstado(reserva, anterior, actual)
+        }
+      } catch {}
 
       return {
         success: true,

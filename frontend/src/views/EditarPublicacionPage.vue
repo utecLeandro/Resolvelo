@@ -54,7 +54,7 @@
             >
               <option value="">Selecciona una categoría</option>
               <option value="GUITARRAS">Guitarras</option>
-              <option value="BATERIAS">Batería</option>
+              <option value="BATERIAS">Baterías</option>
               <option value="TECLADOS">Teclados</option>
               <option value="VIENTOS">Instrumentos de viento</option>
               <option value="CUERDAS">Instrumentos de cuerda</option>
@@ -65,6 +65,14 @@
               <option value="ILUMINACION">Iluminación</option>
               <option value="ACCESORIOS">Accesorios</option>
               <option value="OTROS">Otros</option>
+              <!-- Alias solicitados -->
+              <option value="AUDIO_PA">Micrófonos</option>
+              <option value="ACCESORIOS">Fundas</option>
+              <option value="PERCUSION">Platillos</option>
+              <option value="GUITARRAS">Bajos</option>
+              <option value="GRABACION">Home Studio</option>
+              <option value="VIENTOS">Vientos</option>
+              <option value="CUERDAS">Cuerdas</option>
             </select>
           </div>
 
@@ -218,7 +226,12 @@
             </div>
           </div>
 
-          <!-- Botones -->
+        </form>
+        <div class="px-6 pb-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">Imágenes</h3>
+          <ImagenesUploader :publicacion-id="(route.params.id as string)" />
+        </div>
+        <div class="px-6 pb-6">
           <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
             <button
               type="button"
@@ -228,14 +241,15 @@
               Cancelar
             </button>
             <button
-              type="submit"
+              type="button"
               :disabled="enviando"
+              @click="actualizarPublicacion"
               class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {{ enviando ? 'Actualizando...' : 'Actualizar Publicación' }}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   </div>
@@ -245,6 +259,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { publicacionesService, type ActualizarPublicacionRequest } from '../services/api'
+import ImagenesUploader from '../components/ImagenesUploader.vue'
 
 const router = useRouter()
 const route = useRoute()

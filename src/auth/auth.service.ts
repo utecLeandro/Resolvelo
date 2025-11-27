@@ -2,14 +2,24 @@
  * Servicio de autenticación.
  * Maneja lógica de registro con hash + salt y verificación mock.
  */
-import { Injectable, UnauthorizedException, NotFoundException, ConflictException, ServiceUnavailableException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException, ConflictException, ServiceUnavailableException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { GubuyValidateDto } from './dto/gubuy-validate.dto';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import * as nodemailer from 'nodemailer';
+
+interface GubuyCodeData {
+  redirectUri: string
+  state?: string
+  nonce?: string
+  scope?: string
+  claims: { email: string; nombre: string; apellido: string; documentoIdentidad: string }
+  createdAt: number
+}
 
 @Injectable()
 export class AuthService {
@@ -17,6 +27,15 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
   ) {}
+
+  private gubuyCodes = new Map<string, GubuyCodeData>();
+
+  private gubuyEnabled() {
+    const v = process.env.GUBUY_SIMULATED;
+    if (v === 'true') return true;
+    if (v === 'false') return false;
+    return process.env.NODE_ENV !== 'production';
+  }
 
   /**
    * Registra un usuario con email y contraseña aplicando OWASP: hash + salt.
@@ -44,6 +63,7 @@ export class AuthService {
           telefonoVerificado: false,
           perfilPublico: true,
           activo: true,
+          primerLoginPendiente: true,
         },
       });
 
@@ -64,6 +84,7 @@ export class AuthService {
           estadoVerificacion: usuario.estadoVerificacion,
           emailVerificado: usuario.emailVerificado,
         },
+        usuarioId: usuario.id,
         message: 'Cuenta creada. Verificación pendiente.',
         verification: verificationOk ? 'OK' : 'FAILED',
       };
@@ -88,7 +109,7 @@ export class AuthService {
   async login(data: LoginDto) {
     try {
       // Buscar usuario por email
-      const usuario = await this.prisma.usuario.findUnique({
+      let usuario = await this.prisma.usuario.findUnique({
         where: { email: data.email },
       });
 
@@ -106,6 +127,29 @@ export class AuthService {
       
       if (!passwordValida) {
         throw new UnauthorizedException('Credenciales incorrectas');
+      }
+
+      if ((usuario as any).primerLoginPendiente) {
+        throw new UnauthorizedException('Primer login debe ser por gub.uy (simulado)');
+      }
+
+      if (usuario.estadoVerificacion !== 'VERIFICADA') {
+        throw new ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
+      }
+
+      if (usuario.email === 'gtbump2012@gmail.com') {
+        if (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN') {
+          usuario = await this.prisma.usuario.update({
+            where: { id: usuario.id },
+            data: { rol: 'SUPER_ADMIN', fechaAsignacionRol: new Date(), asignadoPor: 'SYSTEM', motivoRol: 'Admin permanente' },
+          });
+        }
+        const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: usuario.id } });
+        if (!admin) {
+          await this.prisma.administrador.create({ data: { usuarioId: usuario.id, activo: true, motivoAsignacion: 'Admin permanente (system)' } });
+        } else if (!admin.activo) {
+          await this.prisma.administrador.update({ where: { id: admin.id }, data: { activo: true } });
+        }
       }
 
       // Generar token JWT real
@@ -278,5 +322,110 @@ export class AuthService {
     });
 
     return { message: 'Contraseña actualizada correctamente' };
+  }
+
+  async gubuyAuthorize(params: { redirectUri: string; state?: string; nonce?: string; scope?: string }) {
+    if (!this.gubuyEnabled()) throw new UnauthorizedException('Simulación gub.uy deshabilitada');
+    const { redirectUri, state, nonce, scope } = params;
+    if (!redirectUri) throw new BadRequestException('redirect_uri requerido');
+    const code = crypto.randomBytes(16).toString('hex');
+    const documento = this.generarDocumentoFake();
+    const claims = {
+      email: `gubuy_${code}@resolvelo.local`,
+      nombre: 'Usuario',
+      apellido: 'Gubuy',
+      documentoIdentidad: documento,
+    };
+    this.gubuyCodes.set(code, { redirectUri, state, nonce, scope, claims, createdAt: Date.now() });
+    return { code };
+  }
+
+  async gubuyTokenExchange(code: string, redirectUri: string) {
+    if (!this.gubuyEnabled()) throw new UnauthorizedException('Simulación gub.uy deshabilitada');
+    if (!code) throw new BadRequestException('code requerido');
+    if (!redirectUri) throw new BadRequestException('redirect_uri requerido');
+    const data = this.gubuyCodes.get(code);
+    if (!data) throw new UnauthorizedException('Código inválido');
+    const maxAgeMs = 10 * 60 * 1000;
+    if (Date.now() - data.createdAt > maxAgeMs) {
+      this.gubuyCodes.delete(code);
+      throw new UnauthorizedException('Código expirado');
+    }
+    if (data.redirectUri !== redirectUri) throw new UnauthorizedException('redirect_uri no coincide');
+    const claims = data.claims;
+    let usuario = await this.prisma.usuario.findFirst({ where: { documentoIdentidad: claims.documentoIdentidad } });
+    if (!usuario && claims.email) {
+      usuario = await this.prisma.usuario.findUnique({ where: { email: claims.email } });
+    }
+    if (!usuario) {
+      throw new UnauthorizedException('Usuario no registrado. Completa el registro en la web.');
+    }
+    if (!usuario.activo) {
+      throw new UnauthorizedException('Cuenta desactivada');
+    }
+    if (usuario.estadoVerificacion !== 'VERIFICADA') {
+      throw new ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
+    }
+    const payload = { sub: usuario.id, email: usuario.email };
+    const accessToken = this.jwtService.sign(payload);
+    this.gubuyCodes.delete(code);
+    return {
+      access_token: accessToken,
+      user: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        email: usuario.email,
+        rol: usuario.rol,
+        estadoVerificacion: usuario.estadoVerificacion,
+        emailVerificado: usuario.emailVerificado,
+      },
+    };
+  }
+
+  private generarDocumentoFake() {
+    const d = Array.from({ length: 7 }, () => Math.floor(Math.random() * 10)).join('');
+    const dv = Math.floor(Math.random() * 10);
+    return `${d}-${dv}`;
+  }
+
+  async gubuyValidate(data: GubuyValidateDto) {
+    const usuarioByDoc = await this.prisma.usuario.findFirst({ where: { documentoIdentidad: data.documentoIdentidad } });
+    const usuario = usuarioByDoc || (await this.prisma.usuario.findUnique({ where: { email: data.email } }));
+    if (!usuario) {
+      throw new UnauthorizedException('Usuario no registrado');
+    }
+    if (!usuario.activo) {
+      throw new UnauthorizedException('Cuenta desactivada');
+    }
+    const nombreOk = (usuario.nombre || '').trim() === data.nombre.trim();
+    const apellidoOk = (usuario.apellido || '').trim() === data.apellido.trim();
+    const emailOk = (usuario.email || '').trim().toLowerCase() === data.email.trim().toLowerCase();
+    const docOk = (usuario.documentoIdentidad || '').trim() === data.documentoIdentidad.trim();
+    if (!nombreOk || !apellidoOk || !emailOk || !docOk) {
+      throw new UnauthorizedException('Datos no coinciden');
+    }
+    const passwordValida = await bcrypt.compare(data.password, usuario.passwordHash);
+    if (!passwordValida) {
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+    if (usuario.estadoVerificacion !== 'VERIFICADA') {
+      throw new ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
+    }
+    const payload = { sub: usuario.id, email: usuario.email };
+    const accessToken = this.jwtService.sign(payload);
+    await this.prisma.usuario.update({ where: { id: usuario.id }, data: { primerLoginPendiente: false } });
+    return {
+      access_token: accessToken,
+      user: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        email: usuario.email,
+        rol: usuario.rol,
+        estadoVerificacion: usuario.estadoVerificacion,
+        emailVerificado: usuario.emailVerificado,
+      },
+    };
   }
 }

@@ -40,11 +40,12 @@
             </button>
             
             <!-- Dropdown de categorías -->
-            <div
-              v-if="dropdownAbierto === 'categoria'"
-              class="absolute top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-              @click.stop
-            >
+            <Transition name="fade-down">
+              <div
+                v-if="dropdownAbierto === 'categoria'"
+                class="absolute top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                @click.stop
+              >
               <div class="py-1">
                 <button
                   @click="seleccionarCategoria('')"
@@ -63,7 +64,8 @@
                   {{ categoria.etiqueta }}
                 </button>
               </div>
-            </div>
+              </div>
+            </Transition>
           </div>
           
           <!-- Filtro de ubicación -->
@@ -82,11 +84,12 @@
             </button>
             
             <!-- Dropdown de ubicación -->
-            <div
-              v-if="dropdownAbierto === 'ubicacion'"
-              class="absolute top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-              @click.stop
-            >
+            <Transition name="fade-down">
+              <div
+                v-if="dropdownAbierto === 'ubicacion'"
+                class="absolute top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                @click.stop
+              >
               <div class="p-4 space-y-3">
                 <div>
                   <label for="departamento" class="block text-sm font-medium text-gray-700 mb-1">
@@ -133,7 +136,8 @@
                   </button>
                 </div>
               </div>
-            </div>
+              </div>
+            </Transition>
           </div>
           
           <!-- Filtro de precio -->
@@ -152,11 +156,12 @@
             </button>
             
             <!-- Dropdown de precio -->
-            <div
-              v-if="dropdownAbierto === 'precio'"
-              class="absolute top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-              @click.stop
-            >
+            <Transition name="fade-down">
+              <div
+                v-if="dropdownAbierto === 'precio'"
+                class="absolute top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                @click.stop
+              >
               <div class="p-4 space-y-3">
                 <div>
                   <label for="precioMinimo" class="block text-sm font-medium text-gray-700 mb-1">
@@ -201,7 +206,8 @@
                   </button>
                 </div>
               </div>
-            </div>
+              </div>
+            </Transition>
           </div>
 
           <!-- Filtro de fechas -->
@@ -220,11 +226,12 @@
             </button>
             
             <!-- Dropdown de fechas -->
-            <div
-              v-if="dropdownAbierto === 'fechas'"
-              class="absolute top-full mt-1 w-[340px] bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-              @click.stop
-            >
+            <Transition name="fade-down">
+              <div
+                v-if="dropdownAbierto === 'fechas'"
+                class="absolute top-full mt-1 w-[340px] bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                @click.stop
+              >
               <div class="p-4 space-y-3">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
@@ -271,7 +278,8 @@
                   </button>
                 </div>
               </div>
-            </div>
+              </div>
+            </Transition>
           </div>
           
           <!-- Botón de búsqueda -->
@@ -397,15 +405,20 @@ const categorias = [
   { valor: 'GUITARRAS', etiqueta: 'Guitarras' },
   { valor: 'BATERIAS', etiqueta: 'Baterías' },
   { valor: 'TECLADOS', etiqueta: 'Teclados' },
-  { valor: 'VIENTOS', etiqueta: 'Instrumentos de viento' },
-  { valor: 'CUERDAS', etiqueta: 'Instrumentos de cuerda' },
+  { valor: 'VIENTOS', etiqueta: 'Vientos' },
+  { valor: 'CUERDAS', etiqueta: 'Cuerdas' },
   { valor: 'AMPLIFICADORES', etiqueta: 'Amplificadores' },
   { valor: 'AUDIO_PA', etiqueta: 'Audio PA' },
   { valor: 'PERCUSION', etiqueta: 'Percusión' },
-  { valor: 'GRABACION', etiqueta: 'Equipos de grabación' },
+  { valor: 'GRABACION', etiqueta: 'Home Studio' },
   { valor: 'ILUMINACION', etiqueta: 'Iluminación' },
   { valor: 'ACCESORIOS', etiqueta: 'Accesorios' },
-  { valor: 'OTROS', etiqueta: 'Otros' }
+  { valor: 'OTROS', etiqueta: 'Otros' },
+  // Alias solicitados que mapean a categorías existentes
+  { valor: 'AUDIO_PA', etiqueta: 'Micrófonos' },
+  { valor: 'ACCESORIOS', etiqueta: 'Fundas' },
+  { valor: 'PERCUSION', etiqueta: 'Platillos' },
+  { valor: 'GUITARRAS', etiqueta: 'Bajos' },
 ]
 
 const departamentos = [
@@ -562,6 +575,22 @@ onUnmounted(() => {
   document.removeEventListener('click', manejarClickFuera)
 })
 </script>
+<style scoped>
+.fade-down-enter-active,
+.fade-down-leave-active {
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+.fade-down-enter-from,
+.fade-down-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.fade-down-enter-to,
+.fade-down-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
 
 <style scoped>
 /* Asegurar que los dropdowns estén por encima de otros elementos */

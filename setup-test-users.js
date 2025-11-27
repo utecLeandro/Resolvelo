@@ -1,6 +1,8 @@
 const axios = require('axios');
 
-const API_BASE = 'http://localhost:3000/api';
+// Permite configurar el puerto del backend usando la variable de entorno API_BASE
+// Por defecto apunta al backend dist en 127.0.0.1:3006
+const API_BASE = (process.env.API_BASE || 'http://127.0.0.1:3006/api').trim();
 
 // Función para registrar un usuario
 async function registrarUsuario(userData) {

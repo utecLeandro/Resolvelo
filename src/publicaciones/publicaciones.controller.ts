@@ -14,12 +14,18 @@ import {
   ParseUUIDPipe,
   ValidationPipe,
   UsePipes,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as fs from 'fs';
+import * as path from 'path';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PublicacionesService } from './publicaciones.service';
 import { CrearPublicacionDto } from './dto/crear-publicacion.dto';
 import { ActualizarPublicacionDto } from './dto/actualizar-publicacion.dto';
 import { FiltrosPublicacionDto } from './dto/filtros-publicacion.dto';
+import { FinalizarImagenesDto } from './dto/finalizar-imagenes.dto';
 
 /**
  * Controlador para gestionar las publicaciones de equipos musicales
@@ -73,6 +79,11 @@ export class PublicacionesController {
     return this.publicacionesService.obtenerPublicacionPorId(id);
   }
 
+  @Get(':id/imagenes')
+  async listarImagenes(@Param('id') id: string) {
+    return this.publicacionesService.listarImagenes(id);
+  }
+
   /**
    * Actualizar una publicación existente
    * Requiere autenticación JWT
@@ -89,6 +100,76 @@ export class PublicacionesController {
       req.user.id,
       actualizarPublicacionDto,
     );
+  }
+
+  @Post(':id/imagenes/finalizar')
+  @UseGuards(JwtAuthGuard)
+  async finalizarImagenes(
+    @Param('id') id: string,
+    @Body() dto: FinalizarImagenesDto,
+    @Request() req: any,
+  ) {
+    return this.publicacionesService.guardarImagenes(id, req.user.id, dto.images);
+  }
+
+  @Patch(':id/imagenes/:imagenId/principal')
+  @UseGuards(JwtAuthGuard)
+  async marcarPrincipal(
+    @Param('id') id: string,
+    @Param('imagenId') imagenId: string,
+    @Request() req: any,
+  ) {
+    await this.publicacionesService.setImagenPrincipal(id, req.user.id, imagenId);
+    return { success: true };
+  }
+
+  @Delete(':id/imagenes/:imagenId')
+  @UseGuards(JwtAuthGuard)
+  async eliminarImagen(
+    @Param('id') id: string,
+    @Param('imagenId') imagenId: string,
+    @Request() req: any,
+  ) {
+    await this.publicacionesService.eliminarImagen(id, req.user.id, imagenId);
+    return { success: true };
+  }
+
+  @Post(':id/imagenes/upload')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const dest = path.join(__dirname, '..', '..', 'uploads', 'publicaciones', req.params.id);
+          fs.mkdirSync(dest, { recursive: true });
+          cb(null, dest);
+        },
+        filename: (req, file, cb) => {
+          const ext = path.extname(file.originalname) || '.bin';
+          const nombre = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+          cb(null, nombre);
+        },
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (req, file, cb) => {
+        const allow = ['image/jpeg', 'image/png', 'image/webp'];
+        if (allow.includes(file.mimetype)) cb(null, true);
+        else cb(new Error('Tipo de archivo no permitido'), false);
+      },
+    }),
+  )
+  async uploadLocal(
+    @Param('id') id: string,
+    @Request() req: any,
+  ) {
+    const file = (req as any).file as Express.Multer.File;
+    if (!file) return { error: 'Archivo requerido' };
+    const url = `/uploads/publicaciones/${id}/${file.filename}`;
+    const { descripcion, orden, esPrincipal } = req.body || {};
+    const creado = await this.publicacionesService.guardarImagenes(id, req.user.id, [
+      { url, descripcion, orden: orden ? Number(orden) : undefined, esPrincipal: esPrincipal === 'true' },
+    ]);
+    return { success: true, data: creado };
   }
 
   /**

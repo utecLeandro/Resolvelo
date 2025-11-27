@@ -8,7 +8,7 @@ import { useAuth } from './composables/useAuth'
 
 // Composables
 const route = useRoute()
-const { usuarioAutenticado, nombreCompleto, verificarAutenticacion } = useAuth()
+const { usuarioAutenticado, nombreCompleto, verificarAutenticacion, datosUsuario } = useAuth()
 
 // Rutas que no deben mostrar navegación y pie de página
 // Mostramos la navegación también en /login y /registro para mantener estilos consistentes con el catálogo
@@ -40,6 +40,7 @@ const actualizarEstadoAutenticacion = () => {
       v-if="mostrarLayoutCompleto"
       :usuario-autenticado="usuarioAutenticado"
       :nombre-usuario="nombreCompleto"
+      :avatar-url="datosUsuario?.avatarUrl || ''"
     />
     
     <!-- Contenido principal -->

@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Module } from '@nestjs/common';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -11,6 +11,9 @@ import { TransaccionesModule } from './transacciones/transacciones.module';
 import { TransaccionesController } from './transacciones/transacciones.controller';
 import { TransaccionesWebhookController } from './transacciones/webhook.controller';
 import { TransaccionesService } from './transacciones/transacciones.service';
+import { CalificacionesModule } from './calificaciones/calificaciones.module';
+import { NotificacionesModule } from './notificaciones/notificaciones.module';
+import { ImagenesModule } from './imagenes/imagenes.module';
 
 @Module({
   imports: [
@@ -20,6 +23,9 @@ import { TransaccionesService } from './transacciones/transacciones.service';
     UsuariosModule,
     AdminModule,
     TransaccionesModule,
+    CalificacionesModule,
+    NotificacionesModule,
+    ImagenesModule,
   ],
   controllers: [HealthController, AdminDebugController, TransaccionesController, TransaccionesWebhookController],
   providers: [TransaccionesService],

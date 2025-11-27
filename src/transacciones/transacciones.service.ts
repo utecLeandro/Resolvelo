@@ -1,8 +1,11 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Optional } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProcesarPagoDto, RespuestaPagoDto } from './dto/procesar-pago.dto';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { MP_DEFAULT_ACCESS_TOKEN } from '../config/mercadopago.config';
+import axios from 'axios';
+import { ProcesarPagoBrickDto } from './dto/payment-brick.dto';
+import { NotificacionesService } from '../notificaciones/notificaciones.service'
 
 export interface RespuestaPreferenciaMpDto {
   ok: boolean;
@@ -15,7 +18,7 @@ export interface RespuestaPreferenciaMpDto {
 
 @Injectable()
 export class TransaccionesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, @Optional() private notificaciones?: NotificacionesService) {}
 
   /**
    * Simula el procesamiento de un pago externo
@@ -112,7 +115,7 @@ export class TransaccionesService {
 
       if (resultadoPago.aprobado) {
         // 6. Actualizar transacción como completada
-        await this.prisma.transaccion.update({
+        const txCompletada = await this.prisma.transaccion.update({
           where: { id: transaccion.id },
           data: {
             estado: 'COMPLETADA',
@@ -129,6 +132,12 @@ export class TransaccionesService {
           where: { id: reservaId },
           data: { estado: 'EN_CURSO' }
         });
+
+        if (this.notificaciones) {
+          try {
+            await this.notificaciones.emitirPagoCompletado(reserva, txCompletada)
+          } catch {}
+        }
 
         return {
           exito: true,
@@ -266,7 +275,7 @@ export class TransaccionesService {
     const preference = new Preference(client);
 
     const rawFrontendBase = process.env.FRONTEND_URL;
-    const frontendBase = (rawFrontendBase?.trim() || 'http://localhost:5173');
+    const frontendBase = (rawFrontendBase?.trim() || 'http://127.0.0.1:5174');
     const ensureUrl = (raw: string | undefined, fallbackPath: string) => {
       const t = (raw ?? '').trim();
       let candidate = t || `${frontendBase}${fallbackPath}`;
@@ -282,7 +291,7 @@ export class TransaccionesService {
     const pendingUrl = ensureUrl(process.env.MP_PENDING_URL, '/pago-exitoso');
     const isLocalFrontend = /^http:\/\/(127\.0\.0\.1|localhost)/i.test(frontendBase);
 
-    const body: any = {
+      const body: any = {
       items: [
         {
           title: `Pago de reserva: ${reserva.publicacion.titulo}`,
@@ -306,12 +315,13 @@ export class TransaccionesService {
         failure: failureUrl,
         pending: pendingUrl
       },
-      ...(isLocalFrontend ? {} : { auto_return: 'approved' }),
-      // Mantener binary_mode en false para permitir estados 'pending' en sandbox
-      binary_mode: false,
+      
+      binary_mode: true,
       statement_descriptor: 'ReSolVelo',
       external_reference: transaccion.id
     };
+
+    // No usar auto_return en sandbox para evitar validaciones adicionales de MP
 
     // Agregar notification_url solo si está configurada explícitamente y es HTTPS válido
     const rawNotificationUrl = process.env.MP_NOTIFICATION_URL?.trim();
@@ -401,6 +411,9 @@ export class TransaccionesService {
         external_reference: paymentDetail?.external_reference,
         metadata: paymentDetail?.metadata
       });
+      try {
+        console.log('[MP Webhook] Payment detail full:', JSON.stringify(paymentDetail, null, 2));
+      } catch {}
 
       const transaccionId = paymentDetail?.external_reference || payload?.metadata?.transaccionId;
       if (!transaccionId) {
@@ -420,6 +433,7 @@ export class TransaccionesService {
             montoNeto: undefined,
             comisionPlataforma: undefined,
             comisionPasarela: undefined,
+            notasInternas: JSON.stringify(paymentDetail)
           }
         });
 
@@ -429,16 +443,25 @@ export class TransaccionesService {
             where: { id: transaccion.reservaId },
             data: { estado: 'EN_CURSO' }
           });
+          if (this.notificaciones) {
+            try {
+              const reservaFull = await this.prisma.reserva.findUnique({
+                where: { id: transaccion.reservaId },
+                include: { publicacion: { select: { id: true, titulo: true, marca: true, modelo: true } } }
+              })
+              if (reservaFull) await this.notificaciones.emitirPagoCompletado(reservaFull, transaccion)
+            } catch {}
+          }
         }
       } else if (estadoPago === 'PENDING' || estadoPago === 'IN_PROCESS') {
         await this.prisma.transaccion.update({
           where: { id: transaccionId },
-          data: { estado: 'PENDIENTE', referenciaExterna: String(paymentDetail?.id || '') }
+          data: { estado: 'PENDIENTE', referenciaExterna: String(paymentDetail?.id || ''), notasInternas: JSON.stringify(paymentDetail) }
         });
       } else {
         await this.prisma.transaccion.update({
           where: { id: transaccionId },
-          data: { estado: 'FALLIDA', referenciaExterna: String(paymentDetail?.id || '') }
+          data: { estado: 'FALLIDA', referenciaExterna: String(paymentDetail?.id || ''), notasInternas: JSON.stringify(paymentDetail) }
         });
       }
 
@@ -479,24 +502,28 @@ export class TransaccionesService {
       }
 
       // Intentar buscar pagos por external_reference (seteado con transaccion.id al crear la preferencia)
-      const fetch = (await import('node-fetch')).default as any;
       const baseUrl = 'https://api.mercadopago.com/v1/payments/search';
-      const urlByExternal = `${baseUrl}?external_reference=${encodeURIComponent(transaccionId)}&sort=date_created&criteria=desc`;
-      const respExt = await fetch(urlByExternal, { headers: { Authorization: `Bearer ${accessToken}` } });
-      const dataExt = await respExt.json();
-      let results: any[] = Array.isArray(dataExt?.results) ? dataExt.results : [];
-
-      // Si no hubo resultados, intentar por preference_id usando tx.referenciaExterna (id de la preferencia)
+      const headers = { Authorization: `Bearer ${accessToken}` };
+      let results: any[] = [];
+      try {
+        const { data: dataExt } = await axios.get(baseUrl, { headers, params: { external_reference: transaccionId, sort: 'date_created', criteria: 'desc' } });
+        results = Array.isArray(dataExt?.results) ? dataExt.results : [];
+      } catch {}
       if (!results.length && tx.referenciaExterna) {
-        const urlByPref = `${baseUrl}?preference_id=${encodeURIComponent(tx.referenciaExterna)}&sort=date_created&criteria=desc`;
-        const respPref = await fetch(urlByPref, { headers: { Authorization: `Bearer ${accessToken}` } });
-        const dataPref = await respPref.json();
-        results = Array.isArray(dataPref?.results) ? dataPref.results : [];
+        try {
+          const { data: dataPref } = await axios.get(baseUrl, { headers, params: { preference_id: tx.referenciaExterna, sort: 'date_created', criteria: 'desc' } });
+          results = Array.isArray(dataPref?.results) ? dataPref.results : [];
+        } catch {}
       }
 
       const ultimo: any = results.length ? results[0] : null;
       const estadoPago = String(ultimo?.status || '').toUpperCase();
       console.log('🔎 [MP] Verificación por external_reference/preference:', { transaccionId, estadoPago, paymentId: ultimo?.id });
+      try {
+        if (ultimo) {
+          console.log('[MP Verify] Payment search result full:', JSON.stringify(ultimo, null, 2));
+        }
+      } catch {}
 
       if (estadoPago === 'APPROVED') {
         const actualizada = await this.prisma.transaccion.update({
@@ -505,23 +532,27 @@ export class TransaccionesService {
             estado: 'COMPLETADA',
             fechaCompletado: new Date(),
             referenciaExterna: String(ultimo?.id || tx.referenciaExterna || ''),
+            notasInternas: ultimo ? JSON.stringify(ultimo) : tx.notasInternas
           },
           include: { reserva: true }
         });
         if (actualizada?.reservaId) {
           await this.prisma.reserva.update({ where: { id: actualizada.reservaId }, data: { estado: 'EN_CURSO' } });
+          if (this.notificaciones && actualizada.reserva) {
+            try { await this.notificaciones.emitirPagoCompletado(actualizada.reserva, actualizada) } catch {}
+          }
         }
         return actualizada;
       }
       if (estadoPago === 'PENDING' || estadoPago === 'IN_PROCESS') {
         await this.prisma.transaccion.update({
           where: { id: transaccionId },
-          data: { estado: 'PENDIENTE', referenciaExterna: String(ultimo?.id || tx.referenciaExterna || '') }
+          data: { estado: 'PENDIENTE', referenciaExterna: String(ultimo?.id || tx.referenciaExterna || ''), notasInternas: ultimo ? JSON.stringify(ultimo) : tx.notasInternas }
         });
       } else if (estadoPago === 'REJECTED' || estadoPago === 'CANCELLED') {
         await this.prisma.transaccion.update({
           where: { id: transaccionId },
-          data: { estado: 'FALLIDA', referenciaExterna: String(ultimo?.id || tx.referenciaExterna || '') }
+          data: { estado: 'FALLIDA', referenciaExterna: String(ultimo?.id || tx.referenciaExterna || ''), notasInternas: ultimo ? JSON.stringify(ultimo) : tx.notasInternas }
         });
       }
 
@@ -533,6 +564,91 @@ export class TransaccionesService {
         throw error;
       }
       throw new BadRequestException('Error verificando estado de pago');
+    }
+  }
+
+  async verificarEstadoMercadoPagoPorPreference(preferenceId: string) {
+    try {
+      if (!preferenceId) {
+        throw new BadRequestException('Falta preferenceId');
+      }
+      const accessToken = process.env.MP_ACCESS_TOKEN || MP_DEFAULT_ACCESS_TOKEN;
+      if (!accessToken) {
+        throw new BadRequestException('Falta configurar MP_ACCESS_TOKEN en el entorno');
+      }
+      const baseUrl = 'https://api.mercadopago.com/v1/payments/search';
+      const headers = { Authorization: `Bearer ${accessToken}` };
+      let results: any[] = [];
+      try {
+        const { data } = await axios.get(baseUrl, { headers, params: { preference_id: preferenceId, sort: 'date_created', criteria: 'desc' } });
+        results = Array.isArray(data?.results) ? data.results : [];
+      } catch {}
+      // Si no hay pagos en /v1/payments, intentar obtenerlos desde merchant_orders
+      let ultimo: any = results.length ? results[0] : null;
+      if (!ultimo) {
+        try {
+          const { data: mo } = await axios.get('https://api.mercadopago.com/merchant_orders/search', { headers, params: { preference_id: preferenceId } });
+          const elements: any[] = Array.isArray(mo?.elements) ? mo.elements : [];
+          const order = elements.length ? elements[0] : null;
+          const pagos: any[] = Array.isArray(order?.payments) ? order.payments : [];
+          // Seleccionar el último pago o el primero con status
+          if (pagos.length) {
+            // Normalizar estructura del pago para reutilizar lógica
+            const p = pagos.find(x => String(x?.status || '').toUpperCase() === 'APPROVED') || pagos[0];
+            ultimo = {
+              id: p?.id,
+              status: p?.status,
+              external_reference: order?.external_reference,
+              date_approved: p?.date_approved,
+              transaction_amount: p?.total_paid_amount ?? p?.transaction_amount ?? p?.amount,
+              description: order?.description,
+            };
+          }
+        } catch {}
+      }
+      const estadoPago = String(ultimo?.status || '').toUpperCase();
+      let transaccionId = String(ultimo?.external_reference || '');
+      if (!transaccionId) {
+        const txPref = await this.prisma.transaccion.findFirst({ where: { referenciaExterna: preferenceId } });
+        transaccionId = txPref?.id || '';
+      }
+      if (!transaccionId) {
+        throw new NotFoundException('No se encontró transacción asociada a la preferencia');
+      }
+      if (estadoPago === 'APPROVED') {
+        const actualizada = await this.prisma.transaccion.update({
+          where: { id: transaccionId },
+          data: {
+            estado: 'COMPLETADA',
+            fechaCompletado: new Date(),
+            referenciaExterna: String(ultimo?.id || preferenceId),
+            notasInternas: ultimo ? JSON.stringify(ultimo) : undefined
+          },
+          include: { reserva: true }
+        });
+        if (actualizada?.reservaId) {
+          await this.prisma.reserva.update({ where: { id: actualizada.reservaId }, data: { estado: 'EN_CURSO' } });
+        }
+        return actualizada;
+      }
+      if (estadoPago === 'PENDING' || estadoPago === 'IN_PROCESS') {
+        await this.prisma.transaccion.update({
+          where: { id: transaccionId },
+          data: { estado: 'PENDIENTE', referenciaExterna: String(ultimo?.id || preferenceId), notasInternas: ultimo ? JSON.stringify(ultimo) : undefined }
+        });
+      } else if (estadoPago === 'REJECTED' || estadoPago === 'CANCELLED') {
+        await this.prisma.transaccion.update({
+          where: { id: transaccionId },
+          data: { estado: 'FALLIDA', referenciaExterna: String(ultimo?.id || preferenceId), notasInternas: ultimo ? JSON.stringify(ultimo) : undefined }
+        });
+      }
+      return await this.prisma.transaccion.findUnique({ where: { id: transaccionId }, include: { reserva: true } });
+    } catch (error) {
+      console.error('❌ [MP] Error verificando estado por preference:', error);
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Error verificando estado por preference');
     }
   }
 
@@ -558,6 +674,9 @@ export class TransaccionesService {
         external_reference: paymentDetail?.external_reference,
         metadata: paymentDetail?.metadata
       });
+      try {
+        console.log('[MP Confirm] Payment detail full:', JSON.stringify(paymentDetail, null, 2));
+      } catch {}
 
       const transaccionId = paymentDetail?.external_reference;
       if (!transaccionId) {
@@ -575,6 +694,7 @@ export class TransaccionesService {
             montoNeto: undefined,
             comisionPlataforma: undefined,
             comisionPasarela: undefined,
+            notasInternas: JSON.stringify(paymentDetail)
           }
         });
         if (transaccion?.reservaId) {
@@ -582,16 +702,25 @@ export class TransaccionesService {
             where: { id: transaccion.reservaId },
             data: { estado: 'EN_CURSO' }
           });
+          if (this.notificaciones) {
+            try {
+              const reservaFull = await this.prisma.reserva.findUnique({
+                where: { id: transaccion.reservaId },
+                include: { publicacion: { select: { id: true, titulo: true, marca: true, modelo: true } } }
+              })
+              if (reservaFull) await this.notificaciones.emitirPagoCompletado(reservaFull, transaccion)
+            } catch {}
+          }
         }
       } else if (estadoPago === 'PENDING' || estadoPago === 'IN_PROCESS') {
         await this.prisma.transaccion.update({
           where: { id: transaccionId },
-          data: { estado: 'PENDIENTE', referenciaExterna: String(paymentDetail?.id || '') }
+          data: { estado: 'PENDIENTE', referenciaExterna: String(paymentDetail?.id || ''), notasInternas: JSON.stringify(paymentDetail) }
         });
       } else {
         await this.prisma.transaccion.update({
           where: { id: transaccionId },
-          data: { estado: 'FALLIDA', referenciaExterna: String(paymentDetail?.id || '') }
+          data: { estado: 'FALLIDA', referenciaExterna: String(paymentDetail?.id || ''), notasInternas: JSON.stringify(paymentDetail) }
         });
       }
 
@@ -603,6 +732,152 @@ export class TransaccionesService {
         throw error;
       }
       throw new BadRequestException('Error confirmando pago');
+    }
+  }
+
+  async procesarPagoBrick(body: ProcesarPagoBrickDto) {
+    try {
+      const accessToken = process.env.MP_ACCESS_TOKEN || MP_DEFAULT_ACCESS_TOKEN;
+      if (!accessToken) {
+        throw new BadRequestException('Falta configurar MP_ACCESS_TOKEN en el entorno');
+      }
+
+      const client = new MercadoPagoConfig({ accessToken });
+      const { Payment } = await import('mercadopago');
+      const payment = new Payment(client);
+
+      // Resolver transaccionId: recibido explícito o por preferenceId
+      let transaccionId = String(body.transaccionId || '');
+      if (!transaccionId && body.preferenceId) {
+        const tx = await this.prisma.transaccion.findFirst({ where: { referenciaExterna: body.preferenceId } });
+        transaccionId = tx?.id || '';
+      }
+      if (!transaccionId) {
+        throw new BadRequestException('No se pudo asociar el pago a una transacción');
+      }
+
+      const txFull = await this.prisma.transaccion.findUnique({
+        where: { id: transaccionId },
+        include: {
+          reserva: {
+            include: {
+              publicacion: { select: { precioPorDia: true, titulo: true } }
+            }
+          },
+          usuario: { select: { email: true, nombre: true, apellido: true, documentoIdentidad: true } }
+        }
+      });
+      let montoCalculado = Number(body.transaction_amount || 0);
+      try {
+        if (txFull?.reserva?.fechaInicio && txFull?.reserva?.fechaFin && txFull?.reserva?.publicacion?.precioPorDia) {
+          const inicio = new Date(txFull.reserva.fechaInicio);
+          const fin = new Date(txFull.reserva.fechaFin);
+          const dias = Math.ceil((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          montoCalculado = Number(txFull.reserva.publicacion.precioPorDia) * dias;
+        }
+      } catch {}
+
+      // Construir body para Payment.create (alineado con v2)
+      const amount = Number(montoCalculado || body.transaction_amount);
+      const issuerIdNum = body.issuer_id !== undefined && body.issuer_id !== null && body.issuer_id !== ''
+        ? Number(body.issuer_id)
+        : undefined;
+
+      const payerBase: any = { ...(body.payer || {}) };
+      // Normalizar email
+      if (!payerBase.email && txFull?.usuario?.email) {
+        payerBase.email = txFull.usuario.email;
+      }
+      // Normalizar identificación (sandbox/local)
+      if (!payerBase.identification && txFull?.usuario?.documentoIdentidad) {
+        payerBase.identification = { type: 'CI', number: String(txFull.usuario.documentoIdentidad) };
+      }
+
+      const payload: any = {
+        token: body.token,
+        payment_method_id: body.payment_method_id,
+        transaction_amount: amount,
+        installments: body.installments ?? 1,
+        issuer_id: issuerIdNum,
+        payer: payerBase,
+        binary_mode: true,
+        external_reference: transaccionId,
+        // Información adicional útil para antifraude/reportes
+        additional_info: {
+          items: [
+            {
+              title: txFull?.reserva?.publicacion?.titulo || 'Pago de reserva',
+              description: `Reserva ${txFull?.reservaId || ''}`,
+              quantity: 1,
+              unit_price: amount,
+            },
+          ],
+          payer: {
+            first_name: (body.payer as any)?.first_name || txFull?.usuario?.nombre || undefined,
+            last_name: (body.payer as any)?.last_name || txFull?.usuario?.apellido || undefined,
+          },
+        },
+      };
+      // Limpiar campos vacíos de nivel superior
+      Object.keys(payload).forEach((k) => {
+        if (payload[k] === undefined || payload[k] === null || payload[k] === '') {
+          delete payload[k];
+        }
+      });
+
+      console.log('🧾 [MP Brick] Payment.create body:', JSON.stringify(payload, null, 2));
+      const result: any = await payment.create({ body: payload });
+      console.log('🧾 [MP Brick] Payment.create result:', {
+        id: result?.id,
+        status: result?.status,
+        status_detail: result?.status_detail,
+        external_reference: result?.external_reference,
+      });
+      try {
+        console.log('[MP Brick] Payment result full:', JSON.stringify(result, null, 2));
+      } catch {}
+
+      const estadoPago = String(result?.status || '').toUpperCase();
+      if (estadoPago === 'APPROVED') {
+        const transaccion = await this.prisma.transaccion.update({
+          where: { id: transaccionId },
+          data: {
+            estado: 'COMPLETADA',
+            fechaCompletado: new Date(),
+            referenciaExterna: String(result?.id || ''),
+            notasInternas: JSON.stringify(result),
+          },
+          include: { reserva: true },
+        });
+        if (transaccion?.reservaId) {
+          await this.prisma.reserva.update({ where: { id: transaccion.reservaId }, data: { estado: 'EN_CURSO' } });
+          if (this.notificaciones && transaccion.reserva) {
+            try { await this.notificaciones.emitirPagoCompletado(transaccion.reserva, transaccion) } catch {}
+          }
+        }
+        return transaccion;
+      }
+      if (estadoPago === 'PENDING' || estadoPago === 'IN_PROCESS') {
+        await this.prisma.transaccion.update({
+          where: { id: transaccionId },
+          data: { estado: 'PENDIENTE', referenciaExterna: String(result?.id || ''), notasInternas: JSON.stringify(result) },
+        });
+      } else {
+        await this.prisma.transaccion.update({
+          where: { id: transaccionId },
+          data: { estado: 'FALLIDA', referenciaExterna: String(result?.id || ''), notasInternas: JSON.stringify(result) },
+        });
+      }
+      return await this.prisma.transaccion.findUnique({ where: { id: transaccionId }, include: { reserva: true } });
+    } catch (error: any) {
+      console.error('❌ [MP Brick] Error creando pago:', error);
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      const msg = String(error?.message || error?.error?.message || 'Error creando pago con Brick');
+      const code = String(error?.cause?.[0]?.code || error?.error?.cause?.[0]?.code || '');
+      const desc = String(error?.cause?.[0]?.description || error?.error?.cause?.[0]?.description || '');
+      throw new BadRequestException(code ? `${msg} (${code}: ${desc})` : msg);
     }
   }
 }

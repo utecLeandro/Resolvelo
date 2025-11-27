@@ -378,11 +378,13 @@
           <div
             v-for="solicitud in solicitudesFiltradas"
             :key="solicitud.id"
+            :id="`solicitud-${solicitud.id}`"
             :class="[
               'rounded-lg shadow-md overflow-hidden',
               solicitud.estado === 'CONFIRMADA' 
                 ? 'bg-white border-l-4 border-green-500' 
-                : 'bg-white'
+                : 'bg-white',
+              highlightSolicitudId === solicitud.id ? 'ring-2 ring-orange-400 rounded-lg transition-shadow duration-500' : ''
             ]"
           >
             <div class="p-6">
@@ -449,7 +451,7 @@
                         <!-- Botones para solicitud confirmada -->
                         <div class="flex space-x-3">
                           <button
-                            @click="contactarArrendatario(solicitud)"
+                            @click="irAlChatReserva(solicitud.id)"
                             class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                           >
                             Contactar
@@ -567,7 +569,11 @@
           <div
             v-for="reserva in reservasActivasFiltradas"
             :key="reserva.id"
-            class="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-green-500"
+            :id="`reserva-${reserva.id}`"
+            :class="[
+              'bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-green-500',
+              highlightReservaId === reserva.id ? 'ring-2 ring-green-400 rounded-lg transition-shadow duration-500' : ''
+            ]"
           >
             <div class="p-6">
               <div class="flex items-start space-x-4">
@@ -624,7 +630,7 @@
                       <!-- Botones de acción -->
                       <div class="flex space-x-3">
                         <button
-                          @click="contactarArrendatario(reserva.usuario.email)"
+                          @click="irAlChatReserva(reserva.id)"
                           class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200"
                         >
                           Contactar
@@ -831,7 +837,7 @@
         <div class="flex space-x-3">
           <button
             @click="confirmarRechazo"
-            :disabled="procesandoSolicitud"
+            :disabled="!!procesandoSolicitud"
             class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="procesandoSolicitud" class="flex items-center justify-center">
@@ -842,7 +848,7 @@
           </button>
           <button
             @click="cerrarModalRechazo"
-            :disabled="procesandoSolicitud"
+            :disabled="!!procesandoSolicitud"
             class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancelar
@@ -924,8 +930,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch, onUnmounted, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { publicacionesService, reservasService } from '../services/api'
 import type { Publicacion } from '../services/api'
 let bc: BroadcastChannel | null = null
@@ -948,10 +954,12 @@ interface SolicitudReserva {
     email: string
     direccion?: string
   }
+  fechaCreacion?: string
 }
 
 // Composables
 const router = useRouter()
+const route = useRoute()
 
 // Estado reactivo - Pestañas
 const pestanaActiva = ref<'publicaciones' | 'solicitudes' | 'reservas-activas' | 'historial'>('publicaciones')
@@ -959,7 +967,20 @@ const subPestanaPublicaciones = ref<'todas' | 'activas' | 'pausadas' | 'revision
 const subPestanaSolicitudes = ref<'pendientes' | 'aprobadas' | 'rechazadas'>('pendientes')
 
 // Estado reactivo - Publicaciones
-const publicaciones = ref<Publicacion[]>([])
+type EstadisticasReservas = {
+  total: number
+  pendientes: number
+  aprobadas: number
+  confirmadas: number
+  activas: number
+  completadas: number
+  rechazadas: number
+  canceladas: number
+}
+
+type PublicacionConStats = Publicacion & { estadisticasReservas?: EstadisticasReservas }
+
+const publicaciones = ref<PublicacionConStats[]>([])
 const cargando = ref(true)
 const error = ref<string | null>(null)
 const eliminando = ref<string | null>(null)
@@ -969,16 +990,21 @@ const solicitudesPendientes = ref<SolicitudReserva[]>([])
 const cargandoSolicitudes = ref(false)
 const errorSolicitudes = ref<string | null>(null)
 const procesandoSolicitud = ref<string | null>(null)
+const focusSolicitudId = ref<string | null>(null)
+const highlightSolicitudId = ref<string | null>(null)
+const focusReservaId = ref<string | null>(null)
+const highlightReservaId = ref<string | null>(null)
 
 // Función de notificación nativa
-const mostrarNotificacion = (mensaje: string, tipo: 'success' | 'error' = 'success') => {
+const mostrarNotificacion = (mensaje: string, tipo: 'success' | 'error' = 'success', offsetPx: number = 16) => {
   try {
     // Crear elemento de notificación
     const notificacion = document.createElement('div')
-    notificacion.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-all duration-300 ${
+    notificacion.className = `fixed right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-all duration-300 ${
       tipo === 'success' ? 'bg-green-500' : 'bg-red-500'
     }`
     notificacion.textContent = mensaje
+    notificacion.style.top = `${offsetPx}px`
     
     // Estilos iniciales para animación
     notificacion.style.transform = 'translateX(100%)'
@@ -1038,7 +1064,7 @@ const comentarioCalificacion = ref('')
 const enviandoCalificacion = ref(false)
 
 // Computed
-const contadorSolicitudes = computed(() => (solicitudesPendientes.value || []).length)
+ 
 
 // Computed properties para publicaciones
 const publicacionesActivas = computed(() => (publicaciones.value || []).filter(p => p.estado === 'ACTIVA' && p.estadoModeracion === 'APROBADA'))
@@ -1097,7 +1123,7 @@ onMounted(async () => {
   console.log('🔍 Estado inicial procesandoSolicitud:', procesandoSolicitud.value)
   await cargarPublicaciones()
   await cargarSolicitudesPendientes()
-  window.addEventListener('reserva-actualizada', manejarActualizacionPropietario as EventListener)
+  window.addEventListener('reserva-actualizada', manejarActualizacionPropietario)
   window.addEventListener('storage', storageListener)
   try {
     bc = new BroadcastChannel('resolvelo-events')
@@ -1109,11 +1135,21 @@ onMounted(async () => {
       }
     }
   } catch {}
+  const tab = (route.query.tab as string) || ''
+  const focus = (route.query.focus as string) || ''
+  if (tab === 'solicitudes') {
+    pestanaActiva.value = 'solicitudes'
+    if (focus) focusSolicitudId.value = focus
+  } else if (tab === 'reservas-activas') {
+    pestanaActiva.value = 'reservas-activas'
+    if (focus) focusReservaId.value = focus
+    await cargarReservasActivas()
+  }
 })
 
-const manejarActualizacionPropietario = async (event: CustomEvent) => {
+const manejarActualizacionPropietario = async (event: Event) => {
   try {
-    const { reservaId, nuevoEstado, accion } = event.detail || {}
+    const { nuevoEstado, accion } = (event as CustomEvent).detail || {}
     if (nuevoEstado === 'EN_CURSO' || accion === 'pago-aprobado') {
       pestanaActiva.value = 'reservas-activas'
       await cargarReservasActivas()
@@ -1135,7 +1171,7 @@ const storageListener = async (ev: StorageEvent) => {
 }
 
 onUnmounted(() => {
-  window.removeEventListener('reserva-actualizada', manejarActualizacionPropietario as EventListener)
+  window.removeEventListener('reserva-actualizada', manejarActualizacionPropietario)
   window.removeEventListener('storage', storageListener)
   try {
     if (bc) bc.close()
@@ -1143,17 +1179,42 @@ onUnmounted(() => {
   } catch {}
 })
 
+watch(focusSolicitudId, async (id) => {
+  if (!id) return
+  await nextTick()
+  setTimeout(() => {
+    const el = document.getElementById(`solicitud-${id}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      highlightSolicitudId.value = id
+      setTimeout(() => {
+        if (highlightSolicitudId.value === id) {
+          highlightSolicitudId.value = null
+        }
+      }, 3000)
+    }
+  }, 150)
+})
+
+watch(focusReservaId, async (id) => {
+  if (!id) return
+  await nextTick()
+  setTimeout(() => {
+    const el = document.getElementById(`reserva-${id}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      highlightReservaId.value = id
+      setTimeout(() => {
+        if (highlightReservaId.value === id) {
+          highlightReservaId.value = null
+        }
+      }, 3000)
+    }
+  }, 150)
+})
+
 // Métodos - Pestañas
-const cambiarPestana = (pestana: 'publicaciones' | 'solicitudes' | 'reservas-activas' | 'historial') => {
-  pestanaActiva.value = pestana
-  if (pestana === 'solicitudes' && (!solicitudesPendientes.value || solicitudesPendientes.value.length === 0)) {
-    cargarSolicitudesPendientes()
-  } else if (pestana === 'reservas-activas' && (!reservasActivas.value || reservasActivas.value.length === 0)) {
-    cargarReservasActivas()
-  } else if (pestana === 'historial' && (!historialReservas.value || historialReservas.value.length === 0)) {
-    cargarHistorialReservas()
-  }
-}
+ 
 
 // Métodos - Publicaciones
 const cargarPublicaciones = async () => {
@@ -1195,10 +1256,10 @@ const aprobarSolicitud = async (solicitud: SolicitudReserva) => {
     const response = await reservasService.aprobarReserva(solicitud.id, {})
     
     if (response.success) {
-       // Actualizar el estado local inmediatamente
        const solicitudIndex = solicitudesPendientes.value.findIndex(s => s.id === solicitud.id)
        if (solicitudIndex !== -1) {
-         solicitudesPendientes.value[solicitudIndex].estado = 'CONFIRMADA'
+         const target = solicitudesPendientes.value[solicitudIndex]
+         if (target) target.estado = 'CONFIRMADA'
        }
        
        // Emitir evento para actualización en tiempo real
@@ -1212,7 +1273,7 @@ const aprobarSolicitud = async (solicitud: SolicitudReserva) => {
       window.dispatchEvent(evento)
       
       // Mostrar mensaje de éxito
-      mostrarNotificacion('Solicitud aprobada exitosamente', 'success')
+      mostrarNotificacion('Solicitud aprobada exitosamente', 'success', 64)
       
       // Recargar solo las publicaciones (para actualizar estadísticas)
       await cargarPublicaciones()
@@ -1255,10 +1316,10 @@ const confirmarRechazo = async () => {
     })
     
     if (response.success) {
-      // Actualizar el estado local inmediatamente
       const solicitudIndex = solicitudesPendientes.value.findIndex(s => s.id === solicitudArechazar.value!.id)
       if (solicitudIndex !== -1) {
-        solicitudesPendientes.value[solicitudIndex].estado = 'RECHAZADA'
+        const target = solicitudesPendientes.value[solicitudIndex]
+        if (target) target.estado = 'RECHAZADA'
       }
       
       // Emitir evento para actualización en tiempo real
@@ -1291,7 +1352,8 @@ const confirmarRechazo = async () => {
   }
 }
 
-const formatearFecha = (fecha: string) => {
+const formatearFecha = (fecha?: string) => {
+  if (!fecha) return '-'
   return new Date(fecha).toLocaleDateString('es-ES', {
     year: 'numeric',
     month: 'short',
@@ -1299,21 +1361,7 @@ const formatearFecha = (fecha: string) => {
   })
 }
 
-// Nuevas funciones para solicitudes confirmadas
-const contactarArrendatario = (solicitud: SolicitudReserva) => {
-  // Aquí puedes implementar la lógica para contactar al arrendatario
-  // Por ejemplo, abrir un modal de chat, redirigir a WhatsApp, etc.
-  console.log('Contactando arrendatario:', solicitud.arrendatario)
-  
-  // Ejemplo: abrir WhatsApp (si tienes el número de teléfono)
-  if (solicitud.arrendatario?.telefono) {
-    const mensaje = `Hola ${solicitud.arrendatario.nombre}, tu solicitud para ${solicitud.publicacion?.titulo} ha sido aprobada. ¿Cuándo podemos coordinar la entrega?`
-    const url = `https://wa.me/${solicitud.arrendatario.telefono}?text=${encodeURIComponent(mensaje)}`
-    window.open(url, '_blank')
-  } else {
-    mostrarNotificacion('Información de contacto no disponible', 'error')
-  }
-}
+// Flujo unificado: el botón Contactar abre el chat de la reserva
 
 const verDetallesSolicitud = (solicitud: SolicitudReserva) => {
   // Aquí puedes implementar la lógica para mostrar los detalles completos
@@ -1323,7 +1371,7 @@ const verDetallesSolicitud = (solicitud: SolicitudReserva) => {
   // Por ahora, mostrar una notificación con información básica
   const fechaInicio = formatearFecha(solicitud.fechaInicio)
   const fechaFin = formatearFecha(solicitud.fechaFin)
-  const mensaje = `Solicitud de ${solicitud.arrendatario?.nombre} para ${solicitud.publicacion?.titulo} del ${fechaInicio} al ${fechaFin} por $${solicitud.precioTotal}`
+  const mensaje = `Solicitud de ${solicitud.usuario?.nombre} para ${solicitud.publicacion?.titulo} del ${fechaInicio} al ${fechaFin} por $${solicitud.precioTotal}`
   
   mostrarNotificacion(mensaje, 'success')
 }
@@ -1382,6 +1430,10 @@ const verDetalleReserva = (reservaId: string) => {
   console.log('Ver detalle de reserva:', reservaId)
   // Navegar a la página de detalle de reserva
   router.push(`/reservas/${reservaId}`)
+}
+
+const irAlChatReserva = (reservaId: string) => {
+  router.push(`/mensajes/reserva/${reservaId}`)
 }
 
 const calificarArrendatario = (reservaId: string) => {

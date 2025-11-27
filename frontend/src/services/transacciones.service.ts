@@ -26,6 +26,7 @@ export interface Transaccion {
   fechaProcesamiento?: string
   fechaCompletado?: string
   descripcion?: string
+  notasInternas?: string
   reserva?: {
     id: string
     fechaInicio: string
@@ -70,5 +71,25 @@ export const transaccionesService = {
   async verificarEstadoMercadoPagoPorTransaccion(id: string): Promise<Transaccion> {
     const response = await api.get(`/transacciones/mercado-pago/verificar/${id}`)
     return response.data
+  },
+
+  async completarTransaccion(id: string): Promise<Transaccion> {
+    const response = await api.put(`/transacciones/${id}/completar`)
+    return response.data
+  },
+
+  async procesarPagoBrick(payload: { formData: any; transaccionId?: string; preferenceId?: string }): Promise<Transaccion> {
+    const body = { ...payload.formData, transaccionId: payload.transaccionId, preferenceId: payload.preferenceId }
+    const response = await api.post('/transacciones/mercado-pago/process-payment', body)
+    return response.data
+  },
+
+  async obtenerMpPublicKey(): Promise<string> {
+    try {
+      const res = await api.get('/config/mp-public-key')
+      return String(res.data?.publicKey || '')
+    } catch {
+      return ''
+    }
   }
 }

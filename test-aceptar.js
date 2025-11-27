@@ -1,6 +1,7 @@
 const axios = require('axios');
 
-const API_BASE = 'http://localhost:3000/api';
+// API_BASE configurable vía entorno; por defecto al backend dist en 127.0.0.1:3006
+const API_BASE = (process.env.API_BASE || 'http://127.0.0.1:3006/api').trim();
 
 // Función para hacer login
 async function login(email, password) {
@@ -123,7 +124,7 @@ async function main() {
 
   // Login de Federico (propietario)
   console.log('1. Login de Federico (propietario)...');
-  const tokenFederico = await login('gtbump2012@gmail.com', 'FedericoTest2024!');
+  const tokenFederico = await login('federico@test.com', 'Federico123!');
   if (!tokenFederico) {
     console.log('❌ No se pudo hacer login de Federico');
     return;
@@ -132,7 +133,7 @@ async function main() {
 
   // Login de María (arrendataria)
   console.log('2. Login de María (arrendataria)...');
-  const tokenMaria = await login('maria@test.com', 'MariaTest2024!');
+  const tokenMaria = await login('maria@test.com', 'Maria123!');
   if (!tokenMaria) {
     console.log('❌ No se pudo hacer login de María');
     return;
@@ -148,18 +149,8 @@ async function main() {
   }
   console.log('✅ Información de María obtenida exitosamente\n');
 
-  // María crea una nueva reserva
-  console.log('4. María crea una nueva reserva...');
-  const publicacionId = 'cmgxzc40c000dn4c31q3loiai'; // Teclado de Federico
-  const nuevaReserva = await crearReserva(tokenMaria, publicacionId, infoMaria.id);
-  if (!nuevaReserva) {
-    console.log('❌ Error al crear nueva reserva');
-    return;
-  }
-  console.log('✅ Nueva reserva creada exitosamente');
-  console.log(`   ID de reserva: ${nuevaReserva.data?.id || nuevaReserva.id || 'No disponible'}`);
-  console.log(`   Estado: ${nuevaReserva.data?.estado || 'No disponible'}`);
-  console.log(`   Fechas: ${nuevaReserva.data?.fechaInicio || 'No disponible'} a ${nuevaReserva.data?.fechaFin || 'No disponible'}\n`);
+  // María no crea una nueva reserva aquí; se asume que ya existe una solicitud pendiente creada por setup-test-users.js
+  console.log('4. Buscando solicitudes pendientes existentes...');
 
   // Obtener solicitudes pendientes de Federico
   console.log('5. Obteniendo solicitudes pendientes de Federico...');

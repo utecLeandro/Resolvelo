@@ -1,13 +1,14 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3000';
+// Usar API_BASE para apuntar al backend deseado. Por defecto a 3006 (dist)
+const API_BASE = (process.env.API_BASE || 'http://127.0.0.1:3006/api').trim();
 
 async function crearReservaParaPago() {
   try {
     console.log('🔧 Creando reserva de prueba en estado CONFIRMADA...');
     
     // 1. Login como usuario test (arrendatario)
-    const loginResponse = await axios.post(`${BASE_URL}/api/auth/login`, {
+    const loginResponse = await axios.post(`${API_BASE}/auth/login`, {
       email: 'test@test.com',
       password: 'Test123@'
     });
@@ -31,7 +32,7 @@ async function crearReservaParaPago() {
     };
     
     const reservaResponse = await axios.post(
-      `${BASE_URL}/api/usuarios/reservas/crear`,
+      `${API_BASE}/usuarios/reservas/crear`,
       reservaData,
       {
         headers: { Authorization: `Bearer ${token}` }
@@ -44,7 +45,7 @@ async function crearReservaParaPago() {
     
     // 3. Cambiar estado a CONFIRMADA
     const cambiarEstadoResponse = await axios.patch(
-      `${BASE_URL}/api/usuarios/reservas/${reservaId}/confirmar`,
+      `${API_BASE}/usuarios/reservas/${reservaId}/confirmar`,
       {},
       {
         headers: {
@@ -54,7 +55,7 @@ async function crearReservaParaPago() {
     );
     
     console.log(`✅ Reserva ${reservaId} confirmada y lista para pago`);
-    console.log(`🔗 URL de pago: http://localhost:5173/pago/${reservaId}`);
+    console.log(`🔗 URL de pago (frontend): http://localhost:5173/pago/${reservaId}`);
     
     return reservaId;
     

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick, onUnmounted } from 'vue'
 import { usuarioService, authService, publicacionesService } from '../services/api'
 import type { Publicacion } from '../services/api'
 import { useAuth } from '../composables/useAuth'
@@ -23,6 +23,24 @@ const nombre = ref('')
 const apellido = ref('')
 const documentoIdentidad = ref('')
 const direccion = ref('')
+const avatarFile = ref<File | null>(null)
+const subiendoAvatar = ref(false)
+const avatarInput = ref<HTMLInputElement | null>(null)
+const avatarPreviewUrl = ref<string | null>(null)
+const avatarContainer = ref<HTMLDivElement | null>(null)
+const containerW = ref(64)
+const containerH = ref(64)
+const imgNaturalW = ref(0)
+const imgNaturalH = ref(0)
+const scaledW = ref(64)
+const scaledH = ref(64)
+const avatarPosX = ref(0)
+const avatarPosY = ref(0)
+const dragging = ref(false)
+const dragStartX = ref(0)
+const dragStartY = ref(0)
+const posStartX = ref(0)
+const posStartY = ref(0)
 
 // Variables para mis publicaciones
 const misPublicaciones = ref<Publicacion[]>([])
@@ -31,7 +49,7 @@ const errorPublicaciones = ref('')
 const pestanaActiva = ref<'perfil' | 'publicaciones'>('perfil')
 
 // Composable para manejar estado global del usuario
-const { actualizarDatosUsuario } = useAuth()
+const { actualizarDatosUsuario, datosUsuario } = useAuth()
 
 onMounted(async () => {
   const token = localStorage.getItem('access_token')
@@ -77,6 +95,9 @@ const guardarCambios = async () => {
   error.value = ''
   mensaje.value = ''
   try {
+    if (avatarFile.value) {
+      await subirAvatar()
+    }
     const res = await usuarioService.actualizarPerfil(usuarioId.value, {
       nombre: nombre.value || undefined,
       apellido: apellido.value || undefined,
@@ -95,6 +116,162 @@ const guardarCambios = async () => {
     error.value = e?.response?.data?.message || 'No se pudo actualizar el perfil.'
   } finally {
     guardando.value = false
+  }
+}
+
+const abrirSelectorAvatar = () => {
+  avatarInput.value?.click()
+}
+
+const measureContainer = () => {
+  const el = avatarContainer.value
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  containerW.value = Math.round(rect.width)
+  containerH.value = Math.round(rect.height)
+}
+
+const initPreview = async (url: string) => {
+  await nextTick()
+  measureContainer()
+  const img = new Image()
+  const done = new Promise<void>((resolve) => {
+    img.onload = () => {
+      imgNaturalW.value = img.naturalWidth || img.width
+      imgNaturalH.value = img.naturalHeight || img.height
+      const scale = Math.max(containerW.value / imgNaturalW.value, containerH.value / imgNaturalH.value)
+      scaledW.value = Math.round(imgNaturalW.value * scale)
+      scaledH.value = Math.round(imgNaturalH.value * scale)
+      avatarPosX.value = Math.round((containerW.value - scaledW.value) / 2)
+      avatarPosY.value = Math.round((containerH.value - scaledH.value) / 2)
+      resolve()
+    }
+  })
+  img.src = url
+  await done
+}
+
+const clampPosition = () => {
+  const minX = containerW.value - scaledW.value
+  const minY = containerH.value - scaledH.value
+  if (avatarPosX.value > 0) avatarPosX.value = 0
+  if (avatarPosY.value > 0) avatarPosY.value = 0
+  if (avatarPosX.value < minX) avatarPosX.value = minX
+  if (avatarPosY.value < minY) avatarPosY.value = minY
+}
+
+const onAvatarMouseDown = (e: MouseEvent) => {
+  if (!avatarPreviewUrl.value) return
+  dragging.value = true
+  dragStartX.value = e.clientX
+  dragStartY.value = e.clientY
+  posStartX.value = avatarPosX.value
+  posStartY.value = avatarPosY.value
+  window.addEventListener('mousemove', onAvatarMouseMove)
+  window.addEventListener('mouseup', onAvatarMouseUp)
+}
+
+const onAvatarMouseMove = (e: MouseEvent) => {
+  if (!dragging.value) return
+  const dx = e.clientX - dragStartX.value
+  const dy = e.clientY - dragStartY.value
+  avatarPosX.value = posStartX.value + dx
+  avatarPosY.value = posStartY.value + dy
+  clampPosition()
+}
+
+const onAvatarMouseUp = () => {
+  dragging.value = false
+  window.removeEventListener('mousemove', onAvatarMouseMove)
+  window.removeEventListener('mouseup', onAvatarMouseUp)
+}
+
+const onAvatarTouchStart = (e: TouchEvent) => {
+  if (!avatarPreviewUrl.value) return
+  const t = e.touches[0]
+  dragging.value = true
+  dragStartX.value = t.clientX
+  dragStartY.value = t.clientY
+  posStartX.value = avatarPosX.value
+  posStartY.value = avatarPosY.value
+  window.addEventListener('touchmove', onAvatarTouchMove, { passive: false })
+  window.addEventListener('touchend', onAvatarTouchEnd)
+}
+
+const onAvatarTouchMove = (e: TouchEvent) => {
+  if (!dragging.value) return
+  const t = e.touches[0]
+  const dx = t.clientX - dragStartX.value
+  const dy = t.clientY - dragStartY.value
+  avatarPosX.value = posStartX.value + dx
+  avatarPosY.value = posStartY.value + dy
+  clampPosition()
+}
+
+const onAvatarTouchEnd = () => {
+  dragging.value = false
+  window.removeEventListener('touchmove', onAvatarTouchMove)
+  window.removeEventListener('touchend', onAvatarTouchEnd)
+}
+
+onUnmounted(() => {
+  window.removeEventListener('mousemove', onAvatarMouseMove)
+  window.removeEventListener('mouseup', onAvatarMouseUp)
+  window.removeEventListener('touchmove', onAvatarTouchMove)
+  window.removeEventListener('touchend', onAvatarTouchEnd)
+})
+
+
+const onAvatarChange = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  const f = input.files && input.files[0]
+  avatarFile.value = f || null
+  if (f) {
+    const url = URL.createObjectURL(f)
+    avatarPreviewUrl.value = url
+    initPreview(url)
+  }
+}
+
+const crearCroppedBlob = async (): Promise<Blob | null> => {
+  if (!avatarPreviewUrl.value) return null
+  const canvas = document.createElement('canvas')
+  canvas.width = containerW.value
+  canvas.height = containerH.value
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  await new Promise<void>((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      ctx.drawImage(img, avatarPosX.value, avatarPosY.value, scaledW.value, scaledH.value)
+      resolve()
+    }
+    img.src = avatarPreviewUrl.value as string
+  })
+  return await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.92)
+  })
+}
+
+const subirAvatar = async () => {
+  if (!usuarioId.value || !avatarFile.value) return
+  subiendoAvatar.value = true
+  error.value = ''
+  try {
+    const blob = await crearCroppedBlob()
+    const fileToSend = blob ? new File([blob], 'avatar.jpg', { type: 'image/jpeg' }) : avatarFile.value
+    const res = await usuarioService.subirAvatar(usuarioId.value, fileToSend)
+    mensaje.value = 'Foto de perfil actualizada.'
+    actualizarDatosUsuario({ avatarUrl: res.avatarUrl })
+    avatarFile.value = null
+    if (avatarPreviewUrl.value) {
+      URL.revokeObjectURL(avatarPreviewUrl.value)
+      avatarPreviewUrl.value = null
+    }
+  } catch (e: any) {
+    error.value = e?.response?.data?.message || 'No se pudo subir la foto de perfil.'
+  } finally {
+    subiendoAvatar.value = false
   }
 }
 
@@ -156,6 +333,30 @@ const cambiarPestana = (pestana: 'perfil' | 'publicaciones') => {
       <!-- Pestaña de información personal -->
       <div v-if="pestanaActiva === 'perfil'">
         <form @submit.prevent="guardarCambios" class="space-y-6" aria-describedby="form-error">
+        <div class="flex items-center gap-4">
+          <div ref="avatarContainer" class="w-16 h-16 rounded-full bg-blue-100 relative overflow-hidden select-none">
+            <template v-if="avatarPreviewUrl">
+              <img
+                :src="avatarPreviewUrl"
+                :style="{ position: 'absolute', left: avatarPosX + 'px', top: avatarPosY + 'px', width: scaledW + 'px', height: scaledH + 'px', userSelect: 'none' }"
+                @mousedown="onAvatarMouseDown"
+                @touchstart.prevent="onAvatarTouchStart"
+                alt="Avatar preview"
+              />
+            </template>
+            <template v-else>
+              <img v-if="datosUsuario?.avatarUrl" :src="datosUsuario?.avatarUrl" alt="Avatar" class="w-16 h-16 object-cover" />
+              <span v-else class="absolute inset-0 flex items-center justify-center text-blue-600 font-semibold">{{ (nombre?.[0] || '') + (apellido?.[0] || '') }}</span>
+            </template>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-800">Foto de perfil</label>
+            <input ref="avatarInput" type="file" accept="image/*" @change="onAvatarChange" class="hidden" />
+            <button type="button" @click="abrirSelectorAvatar" :disabled="guardando || subiendoAvatar" class="mt-2 px-4 h-10 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              Subir foto
+            </button>
+          </div>
+        </div>
         <div>
           <label for="nombre" class="block text-sm font-medium text-gray-800">Nombre</label>
           <input
@@ -251,7 +452,7 @@ const cambiarPestana = (pestana: 'perfil' | 'publicaciones') => {
             <div class="p-4">
               <h3 class="font-semibold text-lg text-gray-900 mb-2">{{ publicacion.titulo }}</h3>
               <p class="text-gray-600 text-sm mb-2">{{ publicacion.categoria }}</p>
-              <p class="text-blue-600 font-semibold">${{ publicacion.precio }} / día</p>
+              <p class="text-blue-600 font-semibold">${{ publicacion.precioPorDia }} / día</p>
               <p class="text-gray-500 text-sm mt-2">{{ publicacion.ciudad }}, {{ publicacion.departamento }}</p>
               <div class="mt-4 flex justify-between items-center">
                 <span

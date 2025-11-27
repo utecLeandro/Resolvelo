@@ -23,6 +23,16 @@ export interface RespuestaUsuariosAdmin {
 }
 
 export const adminService = {
+  async listarRoles(): Promise<{ roles: { clave: UsuarioAdminListItem['rol']; nombre: string }[] }> {
+    const response = await api.get('/admin/roles')
+    if (response.status !== 200) {
+      const mensaje = (response.data && (response.data.message || response.data.error)) || 'Error al listar roles'
+      const err: any = new Error(mensaje)
+      err.response = response
+      throw err
+    }
+    return response.data
+  },
   async listarUsuarios(params: { pagina?: number; limite?: number; busqueda?: string; rol?: string; activo?: boolean } = {}): Promise<RespuestaUsuariosAdmin> {
     const searchParams = new URLSearchParams()
     if (params.pagina) searchParams.append('pagina', String(params.pagina))
@@ -59,6 +69,17 @@ export const adminService = {
     const response = await api.patch(`/admin/usuarios/${id}/verificar`, { motivo })
     if (response.status !== 200) {
       const mensaje = (response.data && (response.data.message || response.data.error)) || 'Error al verificar usuario'
+      const err: any = new Error(mensaje)
+      err.response = response
+      throw err
+    }
+    return response.data
+  },
+
+  async cambiarRolUsuario(id: string, rol: UsuarioAdminListItem['rol']): Promise<{ message: string; usuario: UsuarioAdminListItem }> {
+    const response = await api.patch(`/admin/usuarios/${id}/rol`, { rol })
+    if (response.status !== 200) {
+      const mensaje = (response.data && (response.data.message || response.data.error)) || 'Error al cambiar rol del usuario'
       const err: any = new Error(mensaje)
       err.response = response
       throw err

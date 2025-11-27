@@ -9,10 +9,16 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule, __APP_MODULE_MARKER__ } from './app.module';
 import { TransaccionesModule } from './transacciones/transacciones.module';
 import { TransaccionesService } from './transacciones/transacciones.service';
+import { CalificacionesService } from './calificaciones/calificaciones.service';
+import { JwtService } from '@nestjs/jwt';
+import { MensajesService } from './mensajes/mensajes.service';
+import { PrismaService } from './prisma/prisma.service';
 import cors from 'cors';
+import * as bodyParser from 'body-parser';
 import type { Request, Response, NextFunction } from 'express';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { NotificacionesService } from './notificaciones/notificaciones.service'
 
 async function bootstrap() {
   console.log('[Main] Import debug -> typeof TransaccionesModule =', typeof TransaccionesModule);
@@ -71,6 +77,10 @@ async function bootstrap() {
   // Endpoint de debug para listar rutas registradas
   try {
     const express = app.getHttpAdapter().getInstance();
+    express.use(bodyParser.json());
+    const jwtService = app.get(JwtService);
+    const prismaService = app.get(PrismaService);
+    const mensajesService = new MensajesService(prismaService);
     express.get('/api/__routes', (_req: Request, res: Response) => {
       const stack = express._router?.stack || [];
       const routes = [] as any[];
@@ -100,6 +110,143 @@ async function bootstrap() {
         res.json({ modPath, runtimeMarker, typeofAppModule: typeof freshMod.AppModule });
       } catch (e) {
         res.status(500).json({ error: String(e) });
+      }
+    });
+
+    // Asegurar parseo de JSON para las rutas de mensajes (en caso de que el body parser de Nest no aplique a handlers manuales)
+    express.use('/api/mensajes', bodyParser.json());
+    // Asegurar parseo de JSON para calificaciones
+    express.use('/api/calificaciones', bodyParser.json());
+
+    // Fallback temporal para mensajes en desarrollo
+    const authUserId = async (req: Request): Promise<string> => {
+      const auth = (req.headers['authorization'] || '').toString();
+      const token = auth.startsWith('Bearer ') ? auth.substring(7) : '';
+      const qToken = String((req.query as any)?.token || '')
+      const useToken = token || qToken
+      if (!useToken) throw new Error('No autorizado');
+      const payload: any = await jwtService.verifyAsync(useToken).catch(() => { throw new Error('Token inválido'); });
+      const sub = String(payload?.sub || '')
+      if (!sub) throw new Error('Token inválido');
+      return sub;
+    };
+
+    const notificacionesService = app.get(NotificacionesService)
+
+    express.get('/api/notificaciones/stream', async (req: Request, res: Response) => {
+      try {
+        const userId = await authUserId(req)
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        })
+        const init = await notificacionesService.listar(userId)
+        res.write(`data: ${JSON.stringify({ tipo: 'COUNTER', noLeidas: init.noLeidas })}\n\n`)
+        const sub = notificacionesService.stream.subscribe(({ usuarioId, data }) => {
+          if (usuarioId !== userId) return
+          try { res.write(`data: ${JSON.stringify(data)}\n\n`) } catch {}
+        })
+        req.on('close', () => { try { sub.unsubscribe() } catch {} })
+      } catch (e) {
+        res.status(401).end()
+      }
+    })
+
+    express.post('/api/mensajes/enviar', async (req: Request, res: Response) => {
+      console.log('[MensajesFallback] POST /api/mensajes/enviar body=', (req as any).body)
+      try {
+        const userId = await authUserId(req);
+        const dto = (req as any).body || {};
+        console.log('[MensajesFallback] userId=', userId, 'dto=', dto)
+        const resp = await mensajesService.enviarMensaje(dto, userId);
+        res.json(resp);
+      } catch (e) {
+        const msg = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
+        const code = /no autorizado|token inválido/i.test(msg) ? 401 : 400;
+        console.error('[MensajesFallback] error:', msg)
+        res.status(code).json({ error: msg });
+      }
+    });
+
+    // Fallback temporal para calificaciones en desarrollo
+    express.post('/api/calificaciones', async (req: Request, res: Response) => {
+      try {
+        const userId = await authUserId(req);
+        const calificacionesService = app.get(CalificacionesService);
+        const dto = (req as any).body || {};
+        const resultado = await calificacionesService.crear(userId, dto);
+        res.status(200).json({ ...resultado, timestamp: new Date().toISOString() });
+      } catch (e) {
+        const raw = e as any;
+        const msg = typeof raw === 'object' && raw && 'message' in raw ? String(raw.message) : String(raw);
+        let code = 500;
+        if (/no autorizado|token inválido/i.test(msg)) {
+          code = 401;
+        } else if (/reserva no encontrada/i.test(msg)) {
+          code = 400;
+        } else if (/ya has calificado|ya has calificado esta reserva/i.test(msg)) {
+          code = 400;
+        } else if (/solo se puede calificar reservas completadas/i.test(msg)) {
+          code = 400;
+        } else if (/no autorizado para calificar/i.test(msg)) {
+          code = 403;
+        } else if (raw?.code === 'P2002') {
+          code = 400;
+        }
+        res.status(code).json({ message: msg });
+      }
+    });
+
+    express.get('/api/calificaciones/publicaciones/:id', async (req: Request, res: Response) => {
+      try {
+        const calificacionesService = app.get(CalificacionesService);
+        const take = req.query.take ? parseInt(String(req.query.take)) : 10;
+        const skip = req.query.skip ? parseInt(String(req.query.skip)) : 0;
+        const resultado = await calificacionesService.listarPorPublicacion(String(req.params.id), take, skip);
+        res.json({ ...resultado, timestamp: new Date().toISOString() });
+      } catch (e) {
+        const msg = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
+        res.status(400).json({ message: msg });
+      }
+    });
+
+    express.get('/api/mensajes/reserva/:reservaId', async (req: Request, res: Response) => {
+      console.log('[MensajesFallback] GET /api/mensajes/reserva/:reservaId params=', req.params)
+      try {
+        const userId = await authUserId(req);
+        const resp = await mensajesService.listarPorReserva(String(req.params.reservaId), userId);
+        res.json(resp);
+      } catch (e) {
+        const msg = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
+        const code = /no autorizado|token inválido/i.test(msg) ? 401 : 400;
+        console.error('[MensajesFallback] error:', msg)
+        res.status(code).json({ error: msg });
+      }
+    });
+
+    express.post('/api/mensajes/reserva/:reservaId/leer', async (req: Request, res: Response) => {
+      try {
+        const userId = await authUserId(req);
+        const resp = await mensajesService.marcarLeidos(String(req.params.reservaId), userId);
+        res.json(resp);
+      } catch (e) {
+        const msg = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
+        const code = /no autorizado|token inválido/i.test(msg) ? 401 : 400;
+        res.status(code).json({ error: msg });
+      }
+    });
+
+    express.get('/api/mensajes/mis-conversaciones', async (req: Request, res: Response) => {
+      try {
+        const userId = await authUserId(req);
+        const resp = await mensajesService.listarMisConversaciones(userId);
+        res.json(resp);
+      } catch (e) {
+        const msg = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
+        const code = /no autorizado|token inválido/i.test(msg) ? 401 : 400;
+        res.status(code).json({ error: msg });
       }
     });
     // Endpoint para verificar desde qué archivo se está resolviendo app.module
@@ -146,6 +293,41 @@ async function bootstrap() {
       } catch (e) {
         const message = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
         res.status(400).json({ error: message });
+      }
+    });
+
+    express.post('/api/transacciones/mercado-pago/confirmar-debug', async (req: Request, res: Response) => {
+      try {
+        const paymentId = String(((req as any).body?.paymentId ?? (req as any).query?.paymentId) || '');
+        if (!paymentId) {
+          return res.status(400).json({ error: 'paymentId requerido' });
+        }
+        const transaccionesService = app.get(TransaccionesService);
+        const resp = await transaccionesService.confirmarPagoMercadoPago(paymentId);
+        res.json(resp);
+      } catch (e) {
+        const message = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
+        res.status(400).json({ error: message });
+      }
+    });
+
+    express.get('/api/transacciones/mercado-pago/verificar-preference/:preferenceId', async (req: Request, res: Response) => {
+      try {
+        const transaccionesService = app.get(TransaccionesService);
+        const resp = await transaccionesService.verificarEstadoMercadoPagoPorPreference(String(req.params.preferenceId || ''));
+        res.json(resp);
+      } catch (e) {
+        const message = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
+        res.status(400).json({ error: message });
+      }
+    });
+
+    // Endpoint público para obtener la clave pública de MP para el frontend
+    express.get('/api/config/mp-public-key', (_req: Request, res: Response) => {
+      try {
+        res.json({ publicKey: process.env.MP_PUBLIC_KEY || '' });
+      } catch (e) {
+        res.status(500).json({ error: String(e) });
       }
     });
   } catch (e) {

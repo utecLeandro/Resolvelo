@@ -173,12 +173,12 @@ const tituloSeccion = computed(() => {
       'GUITARRAS': 'Guitarras',
       'BATERIAS': 'Baterías',
       'TECLADOS': 'Teclados',
-      'VIENTOS': 'Instrumentos de viento',
-      'CUERDAS': 'Instrumentos de cuerda',
+      'VIENTOS': 'Vientos',
+      'CUERDAS': 'Cuerdas',
       'AMPLIFICADORES': 'Amplificadores',
       'AUDIO_PA': 'Audio PA',
       'PERCUSION': 'Percusión',
-      'GRABACION': 'Equipos de grabación',
+      'GRABACION': 'Home Studio',
       'ILUMINACION': 'Iluminación',
       'ACCESORIOS': 'Accesorios',
       'OTROS': 'Otros instrumentos'
@@ -305,7 +305,7 @@ const aplicarOrden = () => {
 
 const formatoEtiquetaFecha = (iso: string) => {
   try {
-    const [y, m, d] = iso.split('-')
+    const [, m, d] = iso.split('-')
     return `${d}/${m}`
   } catch {
     return iso

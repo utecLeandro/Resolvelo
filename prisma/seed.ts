@@ -79,7 +79,17 @@ async function main() {
       telefono: '+59896543210',
       estadoVerificacion: 'VERIFICADA',
       emailVerificado: true,
+      rol: 'SUPER_ADMIN',
+      fechaAsignacionRol: new Date(),
+      asignadoPor: 'SYSTEM',
+      motivoRol: 'Admin permanente',
     },
+  });
+
+  await prisma.administrador.upsert({
+    where: { usuarioId: usuario4.id },
+    update: { activo: true },
+    create: { usuarioId: usuario4.id, activo: true, motivoAsignacion: 'Admin permanente (seed)' },
   });
 
   // Crear publicaciones de prueba
@@ -184,7 +194,7 @@ async function main() {
       fechaFin: new Date('2024-02-03'),
       precioTotal: 150.00,
       comisionPlataforma: 15.00,
-      estado: 'CONFIRMADA',
+      estado: 'COMPLETADA',
       tipoEntrega: 'retiro',
       usuarioId: usuario2.id,
       publicacionId: publicacion1.id,

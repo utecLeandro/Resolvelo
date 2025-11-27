@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, HttpCode, HttpStatus, UseGuards, Request, BadRequestException, NotFoundException } from '@nestjs/common'
+import { Controller, Get, Post, Put, Param, HttpCode, HttpStatus, UseGuards, Request, BadRequestException, NotFoundException } from '@nestjs/common'
 import { ReservasService } from './reservas.service'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 
@@ -156,6 +156,13 @@ export class ReservasController {
       }
       throw new BadRequestException('Error al activar la reserva');
     }
+  }
+
+  @Put(':id/activar')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async activarReservaPut(@Param('id') reservaId: string, @Request() req: any) {
+    return this.activarReserva(reservaId, req)
   }
 
   @Get('mis-reservas-activas')

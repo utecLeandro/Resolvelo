@@ -36,10 +36,14 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 const estadoPago = ref<string>('')
 const mensaje = ref<string>('')
+const detalle = ref<string>('')
 
 onMounted(() => {
-  estadoPago.value = (route.query.status as string) || ''
+  const statusParam = (route.query.status as string) || ''
+  const collectionStatus = (route.query.collection_status as string) || ''
+  estadoPago.value = collectionStatus || statusParam || ''
   mensaje.value = (route.query.message as string) || ''
+  detalle.value = (route.query.status_detail as string) || ''
 })
 </script>
 

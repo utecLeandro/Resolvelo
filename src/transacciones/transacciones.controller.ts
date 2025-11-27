@@ -1,8 +1,9 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, Param, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import { TransaccionesService } from './transacciones.service';
 import { ProcesarPagoDto } from './dto/procesar-pago.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CrearPreferenciaMpDto } from './dto/crear-preferencia-mp.dto';
+import { ProcesarPagoBrickDto } from './dto/payment-brick.dto';
 // Debug: confirmar carga del controlador
 console.log('[TransaccionesController] Archivo cargado (import)');
 
@@ -53,6 +54,24 @@ export class TransaccionesController {
     }
     const tx = await this.transaccionesService.confirmarPagoMercadoPago(body.paymentId);
     console.log('✅ [CONTROLLER] Confirmación procesada para transacción:', tx?.id, 'estado:', tx?.estado);
+    return tx;
+  }
+
+  @Put(':id/completar')
+  async completarTransaccion(@Param('id') id: string, @Request() req) {
+    console.log('🧭 [CONTROLLER] Completar transacción manual:', id, 'usuario:', req.user?.sub);
+    const tx = await this.transaccionesService.verificarEstadoMercadoPagoPorTransaccion(id);
+    if (!tx || tx.estado !== 'COMPLETADA') {
+      throw new BadRequestException('El pago no está aprobado aún');
+    }
+    return tx;
+  }
+
+  @Post('mercado-pago/process-payment')
+  async processPaymentBrick(@Body() body: ProcesarPagoBrickDto, @Request() req) {
+    console.log('🧭 [CONTROLLER] process-payment Brick, usuario:', req.user?.sub);
+    const tx = await this.transaccionesService.procesarPagoBrick(body);
+    console.log('✅ [CONTROLLER] Brick payment procesado para transacción:', tx?.id, 'estado:', tx?.estado);
     return tx;
   }
 }

@@ -10,6 +10,7 @@ const datosUsuario = ref<{
   email: string
   documentoIdentidad?: string
   direccion?: string
+  avatarUrl?: string | null
 } | null>(null)
 
 // Computed para el nombre completo del usuario (fallback al email si nombre/apellido no están cargados)
@@ -64,7 +65,8 @@ export function useAuth() {
             apellido: perfil.apellido || '',
             email: perfil.email || '',
             documentoIdentidad: perfil.documentoIdentidad,
-            direccion: perfil.direccion
+            direccion: perfil.direccion,
+            avatarUrl: perfil.avatarUrl
           }
           
           // Actualizar localStorage con los datos más recientes
@@ -86,7 +88,8 @@ export function useAuth() {
             apellido: perfil.apellido || '',
             email: perfil.email || '',
             documentoIdentidad: perfil.documentoIdentidad,
-            direccion: perfil.direccion
+            direccion: perfil.direccion,
+            avatarUrl: perfil.avatarUrl
           }
           usuarioAutenticado.value = true
           localStorage.setItem('userData', JSON.stringify(datosUsuario.value))
@@ -107,7 +110,8 @@ export function useAuth() {
         apellido: perfil.apellido || '',
         email: perfil.email || '',
         documentoIdentidad: perfil.documentoIdentidad,
-        direccion: perfil.direccion
+        direccion: perfil.direccion,
+        avatarUrl: perfil.avatarUrl
       }
       usuarioAutenticado.value = true
       localStorage.setItem('userData', JSON.stringify(datosUsuario.value))

@@ -63,7 +63,19 @@ api.interceptors.response.use(
       // TODO: redirigir a login si es necesario
     }
     
-    // Log detallado para debugging
+    if (!error.response) {
+      error.response = { status: 0, statusText: 'Network Error', data: { message: error.message } } as any
+    } else {
+      if (!error.response.data || typeof error.response.data !== 'object') {
+        error.response.data = { message: error.message || 'Error desconocido' }
+      }
+      if (error.response.status === 500) {
+        error.message = 'Error interno del servidor'
+        error.response.data.message = 'Error interno del servidor'
+      }
+      (error.response.data as any).path = error.config?.url
+      ;(error.response.data as any).method = error.config?.method
+    }
     console.error('API Error Details:', {
       message: error.message,
       code: error.code,
@@ -194,6 +206,42 @@ export const authService = {
     }
   },
 
+  async loginConGubUy(code: string, redirectUri: string): Promise<AuthResponse> {
+    try {
+      const response = await api.post('/auth/gubuy/token', { code, redirect_uri: redirectUri })
+      if (response.status !== 200) {
+        const mensaje = (response.data && (response.data.message || response.data.error)) || 'Intercambio de código fallido'
+        const err: any = new Error(mensaje)
+        err.response = response
+        throw err
+      }
+      return response.data
+    } catch (error: any) {
+      return await fetchFallback('/auth/gubuy/token', {
+        method: 'POST',
+        body: JSON.stringify({ code, redirect_uri: redirectUri })
+      })
+    }
+  },
+
+  async loginConGubUySimulado(payload: { nombre: string; apellido: string; documentoIdentidad: string; email: string; password: string }): Promise<AuthResponse> {
+    try {
+      const response = await api.post('/auth/gubuy/validate', payload)
+      if (response.status !== 200) {
+        const mensaje = (response.data && (response.data.message || response.data.error)) || 'Validación fallida'
+        const err: any = new Error(mensaje)
+        err.response = response
+        throw err
+      }
+      return response.data
+    } catch (error: any) {
+      return await fetchFallback('/auth/gubuy/validate', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+    }
+  },
+
   // Obtener el perfil del usuario autenticado a partir del JWT (mock)
   async perfil() {
     try {
@@ -232,6 +280,9 @@ export const authService = {
     if (rutaGuardada) {
       // Limpiar la ruta guardada después de obtenerla
       sessionStorage.removeItem('rutaAnteriorLogin')
+      if (rutaGuardada === '/login' || rutaGuardada.startsWith('/gubuy')) {
+        return '/catalogo'
+      }
       return rutaGuardada
     }
     // Ruta por defecto si no hay ruta guardada
@@ -293,6 +344,7 @@ export interface Publicacion {
     reservas: number
     calificaciones: number
   }
+  calificaciones?: Calificacion[]
 }
 
 export interface ImagenPublicacion {
@@ -301,6 +353,18 @@ export interface ImagenPublicacion {
   descripcion?: string
   orden: number
   esPrincipal: boolean
+}
+
+export interface Calificacion {
+  id: string
+  puntuacion: number
+  comentario?: string | null
+  fechaCreacion: string
+  usuarioCalificador?: {
+    id: string
+    nombre: string
+    apellido: string
+  }
 }
 
 export interface FiltrosPublicacion {
@@ -538,6 +602,58 @@ export const publicacionesService = {
   },
 }
 
+export const imagenesService = {
+  async presign(publicacionId: string, files: Array<{ fileName: string; contentType: string; size: number }>): Promise<{ uploads: Array<{ key: string; url: string; method: 'PUT'; expiresAt: string; contentType: string }> }> {
+    const payload = { publicacionId, files }
+    const response = await api.post('/imagenes/presign', payload)
+    if (response.status >= 400) throw { response }
+    return response.data
+  },
+
+  async finalizar(publicacionId: string, images: Array<{ url: string; descripcion?: string; orden?: number; esPrincipal?: boolean }>): Promise<ImagenPublicacion[]> {
+    const response = await api.post(`/publicaciones/${encodeURIComponent(publicacionId)}/imagenes/finalizar`, { images })
+    if (response.status >= 400) throw { response }
+    return response.data
+  },
+
+  async listar(publicacionId: string): Promise<ImagenPublicacion[]> {
+    const response = await api.get(`/publicaciones/${encodeURIComponent(publicacionId)}/imagenes`)
+    if (response.status >= 400) throw { response }
+    return response.data
+  },
+
+  async setPrincipal(publicacionId: string, imagenId: string): Promise<{ success: boolean }> {
+    const response = await api.patch(`/publicaciones/${encodeURIComponent(publicacionId)}/imagenes/${encodeURIComponent(imagenId)}/principal`)
+    if (response.status >= 400) throw { response }
+    return response.data
+  },
+
+  async eliminar(publicacionId: string, imagenId: string): Promise<{ success: boolean }> {
+    const response = await api.delete(`/publicaciones/${encodeURIComponent(publicacionId)}/imagenes/${encodeURIComponent(imagenId)}`)
+    if (response.status >= 400) throw { response }
+    return response.data
+  },
+
+  async uploadLocal(publicacionId: string, file: File, options: { descripcion?: string; orden?: number; esPrincipal?: boolean } = {}, onProgress?: (p: number) => void): Promise<ImagenPublicacion[]> {
+    const fd = new FormData()
+    fd.append('file', file)
+    if (options.descripcion) fd.append('descripcion', options.descripcion)
+    if (typeof options.orden === 'number') fd.append('orden', String(options.orden))
+    if (typeof options.esPrincipal === 'boolean') fd.append('esPrincipal', String(options.esPrincipal))
+    const response = await api.post(`/publicaciones/${encodeURIComponent(publicacionId)}/imagenes/upload`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (evt) => {
+        if (onProgress && evt.total) {
+          const percent = Math.round((evt.loaded / evt.total) * 100)
+          onProgress(percent)
+        }
+      },
+    })
+    if (response.status >= 400) throw { response }
+    return response.data?.data || []
+  },
+}
+
 // Tipos para las reservas
 export interface SolicitudReserva {
   id: string
@@ -688,4 +804,81 @@ export const usuarioService = {
     const response = await api.patch(`/usuarios/${id}`, datos)
     return response.data
   },
+
+  async subirAvatar(id: string, file: File): Promise<{ success: boolean; avatarUrl: string }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await api.post(`/usuarios/${id}/avatar/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  },
+}
+
+// Servicios de mensajes
+export interface InfoChatReserva {
+  contraparte: { id: string; nombre: string; apellido: string; avatarUrl?: string | null }
+  publicacion: { id: string; titulo: string; ciudad?: string; departamento?: string; precioPorDia?: number | null; imagenPrincipalUrl?: string | null }
+  reserva: { id: string; fechaInicio?: string; fechaFin?: string; estado?: string; tipoEntrega?: string; direccionEntrega?: string | null; precioTotal?: number | null }
+  yo: { id: string; rol: 'ARRENDATARIO' | 'PROPIETARIO' }
+}
+
+export const mensajesService = {
+  async listarPorReserva(reservaId: string): Promise<{ mensajes: any[]; info?: InfoChatReserva }> {
+    const response = await api.get(`/mensajes/reserva/${encodeURIComponent(reservaId)}`)
+    return response.data
+  },
+  async enviarMensaje(payload: { reservaId: string; contenido: string; receptorId?: string }): Promise<{ mensaje: any }> {
+    const response = await api.post('/mensajes/enviar', payload)
+    return response.data
+  },
+  async marcarLeidos(reservaId: string): Promise<{ ok: boolean }> {
+    const response = await api.post(`/mensajes/reserva/${encodeURIComponent(reservaId)}/leer`)
+    return response.data
+  },
+  async listarMisConversaciones(): Promise<{ conversaciones: Array<{ reservaId: string; publicacion: { id: string; titulo: string; imagenPrincipalUrl?: string | null }; ultimoMensaje: any | null; noLeidos: number; contraparte: { id: string; nombre: string; apellido: string; avatarUrl?: string | null } }> }> {
+    const response = await api.get('/mensajes/mis-conversaciones')
+    return response.data
+  },
+}
+
+export const calificacionesService = {
+  async crearCalificacion(payload: { reservaId: string; puntuacion: number; comentario?: string }): Promise<any> {
+    const response = await api.post('/calificaciones', payload)
+    return response.data
+  },
+  async listarPorPublicacion(publicacionId: string, params: { take?: number; skip?: number } = {}): Promise<{ success: boolean; data: Calificacion[] }> {
+    const qs = new URLSearchParams()
+    if (params.take) qs.append('take', String(params.take))
+    if (params.skip) qs.append('skip', String(params.skip))
+    const response = await api.get(`/calificaciones/publicaciones/${encodeURIComponent(publicacionId)}${qs.toString() ? `?${qs.toString()}` : ''}`)
+    return response.data
+  }
+}
+
+// Tipos y servicios de notificaciones
+export interface NotificacionItem {
+  id: string
+  tipo: 'MENSAJE' | 'RESEÑA' | 'PUBLICACION_EVENTO'
+  titulo: string
+  mensaje: string
+  timestamp: string
+  read: boolean
+  icon?: string
+  data?: Record<string, any>
+}
+
+export const notificacionesService = {
+  async listar(): Promise<{ items: NotificacionItem[]; noLeidas: number }> {
+    const response = await api.get('/notificaciones')
+    return response.data
+  },
+  async marcarLeidas(): Promise<{ ok: boolean }> {
+    const response = await api.post('/notificaciones/marcar-leidas')
+    return response.data
+  },
+  async registrarInteraccion(payload: { id: string; tipo: string; data?: any }): Promise<{ ok: boolean }> {
+    const response = await api.post('/notificaciones/interaccion', payload)
+    return response.data
+  }
 }

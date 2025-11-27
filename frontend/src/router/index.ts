@@ -22,6 +22,10 @@ import RecuperarContrasenaPage from '../views/RecuperarContrasenaPage.vue'
 import ResetPasswordPage from '../views/ResetPasswordPage.vue'
 import PagoExitoso from '../views/PagoExitoso.vue'
 import PagoError from '../views/PagoError.vue'
+import ChatReservaPage from '../views/ChatReservaPage.vue'
+import MensajesHomePage from '../views/MensajesHomePage.vue'
+import GubUyCallbackPage from '../views/GubUyCallbackPage.vue'
+import GubUySimuladoPage from '../views/GubUySimuladoPage.vue'
 
 // Administración
 import AdminUsersPage from '../views/AdminUsersPage.vue'
@@ -104,6 +108,8 @@ const routes: RouteRecordRaw[] = [
   },
   { path: '/registro', name: 'Registro', component: RegisterPage },
   { path: '/verificacion-pendiente', name: 'VerificaciónPendiente', component: PendingVerification },
+  { path: '/gubuy/callback', name: 'GubUyCallback', component: GubUyCallbackPage },
+  { path: '/gubuy/simulado', name: 'GubUySimulado', component: GubUySimuladoPage },
   {
     path: '/perfil',
     name: 'Perfil',
@@ -140,6 +146,18 @@ const routes: RouteRecordRaw[] = [
       title: 'Mis Reservas - ReSolVelo',
       description: 'Gestiona tus reservas de instrumentos musicales',
     },
+  },
+  {
+    path: '/mensajes',
+    name: 'MensajesHome',
+    component: MensajesHomePage,
+    meta: { title: 'Mensajes - ReSolVelo', description: 'Tus conversaciones' },
+  },
+  {
+    path: '/mensajes/reserva/:reservaId',
+    name: 'ChatReserva',
+    component: ChatReservaPage,
+    meta: { title: 'Chat de Reserva - ReSolVelo', description: 'Conversación por reserva', requiresAuth: true },
   },
   {
     path: '/pago/:id',

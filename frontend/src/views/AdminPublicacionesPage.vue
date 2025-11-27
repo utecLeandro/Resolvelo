@@ -263,15 +263,19 @@ const categorias = [
   { valor: 'GUITARRAS', etiqueta: 'Guitarras' },
   { valor: 'BATERIAS', etiqueta: 'Baterías' },
   { valor: 'TECLADOS', etiqueta: 'Teclados' },
-  { valor: 'VIENTOS', etiqueta: 'Instrumentos de viento' },
-  { valor: 'CUERDAS', etiqueta: 'Instrumentos de cuerda' },
+  { valor: 'VIENTOS', etiqueta: 'Vientos' },
+  { valor: 'CUERDAS', etiqueta: 'Cuerdas' },
   { valor: 'AMPLIFICADORES', etiqueta: 'Amplificadores' },
   { valor: 'AUDIO_PA', etiqueta: 'Audio PA' },
   { valor: 'PERCUSION', etiqueta: 'Percusión' },
-  { valor: 'GRABACION', etiqueta: 'Equipos de grabación' },
+  { valor: 'GRABACION', etiqueta: 'Home Studio' },
   { valor: 'ILUMINACION', etiqueta: 'Iluminación' },
   { valor: 'ACCESORIOS', etiqueta: 'Accesorios' },
-  { valor: 'OTROS', etiqueta: 'Otros' }
+  { valor: 'OTROS', etiqueta: 'Otros' },
+  { valor: 'AUDIO_PA', etiqueta: 'Micrófonos' },
+  { valor: 'ACCESORIOS', etiqueta: 'Fundas' },
+  { valor: 'PERCUSION', etiqueta: 'Platillos' },
+  { valor: 'GUITARRAS', etiqueta: 'Bajos' },
 ]
 
 // Filtros

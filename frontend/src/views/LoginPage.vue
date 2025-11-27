@@ -31,7 +31,7 @@ const validateFields = () => {
     fieldErrors.value.email = 'Ingresa un email válido.'
   }
   if (!isValidPassword(password.value)) {
-    fieldErrors.value.password = 'La contraseña debe tener al menos 6 caracteres.'
+    fieldErrors.value.password = 'La contraseña debe tener al menos 8 caracteres.'
   }
 }
 
@@ -72,7 +72,15 @@ const onSubmit = async () => {
     router.push(rutaRedireccion)
   } catch (err: any) {
     if (err?.response?.status === 401) {
-      formError.value = 'Credenciales incorrectas. Verifica tu email y contraseña.'
+      const msg = err?.response?.data?.message || err?.message || ''
+      if (msg && msg.toLowerCase().includes('primer login')) {
+        formError.value = 'Debes iniciar por “Entrar con gub.uy” en tu primer acceso.'
+        router.push('/gubuy/simulado')
+      } else {
+        formError.value = 'Credenciales incorrectas. Verifica tu email y contraseña.'
+      }
+    } else if (err?.response?.status === 403) {
+      formError.value = err?.response?.data?.message || 'Tu cuenta debe ser verificada por un administrador antes de acceder'
     } else if (err?.response?.status === 404) {
       formError.value = 'Usuario no encontrado. ¿Ya tienes una cuenta?'
     } else if (err?.response?.status === 503) {
@@ -119,6 +127,10 @@ const probarConexion = async () => {
   } catch (err: any) {
     alert(`❌ Error de conexión: ${err?.message || err}`)
   }
+}
+
+const iniciarLoginGubUy = () => {
+  router.push('/gubuy/simulado')
 }
 </script>
 
@@ -196,6 +208,20 @@ const probarConexion = async () => {
           :disabled="!canSubmit"
         >
           {{ isLoading ? 'Ingresando…' : 'Iniciar sesión' }}
+        </button>
+
+        <div class="my-3">
+          <div class="rounded-xl border border-blue-200 bg-blue-50 text-blue-800 px-4 py-3">
+            Si es la primera vez que inicias sesión debes hacerlo mediante el botón “Entrar con gub.uy”.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="w-full h-12 mt-3 px-4 rounded-2xl bg-gray-100 text-gray-800 hover:bg-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          @click="iniciarLoginGubUy"
+        >
+          Entrar con gub.uy
         </button>
 
         <p v-if="formError" id="form-error" class="text-red-600 text-sm" aria-live="polite">{{ formError }}</p>

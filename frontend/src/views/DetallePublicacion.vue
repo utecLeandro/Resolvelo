@@ -59,7 +59,8 @@
         <div class="space-y-4">
           <!-- Imagen principal cuadrada -->
           <div class="aspect-square bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl overflow-hidden flex items-center justify-center border-2 border-gray-200">
-            <div class="text-center">
+            <img v-if="publicacion.imagenes && publicacion.imagenes.find(i => i.esPrincipal)" :src="publicacion.imagenes.find(i => i.esPrincipal)!.url" class="w-full h-full object-cover" alt="Imagen principal" />
+            <div v-else class="text-center">
               <svg class="h-32 w-32 text-blue-400 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
               </svg>
@@ -70,15 +71,14 @@
           
           <!-- Imágenes adicionales -->
           <div class="grid grid-cols-5 gap-2">
-            <div 
-              v-for="index in 5" 
-              :key="index"
-              class="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer"
-            >
-              <svg class="h-8 w-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-              </svg>
+            <div v-for="img in (publicacion.imagenes || []).filter(i => !i.esPrincipal).slice(0,5)" :key="img.id" class="aspect-square rounded-lg overflow-hidden border border-gray-200">
+              <img :src="img.url" alt="Imagen de publicación" class="w-full h-full object-cover" />
             </div>
+          </div>
+
+          <div v-if="publicacion && usuarioAutenticado && datosUsuario?.id === publicacion.propietario?.id" class="mt-6">
+            <h3 class="text-lg font-semibold mb-2">Gestionar imágenes</h3>
+            <ImagenesUploader :publicacion-id="publicacion.id" />
           </div>
           <section v-if="publicacion" class="mt-8 hidden lg:block" aria-label="Reseñas">
             <h2 class="text-2xl font-bold text-gray-900 mb-4">Reseñas</h2>
@@ -341,6 +341,7 @@ import { publicacionesService, reservasService, calificacionesService } from '..
 import type { Publicacion, ReservaActiva, CrearReservaRequest } from '../services/api'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
+import ImagenesUploader from '../components/ImagenesUploader.vue'
 
 // Composables
 const route = useRoute()

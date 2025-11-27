@@ -37,11 +37,12 @@ describe('Auth - Registro de Usuario (E2E)', () => {
   let prisma: FakePrismaService;
 
   beforeAll(async () => {
+    const fake = new FakePrismaService();
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideProvider(PrismaService)
-      .useClass(FakePrismaService)
+      .useValue(fake)
       .compile();
 
     app = moduleRef.createNestApplication();

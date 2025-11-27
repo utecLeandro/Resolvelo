@@ -186,6 +186,8 @@ model Usuario {
   intentosFallidos   Int                @default(0)
   bloqueadoHasta     DateTime?
 
+  primerLoginPendiente Boolean @default(true)
+
   // Información de roles y administración
   rol                 RolUsuario @default(USUARIO)
   fechaAsignacionRol  DateTime? // Fecha cuando se asignó el rol actual
@@ -283,6 +285,7 @@ model Usuario {
 
   @@index([email])
   @@index([documentoIdentidad])
+  @@index([primerLoginPendiente])
   @@index([estadoVerificacion])
   @@index([fechaCreacion])
   @@index([calificacionPromedio])

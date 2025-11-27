@@ -1,4 +1,8 @@
-import { Controller, Get, Param, Patch, Body, HttpCode, HttpStatus, UsePipes, ValidationPipe, Post, UseGuards, Request, HttpException } from '@nestjs/common'
+import { Controller, Get, Param, Patch, Body, HttpCode, HttpStatus, UsePipes, ValidationPipe, Post, UseGuards, Request, HttpException, UseInterceptors, ForbiddenException } from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
+import { diskStorage } from 'multer'
+import * as fs from 'fs'
+import * as path from 'path'
 import { UsuariosService } from './usuarios.service'
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto'
 import { ReservasService, UpdateReservaDto } from '../reservas/reservas.service'
@@ -79,6 +83,44 @@ export class UsuariosController {
       // Solo necesitamos relanzarlas para que el framework las procese
       throw error;
     }
+  }
+
+  @Post(':id/avatar/upload')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const dest = path.join(__dirname, '..', '..', 'uploads', 'usuarios', req.params.id)
+          fs.mkdirSync(dest, { recursive: true })
+          cb(null, dest)
+        },
+        filename: (req, file, cb) => {
+          const ext = path.extname(file.originalname) || '.bin'
+          const nombre = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`
+          cb(null, nombre)
+        },
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (req, file, cb) => {
+        const allow = ['image/jpeg', 'image/png', 'image/webp']
+        if (allow.includes(file.mimetype)) cb(null, true)
+        else cb(new Error('Tipo de archivo no permitido'), false)
+      },
+    }),
+  )
+  async subirAvatar(@Param('id') id: string, @Request() req: any) {
+    const file = (req as any).file as Express.Multer.File
+    if (!file) {
+      throw new HttpException('Archivo requerido', HttpStatus.BAD_REQUEST)
+    }
+    const usuarioId = req.user?.id
+    if (!usuarioId || usuarioId !== id) {
+      throw new ForbiddenException('No autorizado para subir avatar de otro usuario')
+    }
+    const url = `/uploads/usuarios/${id}/${file.filename}`
+    const actualizado = await this.usuariosService.actualizarAvatar(id, url)
+    return { success: true, avatarUrl: actualizado.avatarUrl }
   }
 
   @Patch('reservas/:id')

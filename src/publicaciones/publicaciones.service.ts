@@ -808,4 +808,75 @@ export class PublicacionesService {
     const camposCriticos = ['titulo', 'descripcion', 'categoria', 'precioPorDia'] as const;
     return camposCriticos.some(campo => datosActualizacion[campo as keyof ActualizarPublicacionDto] !== undefined);
   }
+
+  async listarImagenes(publicacionId: string): Promise<any[]> {
+    const pub = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { id: true } });
+    if (!pub) throw new NotFoundException('Publicación no encontrada');
+    return await this.prisma.imagenPublicacion.findMany({ where: { publicacionId }, orderBy: { orden: 'asc' } });
+  }
+
+  async guardarImagenes(
+    publicacionId: string,
+    usuarioId: string,
+    images: { url: string; descripcion?: string; orden?: number; esPrincipal?: boolean }[],
+  ): Promise<any[]> {
+    if (!Array.isArray(images) || images.length === 0) throw new BadRequestException('Sin imágenes');
+    if (images.length > 5) throw new BadRequestException('Máximo 5 imágenes por publicación');
+
+    const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { propietarioId: true } });
+    if (!existente) throw new NotFoundException('Publicación no encontrada');
+    if (existente.propietarioId !== usuarioId) throw new ForbiddenException('No autorizado');
+
+    const actuales = await this.prisma.imagenPublicacion.count({ where: { publicacionId } });
+    if (actuales + images.length > 5) throw new BadRequestException('Se excede el máximo de 5 imágenes');
+
+    const principalSolicitado = images.find((i) => i.esPrincipal === true);
+
+    const maxOrden = await this.prisma.imagenPublicacion.aggregate({ where: { publicacionId }, _max: { orden: true } });
+    let baseOrden = (maxOrden._max.orden ?? -1) + 1;
+
+    const data = images.map((img) => ({
+      url: img.url,
+      descripcion: img.descripcion ?? null,
+      orden: img.orden ?? baseOrden++,
+      esPrincipal: img.esPrincipal === true,
+      publicacionId,
+    }));
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      if (principalSolicitado) {
+        await tx.imagenPublicacion.updateMany({ where: { publicacionId }, data: { esPrincipal: false } });
+      }
+      await tx.imagenPublicacion.createMany({ data });
+      const nuevas = await tx.imagenPublicacion.findMany({ where: { publicacionId }, orderBy: { orden: 'asc' } });
+      return nuevas;
+    });
+
+    return created;
+  }
+
+  async setImagenPrincipal(publicacionId: string, usuarioId: string, imagenId: string): Promise<void> {
+    const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { propietarioId: true } });
+    if (!existente) throw new NotFoundException('Publicación no encontrada');
+    if (existente.propietarioId !== usuarioId) throw new ForbiddenException('No autorizado');
+
+    const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: imagenId } });
+    if (!imagen || imagen.publicacionId !== publicacionId) throw new NotFoundException('Imagen no encontrada');
+
+    await this.prisma.$transaction([
+      this.prisma.imagenPublicacion.updateMany({ where: { publicacionId }, data: { esPrincipal: false } }),
+      this.prisma.imagenPublicacion.update({ where: { id: imagenId }, data: { esPrincipal: true } }),
+    ]);
+  }
+
+  async eliminarImagen(publicacionId: string, usuarioId: string, imagenId: string): Promise<void> {
+    const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { propietarioId: true } });
+    if (!existente) throw new NotFoundException('Publicación no encontrada');
+    if (existente.propietarioId !== usuarioId) throw new ForbiddenException('No autorizado');
+
+    const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: imagenId } });
+    if (!imagen || imagen.publicacionId !== publicacionId) throw new NotFoundException('Imagen no encontrada');
+
+    await this.prisma.imagenPublicacion.delete({ where: { id: imagenId } });
+  }
 }

@@ -1,6 +1,7 @@
 const axios = require('axios');
 
-const API_BASE = 'http://localhost:3000/api';
+// API_BASE configurable vía entorno; por defecto usa el backend dist en 127.0.0.1:3006
+const API_BASE = (process.env.API_BASE || 'http://127.0.0.1:3006/api').trim();
 
 // Función para hacer login
 async function login(email, password) {
@@ -55,16 +56,19 @@ async function obtenerMisReservas(token) {
   }
 }
 
-// Función para obtener una publicación
-async function obtenerPublicacion(token, publicacionId) {
+// Función para obtener publicaciones (paginadas) y filtrar por propietario si se requiere
+async function obtenerPublicaciones(token, page = 1, limit = 20) {
   try {
-    const response = await axios.get(`${API_BASE}/publicaciones/${publicacionId}`, {
+    // Algunos backends no aceptan paginación por query; usamos la ruta base
+    const response = await axios.get(`${API_BASE}/publicaciones`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    return response.data.data || response.data;
+    const data = response.data.data || response.data;
+    // Normalizamos por si la API devuelve { data, meta }
+    return Array.isArray(data) ? data : (data.items || []);
   } catch (error) {
-    console.error('Error al obtener publicación:', error.response?.data || error.message);
-    return null;
+    console.error('Error al obtener publicaciones:', error.response?.data || error.message);
+    return [];
   }
 }
 
@@ -143,14 +147,20 @@ async function main() {
 
   // 4. María crea dos nuevas reservas
   console.log('4. María crea dos nuevas reservas...');
-  
-  const publicacionId = 'cmgxzc40c000dn4c31q3loiai'; // ID del teclado de Federico (Yamaha PSR-E373)
-  const publicacion = await obtenerPublicacion(tokenMaria, publicacionId);
-  
-  if (!publicacion) {
-    console.log('❌ No se pudo obtener la publicación');
+
+  // Obtener publicaciones disponibles y elegir una del propietario Federico
+  const publicaciones = await obtenerPublicaciones(tokenMaria, 1, 50);
+  const publicacionFederico = publicaciones.find(p => {
+    // Algunos backends devuelven p.propietarioId directamente; otros devuelven p.propietario?.id
+    return p.propietarioId || (p.propietario && p.propietario.email === 'gtbump2012@gmail.com');
+  });
+
+  if (!publicacionFederico) {
+    console.log('❌ No se encontró una publicación de Federico en la lista');
     return;
   }
+
+  const publicacion = publicacionFederico;
 
   const precioTotal = publicacion.precioPorDia * 2;
   const comisionPlataforma = Math.round(precioTotal * 0.1);
@@ -158,8 +168,8 @@ async function main() {
   // Primera reserva
   const datosReserva1 = {
     usuarioId: infoMaria.id,
-    publicacionId: publicacionId,
-    propietarioId: publicacion.propietarioId,
+    publicacionId: publicacion.id,
+    propietarioId: publicacion.propietarioId || (publicacion.propietario?.id),
     fechaInicio: '2026-06-15',
     fechaFin: '2026-06-17',
     precioTotal: precioTotal,
@@ -173,8 +183,8 @@ async function main() {
   // Segunda reserva
   const datosReserva2 = {
     usuarioId: infoMaria.id,
-    publicacionId: publicacionId,
-    propietarioId: publicacion.propietarioId,
+    publicacionId: publicacion.id,
+    propietarioId: publicacion.propietarioId || (publicacion.propietario?.id),
     fechaInicio: '2026-07-15',
     fechaFin: '2026-07-17',
     precioTotal: precioTotal,

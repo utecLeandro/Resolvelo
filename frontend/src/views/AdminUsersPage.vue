@@ -140,10 +140,23 @@
                 <div class="text-sm text-gray-900 break-all">{{ u.email }}</div>
               </td>
               <td class="px-6 py-4 align-top whitespace-normal break-words">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                      :class="rolBadgeClass(u.rol)">
-                  {{ formatearRol(u.rol) }}
-                </span>
+                <div class="relative">
+                  <select
+                    :value="u.rol"
+                    class="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    :disabled="rolCargando[u.id]"
+                    @change="onSolicitarCambioRol(u, ($event.target as HTMLSelectElement).value as UsuarioAdminListItem['rol'])"
+                  >
+                    <option v-for="r in rolesDisponibles" :key="r.clave" :value="r.clave" :disabled="r.clave === 'SUPER_ADMIN' && !puedeAsignarSuperAdmin">{{ r.nombre }}</option>
+                  </select>
+                  <div v-if="rolCargando[u.id]" class="absolute inset-y-0 right-2 flex items-center">
+                    <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16 8 8 0 010-16z"></path>
+                    </svg>
+                  </div>
+                  <p v-if="rolError[u.id]" class="mt-1 text-xs text-red-700">{{ rolError[u.id] }}</p>
+                </div>
               </td>
               <td class="px-6 py-4 align-top whitespace-normal break-words">
                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
@@ -167,12 +180,6 @@
                     :class="u.activo ? 'bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-gray-300' : 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500'"
                     @click="toggleEstado(u)"
                   >
-                    <svg v-if="u.activo" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" />
-                    </svg>
-                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
-                    </svg>
                     {{ u.activo ? 'Deshabilitar' : 'Habilitar' }}
                   </button>
                   <button
@@ -215,17 +222,44 @@
         </div>
       </div>
     </div>
+  
+    <div v-if="confirmModalVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <h3 class="text-lg font-semibold text-gray-900">Confirmar cambio de rol</h3>
+        <p class="mt-2 text-sm text-gray-700">
+          ¿Confirmas cambiar el rol de
+          <span class="font-medium">{{ confirmModalUsuario?.nombre }} {{ confirmModalUsuario?.apellido }}</span>
+          a <span class="font-medium">{{ formatearRol(confirmModalNuevoRol as any) }}</span>?
+        </p>
+        <div class="mt-4 flex justify-end gap-2">
+          <button class="px-4 py-2 rounded-md text-sm bg-gray-100 text-gray-800 hover:bg-gray-200" @click="cancelarCambioRol">Cancelar</button>
+          <button class="px-4 py-2 rounded-md text-sm bg-blue-600 text-white hover:bg-blue-700" @click="confirmarCambioRol">Confirmar</button>
+        </div>
+      </div>
+    </div>
   </div>
   
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useAuth } from '@/composables/useAuth'
 import adminService, { type UsuarioAdminListItem, type RespuestaUsuariosAdmin } from '../services/admin'
 
 const usuarios = ref<UsuarioAdminListItem[]>([])
 const cargando = ref<boolean>(false)
 const errorMensaje = ref<string | null>(null)
+const rolesDisponibles = ref<{ clave: UsuarioAdminListItem['rol']; nombre: string }[]>([])
+const rolCargando = ref<Record<string, boolean>>({})
+const rolError = ref<Record<string, string | undefined>>({})
+const confirmModalVisible = ref(false)
+const confirmModalUsuario = ref<UsuarioAdminListItem | null>(null)
+const confirmModalNuevoRol = ref<UsuarioAdminListItem['rol'] | null>(null)
+const { verificarAutenticacion } = useAuth()
+const puedeAsignarSuperAdmin = ref<boolean>(false)
+const toastVisible = ref(false)
+const toastMessage = ref('')
+const toastType = ref<'success' | 'error'>('success')
 
 // Filtros y paginación
 const busqueda = ref<string>('')
@@ -282,15 +316,50 @@ async function cargarUsuarios(pagina = 1) {
   }
 }
 
+async function cargarRoles() {
+  try {
+    const res = await adminService.listarRoles()
+    rolesDisponibles.value = res.roles
+  } catch (e: any) {
+    console.error('Error listando roles:', e?.message || e)
+  }
+}
+
+function evaluarPermisosAsignacion() {
+  try {
+    const userDataRaw = localStorage.getItem('userData')
+    if (userDataRaw) {
+      const user = JSON.parse(userDataRaw)
+      puedeAsignarSuperAdmin.value = user?.rol === 'SUPER_ADMIN'
+    } else {
+      puedeAsignarSuperAdmin.value = false
+    }
+  } catch {
+    puedeAsignarSuperAdmin.value = false
+  }
+}
+
+function mostrarToast(mensaje: string, tipo: 'success' | 'error' = 'success') {
+  toastMessage.value = mensaje
+  toastType.value = tipo
+  toastVisible.value = true
+  setTimeout(() => {
+    toastVisible.value = false
+  }, 3000)
+}
+
+
 async function toggleEstado(u: UsuarioAdminListItem) {
   try {
     const res = await adminService.cambiarEstadoUsuario(u.id, !u.activo, !u.activo ? 'Rehabilitación de cuenta' : 'Deshabilitación')
     const idx = usuarios.value.findIndex(x => x.id === u.id)
     if (idx >= 0) usuarios.value[idx] = { ...usuarios.value[idx], ...res.usuario }
+    mostrarToast(`Usuario ${res.usuario.activo ? 'habilitado' : 'deshabilitado'} correctamente`, 'success')
   } catch (e: any) {
     console.error('Error cambiando estado:', e?.message || e)
     const status = e?.response?.status
     const backendMsg = e?.response?.data?.message || e?.message
+    mostrarToast(backendMsg || 'Ocurrió un error al cambiar el estado del usuario.', 'error')
     if (status === 401) {
       errorMensaje.value = 'No estás autenticado. Por favor, inicia sesión e intenta nuevamente.'
     } else if (status === 403) {
@@ -306,10 +375,12 @@ async function verificar(u: UsuarioAdminListItem) {
     const res = await adminService.verificarUsuario(u.id, 'Verificación manual por administrador')
     const idx = usuarios.value.findIndex(x => x.id === u.id)
     if (idx >= 0) usuarios.value[idx] = { ...usuarios.value[idx], ...res.usuario }
+    mostrarToast('Usuario verificado correctamente', 'success')
   } catch (e: any) {
     console.error('Error verificando usuario:', e?.message || e)
     const status = e?.response?.status
     const backendMsg = e?.response?.data?.message || e?.message
+    mostrarToast(backendMsg || 'Ocurrió un error al verificar al usuario.', 'error')
     if (status === 401) {
       errorMensaje.value = 'No estás autenticado. Por favor, inicia sesión e intenta nuevamente.'
     } else if (status === 403) {
@@ -318,6 +389,53 @@ async function verificar(u: UsuarioAdminListItem) {
       errorMensaje.value = backendMsg || 'Ocurrió un error al verificar al usuario.'
     }
   }
+}
+
+function onSolicitarCambioRol(u: UsuarioAdminListItem, nuevoRol: UsuarioAdminListItem['rol']) {
+  if (!nuevoRol || nuevoRol === u.rol) return
+  confirmModalUsuario.value = u
+  confirmModalNuevoRol.value = nuevoRol
+  confirmModalVisible.value = true
+}
+
+async function confirmarCambioRol() {
+  const u = confirmModalUsuario.value
+  const nuevoRol = confirmModalNuevoRol.value
+  if (!u || !nuevoRol) return
+  const idx = usuarios.value.findIndex(x => x.id === u.id)
+  if (idx < 0) return
+  rolError.value[u.id] = undefined
+  rolCargando.value[u.id] = true
+  const rolAnterior = usuarios.value[idx]!.rol
+  usuarios.value[idx] = { ...usuarios.value[idx]!, rol: nuevoRol }
+  try {
+    const res = await adminService.cambiarRolUsuario(u.id, nuevoRol)
+    usuarios.value[idx] = { ...usuarios.value[idx]!, ...res.usuario }
+    mostrarToast(`Rol actualizado a ${formatearRol(nuevoRol)}`, 'success')
+  } catch (e: any) {
+    console.error('Error cambiando rol:', e?.message || e)
+    const status = e?.response?.status
+    const backendMsg = e?.response?.data?.message || e?.message
+    rolError.value[u.id] = backendMsg || 'Ocurrió un error al cambiar el rol.'
+    usuarios.value[idx] = { ...usuarios.value[idx]!, rol: rolAnterior }
+    mostrarToast(rolError.value[u.id] || 'Ocurrió un error al cambiar el rol.', 'error')
+    if (status === 401) {
+      errorMensaje.value = 'No estás autenticado. Por favor, inicia sesión e intenta nuevamente.'
+    } else if (status === 403) {
+      errorMensaje.value = 'No tienes permisos de administrador para realizar esta acción.'
+    }
+  } finally {
+    rolCargando.value[u.id] = false
+    confirmModalVisible.value = false
+    confirmModalUsuario.value = null
+    confirmModalNuevoRol.value = null
+  }
+}
+
+function cancelarCambioRol() {
+  confirmModalVisible.value = false
+  confirmModalUsuario.value = null
+  confirmModalNuevoRol.value = null
 }
 
 function obtenerIniciales(nombre?: string, apellido?: string) {
@@ -336,14 +454,6 @@ function formatearRol(rol: UsuarioAdminListItem['rol']) {
   }
 }
 
-function rolBadgeClass(rol: UsuarioAdminListItem['rol']) {
-  switch (rol) {
-    case 'SUPER_ADMIN': return 'bg-purple-100 text-purple-800'
-    case 'ADMINISTRADOR': return 'bg-blue-100 text-blue-800'
-    case 'MODERADOR': return 'bg-yellow-100 text-yellow-800'
-    default: return 'bg-gray-100 text-gray-800'
-  }
-}
 
 function verificacionBadgeClass(estado: string) {
   switch (estado) {
@@ -363,8 +473,14 @@ function formatearFecha(iso: string) {
   }
 }
 
-onMounted(() => cargarUsuarios(1))
-</script>
+onMounted(async () => {
+  await verificarAutenticacion()
+  evaluarPermisosAsignacion()
+  await cargarRoles()
+  await cargarUsuarios(1)
+})
+
+ </script>
 
 <style scoped>
 /* Sin estilos personalizados: usamos Tailwind para mantener consistencia visual */

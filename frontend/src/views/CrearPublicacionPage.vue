@@ -13,7 +13,12 @@
 
       <!-- Formulario -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <form @submit.prevent="crearPublicacion" class="space-y-6">
+        <div class="mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-2">Imágenes</h2>
+          <p class="text-sm text-gray-600 mb-4">Seleccioná imágenes ahora; se subirán al crear la publicación.</p>
+          <ImagenesUploader ref="uploaderRef" :publicacion-id="publicacionCreadaId" :defer="true" />
+        </div>
+        <form v-if="!publicacionCreadaId" @submit.prevent="crearPublicacion" class="space-y-6">
           <!-- Información básica -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -53,6 +58,14 @@
                 <option value="ILUMINACION">Iluminación</option>
                 <option value="ACCESORIOS">Accesorios</option>
                 <option value="OTROS">Otros</option>
+                <!-- Alias solicitados -->
+                <option value="AUDIO_PA">Micrófonos</option>
+                <option value="ACCESORIOS">Fundas</option>
+                <option value="PERCUSION">Platillos</option>
+                <option value="GUITARRAS">Bajos</option>
+                <option value="GRABACION">Home Studio</option>
+                <option value="VIENTOS">Vientos</option>
+                <option value="CUERDAS">Cuerdas</option>
               </select>
             </div>
           </div>
@@ -229,20 +242,25 @@
             </button>
           </div>
         </form>
+
+        
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { publicacionesService, type CrearPublicacionRequest } from '../services/api'
+import ImagenesUploader from '../components/ImagenesUploader.vue'
 
 const router = useRouter()
 
 // Estado del formulario
 const enviando = ref(false)
+const publicacionCreadaId = ref<string | null>(null)
+const uploaderRef = ref<InstanceType<typeof ImagenesUploader> | null>(null)
 const formulario = ref({
   titulo: '',
   categoria: '',
@@ -300,14 +318,13 @@ const crearPublicacion = async () => {
     
     // Llamar a la API para crear la publicación
     const publicacionCreada = await publicacionesService.crearPublicacion(datosPublicacion)
-    
+    publicacionCreadaId.value = publicacionCreada.id
     console.log('Publicación creada exitosamente:', publicacionCreada)
-    
-    // Mostrar mensaje de éxito
-    alert('¡Publicación creada exitosamente!')
-    
-    // Redirigir al catálogo
-    router.push('/catalogo')
+    await nextTick()
+    if (uploaderRef.value && (uploaderRef.value as any).hasPreviews && (uploaderRef.value as any).hasPreviews()) {
+      await (uploaderRef.value as any).subir()
+    }
+    router.push('/mis-publicaciones')
   } catch (error: any) {
     console.error('Error al crear la publicación:', error)
     
@@ -326,4 +343,6 @@ const crearPublicacion = async () => {
 const cancelar = () => {
   router.push('/catalogo')
 }
+
+// Navegación automática a Mis publicaciones se realiza tras crear y subir imágenes
 </script>

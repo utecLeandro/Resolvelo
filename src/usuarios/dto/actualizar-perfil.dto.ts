@@ -20,4 +20,9 @@ export class ActualizarPerfilDto {
   @IsString()
   @MaxLength(200)
   direccion?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  avatarUrl?: string
 }

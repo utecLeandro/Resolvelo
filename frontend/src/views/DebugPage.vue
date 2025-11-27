@@ -134,7 +134,8 @@ async function verificarToken() {
   }
   
   try {
-    const perfil = await usuarioService.obtenerPerfil()
+    const usuarioRaw = localStorage.getItem('user')
+    const perfil = await usuarioService.obtenerPerfil(usuarioRaw ? JSON.parse(usuarioRaw).id : '')
     tokenInfo.value = `Token válido ✅\nToken: ${token}\nUsuario: ${perfil.nombre} ${perfil.apellido} (${perfil.email})`
   } catch (error) {
     tokenInfo.value = `Token inválido ❌\nToken: ${token}\nError: ${error}`
@@ -143,7 +144,8 @@ async function verificarToken() {
 
 async function obtenerPerfilAPI() {
   try {
-    const perfil = await usuarioService.obtenerPerfil()
+    const usuarioRaw = localStorage.getItem('user')
+    const perfil = await usuarioService.obtenerPerfil(usuarioRaw ? JSON.parse(usuarioRaw).id : '')
     perfilAPI.value = JSON.stringify(perfil, null, 2)
   } catch (error) {
     perfilAPI.value = `Error: ${error}`
@@ -158,8 +160,7 @@ async function obtenerPublicacionesUsuario() {
       return
     }
     
-    const userData = JSON.parse(usuario)
-    const publicaciones = await publicacionesService.obtenerMisPublicaciones(userData.id)
+    const publicaciones = await publicacionesService.obtenerMisPublicaciones()
     publicacionesUsuario.value = JSON.stringify(publicaciones, null, 2)
   } catch (error) {
     publicacionesUsuario.value = `Error: ${error}`

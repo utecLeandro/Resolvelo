@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+ 
 import { authService } from '../services/api'
 
-const router = useRouter()
 const email = ref('')
 const isLoading = ref(false)
 const message = ref('')

@@ -1,6 +1,7 @@
 const axios = require('axios');
 
-const API_BASE = 'http://localhost:3000/api';
+// API_BASE configurable vía entorno; por defecto al backend dist en 127.0.0.1:3006
+const API_BASE = (process.env.API_BASE || 'http://127.0.0.1:3006/api').trim();
 
 // Función para hacer login y obtener token
 async function login(email, password) {
@@ -71,7 +72,7 @@ async function main() {
 
   // Login de Federico (propietario)
   console.log('1. Login de Federico (propietario)...');
-  const tokenFederico = await login('gtbump2012@gmail.com', 'FedericoTest2024!');
+  const tokenFederico = await login('federico@test.com', 'Federico123!');
   if (!tokenFederico) {
     console.log('❌ No se pudo hacer login de Federico');
     return;
@@ -80,7 +81,7 @@ async function main() {
 
   // Login de María (arrendataria)
   console.log('2. Login de María (arrendataria)...');
-  const tokenMaria = await login('maria@test.com', 'MariaTest2024!');
+  const tokenMaria = await login('maria@test.com', 'Maria123!');
   if (!tokenMaria) {
     console.log('❌ No se pudo hacer login de María');
     return;
