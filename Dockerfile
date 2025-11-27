@@ -20,7 +20,7 @@ WORKDIR /app
 
 # Copiar archivos de configuración de dependencias
 COPY package*.json ./
-COPY context ./context/
+# COPY context ./context/ (Removed as per user request)
 
 # ============================================================================
 # ETAPA DE DEPENDENCIAS
@@ -42,8 +42,8 @@ COPY --from=dependencies /app/node_modules ./node_modules
 # Copiar código fuente
 COPY . .
 
-# Generar cliente de Prisma usando schema en context
-RUN npx prisma generate --schema context/schema.prisma
+# Generar cliente de Prisma usando schema por defecto (prisma/schema.prisma)
+RUN npx prisma generate
 
 # Compilar aplicación TypeScript
 RUN npm run build
@@ -64,6 +64,7 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY --from=build --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=build --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=build --chown=nestjs:nodejs /app/prisma ./prisma
+
 COPY --from=build --chown=nestjs:nodejs /app/healthcheck.js ./
 COPY --from=build --chown=nestjs:nodejs /app/package*.json ./
 
