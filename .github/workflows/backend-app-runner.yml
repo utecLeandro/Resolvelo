@@ -173,7 +173,8 @@ jobs:
             aws apprunner update-service \
               --service-arn "$APP_RUNNER_SERVICE_ARN" \
               --source-configuration file://source-config.json \
-              --instance-configuration file://instance-config.json
+              --instance-configuration file://instance-config.json \
+              --network-configuration file://network-config.json
           else
             echo "🆕 Creando nuevo servicio App Runner: resolvelo-backend"
             SERVICE_ARN=$(aws apprunner create-service \
