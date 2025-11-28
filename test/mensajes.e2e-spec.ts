@@ -1,5 +1,7 @@
 import { Test } from '@nestjs/testing'
-import { INestApplication, ValidationPipe, CanActivate, ExecutionContext } from '@nestjs/common'
+import { INestApplication, ValidationPipe, CanActivate, ExecutionContext, NestInterceptor, CallHandler } from '@nestjs/common'
+import { Observable } from 'rxjs'
+import { map } from 'rxjs/operators'
 import * as request from 'supertest'
 import { AppModule } from '../src/app.module'
 import { MensajesModule } from '../src/mensajes/mensajes.module'
@@ -9,11 +11,11 @@ import { JwtAuthGuard } from '../src/auth/jwt-auth.guard'
 class FakePrismaService {
   mensajes: any[] = []
   reservas: any[] = [
-    { id: 'reserva123', usuarioId: 'usr-borrower', propietarioId: 'usr-owner', publicacionId: 'pub1' }
+    { id: BigInt(1), usuarioId: BigInt(10), propietarioId: BigInt(20), publicacionId: BigInt(100) }
   ]
   usuarios: any[] = [
-    { id: 'usr-borrower', email: 'borrower@test.com', nombre: 'Borrower' },
-    { id: 'usr-owner', email: 'owner@test.com', nombre: 'Owner' },
+    { id: '10', email: 'borrower@test.com', nombre: 'Borrower' },
+    { id: '20', email: 'owner@test.com', nombre: 'Owner' },
   ]
 
   mensaje = {
@@ -38,7 +40,8 @@ class FakePrismaService {
 
   reserva = {
     findUnique: async ({ where: { id }, select, include }: any) => {
-      const r = this.reservas.find(r => r.id === id)
+      const key = typeof id === 'bigint' ? id : BigInt(id)
+      const r = this.reservas.find(r => r.id === key)
       if (!r) return null
       if (include?.publicacion) return { ...r, publicacion: { titulo: 'Dummy Pub' } }
       if (select) {
@@ -52,7 +55,8 @@ class FakePrismaService {
 
   usuario = {
     findUnique: async ({ where: { id }, select }: any) => {
-      const u = this.usuarios.find(u => u.id === id)
+      const key = String(id)
+      const u = this.usuarios.find(u => u.id === key)
       if (!u) return null
       if (select) {
         const picked: any = {}
@@ -67,8 +71,24 @@ class FakePrismaService {
 class AllowGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest()
-    req.user = { id: 'usr-borrower' }
+    req.user = { id: '10' }
     return true
+  }
+}
+
+class BigIntSerializerInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    const serialize = (v: any): any => {
+      if (typeof v === 'bigint') return v.toString()
+      if (Array.isArray(v)) return v.map(serialize)
+      if (v && typeof v === 'object') {
+        const out: any = {}
+        for (const k of Object.keys(v)) out[k] = serialize(v[k])
+        return out
+      }
+      return v
+    }
+    return next.handle().pipe(map((data) => serialize(data)))
   }
 }
 
@@ -87,6 +107,7 @@ describe('Mensajes - flujo de envío (E2E)', () => {
     app = moduleRef.createNestApplication()
     app.setGlobalPrefix('api')
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
+    app.useGlobalInterceptors(new BigIntSerializerInterceptor())
     await app.init()
 
     prisma = app.get(PrismaService) as unknown as FakePrismaService
@@ -95,23 +116,23 @@ describe('Mensajes - flujo de envío (E2E)', () => {
   afterAll(async () => { await app.close() })
 
   it('debería listar vacío al inicio', async () => {
-    const res = await request(app.getHttpServer()).get('/api/mensajes/reserva/reserva123').expect(200)
+    const res = await request(app.getHttpServer()).get('/api/mensajes/reserva/1').expect(200)
     expect(res.body).toHaveProperty('mensajes')
     expect(Array.isArray(res.body.mensajes)).toBe(true)
     expect(res.body.mensajes.length).toBe(0)
   })
 
   it('debería enviar y devolver el mensaje creado', async () => {
-    const payload = { reservaId: 'reserva123', contenido: 'Hola desde E2E' }
+    const payload = { reservaId: '1', contenido: 'Hola desde E2E' }
     const res = await request(app.getHttpServer()).post('/api/mensajes/enviar').send(payload).expect(201)
     expect(res.body).toHaveProperty('mensaje')
     expect(res.body.mensaje.contenido).toBe(payload.contenido)
     expect(res.body.mensaje.reservaId).toBe(payload.reservaId)
-    expect(res.body.mensaje.emisorId).toBe('usr-borrower')
+    expect(res.body.mensaje.emisorId).toBe('10')
   })
 
   it('debería listar el mensaje después del envío', async () => {
-    const res = await request(app.getHttpServer()).get('/api/mensajes/reserva/reserva123').expect(200)
+    const res = await request(app.getHttpServer()).get('/api/mensajes/reserva/1').expect(200)
     expect(res.body.mensajes.length).toBe(1)
     expect(res.body.mensajes[0].contenido).toBe('Hola desde E2E')
   })

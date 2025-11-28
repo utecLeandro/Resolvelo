@@ -68,7 +68,7 @@ let AdminService = class AdminService {
         };
     }
     async cambiarEstadoUsuario(adminUsuarioId, objetivoUsuarioId, activo, motivo) {
-        const usuario = await this.prisma.usuario.findUnique({ where: { id: objetivoUsuarioId } });
+        const usuario = await this.prisma.usuario.findUnique({ where: { id: BigInt(objetivoUsuarioId) } });
         if (!usuario) {
             throw new common_1.NotFoundException('Usuario objetivo no encontrado');
         }
@@ -76,11 +76,11 @@ let AdminService = class AdminService {
             throw new common_1.BadRequestException(`El usuario ya está ${activo ? 'habilitado' : 'deshabilitado'}`);
         }
         const actualizado = await this.prisma.usuario.update({
-            where: { id: objetivoUsuarioId },
+            where: { id: BigInt(objetivoUsuarioId) },
             data: { activo },
             select: { id: true, nombre: true, apellido: true, email: true, rol: true, activo: true },
         });
-        const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: adminUsuarioId } });
+        const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(adminUsuarioId) } });
         const tipo = activo ? 'MODIFICAR_USUARIO' : 'SUSPENDER_USUARIO';
         if (admin) {
             await this.prisma.accionAdministrativa.create({
@@ -97,7 +97,7 @@ let AdminService = class AdminService {
         return { message: 'Estado de usuario actualizado', usuario: actualizado };
     }
     async verificarUsuario(adminUsuarioId, objetivoUsuarioId, motivo) {
-        const usuario = await this.prisma.usuario.findUnique({ where: { id: objetivoUsuarioId } });
+        const usuario = await this.prisma.usuario.findUnique({ where: { id: BigInt(objetivoUsuarioId) } });
         if (!usuario) {
             throw new common_1.NotFoundException('Usuario objetivo no encontrado');
         }
@@ -108,7 +108,7 @@ let AdminService = class AdminService {
             throw new common_1.BadRequestException(`No se puede verificar un usuario con estado '${usuario.estadoVerificacion}'.`);
         }
         const actualizado = await this.prisma.usuario.update({
-            where: { id: objetivoUsuarioId },
+            where: { id: BigInt(objetivoUsuarioId) },
             data: { estadoVerificacion: 'VERIFICADA' },
             select: {
                 id: true,
@@ -121,7 +121,7 @@ let AdminService = class AdminService {
                 fechaCreacion: true,
             },
         });
-        const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: adminUsuarioId } });
+        const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(adminUsuarioId) } });
         if (admin) {
             await this.prisma.accionAdministrativa.create({
                 data: {
@@ -144,7 +144,7 @@ let AdminService = class AdminService {
         return { roles };
     }
     async cambiarRolUsuario(adminUsuarioId, objetivoUsuarioId, rol) {
-        const usuario = await this.prisma.usuario.findUnique({ where: { id: objetivoUsuarioId } });
+        const usuario = await this.prisma.usuario.findUnique({ where: { id: BigInt(objetivoUsuarioId) } });
         if (!usuario) {
             throw new common_1.NotFoundException('Usuario objetivo no encontrado');
         }
@@ -155,7 +155,7 @@ let AdminService = class AdminService {
         if (usuario.email === 'gtbump2012@gmail.com' && rol !== 'ADMINISTRADOR' && rol !== 'SUPER_ADMIN') {
             throw new common_1.BadRequestException('Este usuario posee privilegios permanentes. Debe ser ADMINISTRADOR o SUPER_ADMIN.');
         }
-        const adminUser = await this.prisma.usuario.findUnique({ where: { id: adminUsuarioId } });
+        const adminUser = await this.prisma.usuario.findUnique({ where: { id: BigInt(adminUsuarioId) } });
         if (!adminUser) {
             throw new common_1.ForbiddenException('Administrador no válido');
         }
@@ -164,7 +164,7 @@ let AdminService = class AdminService {
         }
         const rolAnterior = usuario.rol;
         const actualizado = await this.prisma.usuario.update({
-            where: { id: objetivoUsuarioId },
+            where: { id: BigInt(objetivoUsuarioId) },
             data: { rol },
             select: {
                 id: true,
@@ -177,7 +177,7 @@ let AdminService = class AdminService {
                 fechaCreacion: true,
             },
         });
-        const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: adminUsuarioId } });
+        const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(adminUsuarioId) } });
         if (admin) {
             await this.prisma.accionAdministrativa.create({
                 data: {

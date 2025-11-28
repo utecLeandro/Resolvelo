@@ -51,11 +51,10 @@ let AuthService = class AuthService {
                     telefonoVerificado: false,
                     perfilPublico: true,
                     activo: true,
-                    primerLoginPendiente: true,
                 },
             });
             const verificationOk = true;
-            const payload = { sub: usuario.id, email: usuario.email };
+            const payload = { sub: String(usuario.id), email: usuario.email };
             const accessToken = this.jwtService.sign(payload);
             return {
                 access_token: accessToken,
@@ -93,12 +92,12 @@ let AuthService = class AuthService {
             if (!usuario.activo) {
                 throw new common_1.UnauthorizedException('Cuenta desactivada');
             }
+            if (usuario.primerLoginPendiente === true) {
+                throw new common_1.UnauthorizedException('Primer login: debes iniciar por “Entrar con gub.uy”');
+            }
             const passwordValida = await bcrypt.compare(data.password, usuario.passwordHash);
             if (!passwordValida) {
                 throw new common_1.UnauthorizedException('Credenciales incorrectas');
-            }
-            if (usuario.primerLoginPendiente) {
-                throw new common_1.UnauthorizedException('Primer login debe ser por gub.uy (simulado)');
             }
             if (usuario.estadoVerificacion !== 'VERIFICADA') {
                 throw new common_1.ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
@@ -118,7 +117,7 @@ let AuthService = class AuthService {
                     await this.prisma.administrador.update({ where: { id: admin.id }, data: { activo: true } });
                 }
             }
-            const payload = { sub: usuario.id, email: usuario.email };
+            const payload = { sub: String(usuario.id), email: usuario.email };
             const accessToken = this.jwtService.sign(payload);
             return {
                 access_token: accessToken,
@@ -153,8 +152,15 @@ let AuthService = class AuthService {
             if (!userId) {
                 throw new common_1.UnauthorizedException('Token inválido');
             }
+            const subStr = String(userId);
+            const where = (typeof userId === 'bigint')
+                ? { id: userId }
+                : (/^\d+$/.test(subStr) ? { id: BigInt(subStr) } : (payload.email ? { email: payload.email } : null));
+            if (!where) {
+                throw new common_1.UnauthorizedException('Token inválido');
+            }
             const usuario = await this.prisma.usuario.findUnique({
-                where: { id: userId },
+                where,
                 select: {
                     id: true,
                     nombre: true,
@@ -334,7 +340,11 @@ let AuthService = class AuthService {
         if (usuario.estadoVerificacion !== 'VERIFICADA') {
             throw new common_1.ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
         }
-        const payload = { sub: usuario.id, email: usuario.email };
+        try {
+            await this.prisma.usuario.update({ where: { id: usuario.id }, data: { primerLoginPendiente: false } });
+        }
+        catch { }
+        const payload = { sub: String(usuario.id), email: usuario.email };
         const accessToken = this.jwtService.sign(payload);
         this.gubuyCodes.delete(code);
         return {
@@ -371,16 +381,21 @@ let AuthService = class AuthService {
         if (!nombreOk || !apellidoOk || !emailOk || !docOk) {
             throw new common_1.UnauthorizedException('Datos no coinciden');
         }
-        const passwordValida = await bcrypt.compare(data.password, usuario.passwordHash);
-        if (!passwordValida) {
-            throw new common_1.UnauthorizedException('Credenciales incorrectas');
+        if (usuario.passwordHash) {
+            const passwordValida = await bcrypt.compare(data.password, usuario.passwordHash);
+            if (!passwordValida) {
+                throw new common_1.UnauthorizedException('Credenciales incorrectas');
+            }
         }
         if (usuario.estadoVerificacion !== 'VERIFICADA') {
             throw new common_1.ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
         }
-        const payload = { sub: usuario.id, email: usuario.email };
+        try {
+            await this.prisma.usuario.update({ where: { id: usuario.id }, data: { primerLoginPendiente: false } });
+        }
+        catch { }
+        const payload = { sub: String(usuario.id), email: usuario.email };
         const accessToken = this.jwtService.sign(payload);
-        await this.prisma.usuario.update({ where: { id: usuario.id }, data: { primerLoginPendiente: false } });
         return {
             access_token: accessToken,
             user: {

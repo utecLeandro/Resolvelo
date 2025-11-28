@@ -10,7 +10,7 @@ export class MensajesService {
   async listarPorReserva(reservaId: string, usuarioId: string) {
     console.log('[MensajesService] listarPorReserva', { reservaId, usuarioId })
     const reserva = await this.prisma.reserva.findUnique({
-      where: { id: reservaId },
+      where: { id: BigInt(reservaId) },
       include: {
         publicacion: {
           select: {
@@ -32,10 +32,11 @@ export class MensajesService {
       }
     })
     if (!reserva) throw new BadRequestException('Reserva no encontrada')
-    if (usuarioId !== reserva.usuarioId && usuarioId !== reserva.propietarioId) throw new ForbiddenException('Acceso denegado')
-    const mensajes = await this.prisma.mensaje.findMany({ where: { reservaId }, orderBy: { fechaCreacion: 'asc' } })
+    const usuarioIdBig = BigInt(usuarioId)
+    if (usuarioIdBig !== reserva.usuarioId && usuarioIdBig !== reserva.propietarioId) throw new ForbiddenException('Acceso denegado')
+    const mensajes = await this.prisma.mensaje.findMany({ where: { reservaId: BigInt(reservaId) }, orderBy: { fechaCreacion: 'asc' } })
 
-    const esArrendatario = usuarioId === reserva.usuarioId
+    const esArrendatario = usuarioIdBig === reserva.usuarioId
     const contraparte = esArrendatario ? reserva.propietario : reserva.usuario
     const imagenPrincipalUrl = reserva.publicacion?.imagenes?.[0]?.url || null
 
@@ -58,16 +59,17 @@ export class MensajesService {
         direccionEntrega: (reserva as any).direccionEntrega,
         precioTotal: (reserva as any).precioTotal ? Number((reserva as any).precioTotal) : null,
       },
-      yo: { id: usuarioId, rol: esArrendatario ? 'ARRENDATARIO' : 'PROPIETARIO' },
+      yo: { id: usuarioIdBig, rol: esArrendatario ? 'ARRENDATARIO' : 'PROPIETARIO' },
     }
     return { mensajes, info }
   }
 
   async marcarLeidos(reservaId: string, usuarioId: string) {
-    const reserva = await this.prisma.reserva.findUnique({ where: { id: reservaId }, select: { usuarioId: true, propietarioId: true } })
+    const reserva = await this.prisma.reserva.findUnique({ where: { id: BigInt(reservaId) }, select: { usuarioId: true, propietarioId: true } })
     if (!reserva) throw new BadRequestException('Reserva no encontrada')
-    if (usuarioId !== reserva.usuarioId && usuarioId !== reserva.propietarioId) throw new ForbiddenException('Acceso denegado')
-    await this.prisma.mensaje.updateMany({ where: { reservaId, receptorId: usuarioId, leido: false }, data: { leido: true, fechaLectura: new Date() } })
+    const usuarioIdBig = BigInt(usuarioId)
+    if (usuarioIdBig !== reserva.usuarioId && usuarioIdBig !== reserva.propietarioId) throw new ForbiddenException('Acceso denegado')
+    await this.prisma.mensaje.updateMany({ where: { reservaId: BigInt(reservaId), receptorId: usuarioIdBig, leido: false }, data: { leido: true, fechaLectura: new Date() } })
     return { ok: true }
   }
 
@@ -77,29 +79,29 @@ export class MensajesService {
     if (!contenido || contenido.length > 2000) throw new BadRequestException('Contenido inválido')
     if (/<script/i.test(contenido)) throw new BadRequestException('Contenido no permitido')
 
-    const reserva = await this.prisma.reserva.findUnique({ where: { id: dto.reservaId }, select: { id: true, usuarioId: true, propietarioId: true, publicacionId: true } })
+    const reserva = await this.prisma.reserva.findUnique({ where: { id: BigInt(dto.reservaId) }, select: { id: true, usuarioId: true, propietarioId: true, publicacionId: true } })
     if (!reserva) throw new BadRequestException('Reserva no encontrada')
-    if (emisorId !== reserva.usuarioId && emisorId !== reserva.propietarioId) throw new ForbiddenException('No autorizado')
+    if (BigInt(emisorId) !== reserva.usuarioId && BigInt(emisorId) !== reserva.propietarioId) throw new ForbiddenException('No autorizado')
 
     const ahora = new Date()
     const haceUnMin = new Date(ahora.getTime() - 60 * 1000)
-    const enviadosUltimoMinuto = await this.prisma.mensaje.count({ where: { emisorId, fechaCreacion: { gte: haceUnMin } } })
+    const enviadosUltimoMinuto = await this.prisma.mensaje.count({ where: { emisorId: BigInt(emisorId), fechaCreacion: { gte: haceUnMin } } })
     if (enviadosUltimoMinuto >= 5) throw new HttpException('Demasiados mensajes en poco tiempo', HttpStatus.TOO_MANY_REQUESTS)
 
-    const receptorId = dto.receptorId && dto.receptorId.length > 0 ? dto.receptorId : (emisorId === reserva.usuarioId ? reserva.propietarioId : reserva.usuarioId)
-    const mensaje = await this.prisma.mensaje.create({ data: { contenido, emisorId, receptorId, reservaId: reserva.id } })
+    const receptorId = dto.receptorId && dto.receptorId.length > 0 ? dto.receptorId : (BigInt(emisorId) === reserva.usuarioId ? reserva.propietarioId : reserva.usuarioId)
+    const mensaje = await this.prisma.mensaje.create({ data: { contenido, emisorId: BigInt(emisorId), receptorId: typeof receptorId === 'bigint' ? receptorId : BigInt(receptorId), reservaId: reserva.id } })
     console.log('[MensajesService] creado', { id: mensaje.id, reservaId: reserva.id, emisorId, receptorId })
 
     const totalMensajes = await this.prisma.mensaje.count({ where: { reservaId: reserva.id } })
     if (totalMensajes === 1) {
-      this.enviarEmailNotificacionPrimerMensaje(reserva.id, receptorId, mensaje.id).catch(() => {})
+      this.enviarEmailNotificacionPrimerMensaje(String(reserva.id), String(receptorId), String(mensaje.id)).catch(() => {})
     }
     return { mensaje }
   }
 
   async enviarEmailNotificacionPrimerMensaje(reservaId: string, receptorId: string, mensajeId: string) {
     try {
-      const reserva = await this.prisma.reserva.findUnique({ where: { id: reservaId }, include: { publicacion: { select: { titulo: true } } } })
+      const reserva = await this.prisma.reserva.findUnique({ where: { id: BigInt(reservaId) }, include: { publicacion: { select: { titulo: true } } } })
       const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5174'
       const link = `${frontendBase}/mensajes/reserva/${encodeURIComponent(reservaId)}?m=${encodeURIComponent(mensajeId)}`
       const asunto = `Nuevo mensaje sobre "${reserva?.publicacion?.titulo || 'tu reserva'}"`
@@ -113,7 +115,7 @@ export class MensajesService {
   async listarMisConversaciones(usuarioId: string) {
     console.log('[MensajesService] listarMisConversaciones', { usuarioId })
     const reservas = await this.prisma.reserva.findMany({
-      where: { OR: [ { usuarioId }, { propietarioId: usuarioId } ] },
+      where: { OR: [ { usuarioId: BigInt(usuarioId) }, { propietarioId: BigInt(usuarioId) } ] },
       include: {
         publicacion: {
           select: {
@@ -135,8 +137,8 @@ export class MensajesService {
     })
 
     const conUnread = await Promise.all(reservas.map(async r => {
-      const noLeidos = await this.prisma.mensaje.count({ where: { reservaId: r.id, receptorId: usuarioId, leido: false } })
-      const esArrendatario = usuarioId === r.usuarioId
+      const noLeidos = await this.prisma.mensaje.count({ where: { reservaId: r.id, receptorId: BigInt(usuarioId), leido: false } })
+      const esArrendatario = BigInt(usuarioId) === r.usuarioId
       const contraparte = esArrendatario ? r.propietario : r.usuario
       const imagenPrincipalUrl = r.publicacion?.imagenes?.[0]?.url || null
       return {

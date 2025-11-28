@@ -13,8 +13,8 @@
     "build": "tsc -p tsconfig.build.json",
     "test": "jest --passWithNoTests",
     "test:e2e": "jest --config jest.config.js --runInBand",
-    "prisma:generate": "prisma generate --schema context/schema.prisma",
-    "prisma:db:push": "prisma db push --schema context/schema.prisma",
+    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
+    "prisma:db:push": "prisma db push --schema prisma/schema.prisma",
     "prisma:seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {

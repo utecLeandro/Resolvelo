@@ -7,19 +7,19 @@ export class CalificacionesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async crear(usuarioId: string, dto: CrearCalificacionDto) {
-    const reserva = await this.prisma.reserva.findUnique({ where: { id: dto.reservaId } })
+    const reserva = await this.prisma.reserva.findUnique({ where: { id: BigInt(dto.reservaId) } })
     if (!reserva) throw new NotFoundException('Reserva no encontrada')
-    if (reserva.usuarioId !== usuarioId) throw new ForbiddenException('No autorizado para calificar esta reserva')
+    if (reserva.usuarioId !== BigInt(usuarioId)) throw new ForbiddenException('No autorizado para calificar esta reserva')
     if (reserva.estado !== 'COMPLETADA') throw new BadRequestException('Solo se puede calificar reservas completadas')
-    const yaExiste = await this.prisma.calificacion.findFirst({ where: { reservaId: dto.reservaId, usuarioCalificadorId: usuarioId } })
+    const yaExiste = await this.prisma.calificacion.findFirst({ where: { reservaId: BigInt(dto.reservaId), usuarioCalificadorId: BigInt(usuarioId) } })
     if (yaExiste) throw new BadRequestException('Ya has calificado esta reserva')
 
     try {
       const calificacion = await this.prisma.calificacion.create({
         data: {
-          reservaId: dto.reservaId,
+          reservaId: BigInt(dto.reservaId),
           publicacionId: reserva.publicacionId,
-          usuarioCalificadorId: usuarioId,
+          usuarioCalificadorId: BigInt(usuarioId),
           usuarioCalificadoId: reserva.propietarioId,
           puntuacion: dto.puntuacion,
           comentario: dto.comentario ?? null,
@@ -70,7 +70,7 @@ export class CalificacionesService {
 
   async listarPorPublicacion(publicacionId: string, take = 10, skip = 0) {
     const calificaciones = await this.prisma.calificacion.findMany({
-      where: { publicacionId },
+      where: { publicacionId: BigInt(publicacionId) },
       include: {
         usuarioCalificador: { select: { id: true, nombre: true, apellido: true } },
       },

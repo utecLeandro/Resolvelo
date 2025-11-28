@@ -270,7 +270,7 @@ interface ReservaArrendatario {
   id: string
   fechaInicio: string
   fechaFin: string
-  precioTotal: number
+  precioTotal: number | string
   telefonoContacto?: string
   estado: 'PENDIENTE' | 'CONFIRMADA' | 'EN_CURSO' | 'COMPLETADA' | 'RECHAZADA' | 'CANCELADA'
   motivoRechazo?: string
@@ -279,7 +279,7 @@ interface ReservaArrendatario {
     id: string
     titulo: string
     descripcion: string
-    precioPorDia: number
+    precioPorDia: number | string
     categoria: string
     direccion: string
     ciudad: string

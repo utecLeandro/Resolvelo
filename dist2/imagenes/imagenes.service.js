@@ -8,7 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImagenesService = void 0;
 const common_1 = require("@nestjs/common");
-const uuid_1 = require("uuid");
+const node_crypto_1 = require("node:crypto");
 let ImagenesService = class ImagenesService {
     async generarPresignUrls(payload) {
         const s3Enabled = String(process.env.S3_ENABLED || '').toLowerCase() === 'true';
@@ -22,7 +22,7 @@ let ImagenesService = class ImagenesService {
         }
         const uploads = payload.files.map((f) => {
             const ext = this.extensionFromContentType(f.contentType);
-            const key = `publicaciones/${payload.publicacionId}/${(0, uuid_1.v4)()}.${ext}`;
+            const key = `publicaciones/${payload.publicacionId}/${(0, node_crypto_1.randomUUID)()}.${ext}`;
             const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
             const url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
             return { key, url, method: 'PUT', expiresAt, contentType: f.contentType };

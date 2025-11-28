@@ -6,6 +6,7 @@ import { MP_DEFAULT_ACCESS_TOKEN } from '../config/mercadopago.config';
 import axios from 'axios';
 import { ProcesarPagoBrickDto } from './dto/payment-brick.dto';
 import { NotificacionesService } from '../notificaciones/notificaciones.service'
+import { Transaccion, Reserva, Publicacion, Usuario } from '@prisma/client'
 
 export interface RespuestaPreferenciaMpDto {
   ok: boolean;
@@ -14,6 +15,11 @@ export interface RespuestaPreferenciaMpDto {
   init_point?: string;
   sandbox_init_point?: string;
   redirectUrl: string;
+}
+
+type TransaccionConDetalles = Transaccion & {
+  reserva: (Reserva & { publicacion: Pick<Publicacion, 'precioPorDia' | 'titulo'> }) | null;
+  usuario: Pick<Usuario, 'email' | 'nombre' | 'apellido' | 'documentoIdentidad'>;
 }
 
 @Injectable()
@@ -52,7 +58,7 @@ export class TransaccionesService {
     try {
       // 1. Verificar que la reserva existe y está en estado CONFIRMADA
       const reserva = await this.prisma.reserva.findUnique({
-        where: { id: reservaId },
+        where: { id: BigInt(reservaId) },
         include: {
           publicacion: {
             select: {
@@ -81,7 +87,7 @@ export class TransaccionesService {
       // 2. Verificar que no existe ya una transacción completada para esta reserva
       const transaccionExistente = await this.prisma.transaccion.findFirst({
         where: {
-          reservaId: reservaId,
+          reservaId: BigInt(reservaId),
           estado: 'COMPLETADA'
         }
       });
@@ -105,7 +111,7 @@ export class TransaccionesService {
           metodoPago: metodoPago || 'TARJETA_CREDITO',
           descripcion: descripcion || `Pago de reserva para ${reserva.publicacion.titulo}`,
           usuarioId: reserva.usuarioId,
-          reservaId: reservaId,
+          reservaId: BigInt(reservaId),
           fechaProcesamiento: new Date()
         }
       });
@@ -129,7 +135,7 @@ export class TransaccionesService {
 
         // 7. Actualizar estado de la reserva a EN_CURSO
         await this.prisma.reserva.update({
-          where: { id: reservaId },
+          where: { id: BigInt(reservaId) },
           data: { estado: 'EN_CURSO' }
         });
 
@@ -141,7 +147,7 @@ export class TransaccionesService {
 
         return {
           exito: true,
-          transaccionId: transaccion.id,
+          transaccionId: String(transaccion.id),
           referenciaExterna: resultadoPago.referenciaExterna,
           mensaje: resultadoPago.mensaje,
           fechaProcesamiento: new Date()
@@ -175,7 +181,7 @@ export class TransaccionesService {
    */
   async obtenerTransaccionesUsuario(usuarioId: string) {
     return this.prisma.transaccion.findMany({
-      where: { usuarioId },
+      where: { usuarioId: BigInt(usuarioId) },
       include: {
         reserva: {
           include: {
@@ -197,7 +203,7 @@ export class TransaccionesService {
    */
   async obtenerTransaccion(id: string) {
     const transaccion = await this.prisma.transaccion.findUnique({
-      where: { id },
+      where: { id: BigInt(id) },
       include: {
         reserva: {
           include: {
@@ -247,7 +253,7 @@ export class TransaccionesService {
     }
 
     const reserva = await this.prisma.reserva.findUnique({
-      where: { id: reservaId },
+      where: { id: BigInt(reservaId) },
       include: {
         publicacion: { select: { precioPorDia: true, titulo: true } },
         usuario: { select: { id: true, nombre: true, email: true } }
@@ -275,7 +281,7 @@ export class TransaccionesService {
         metodoPago: 'MERCADO_PAGO',
         descripcion: descripcion || `Pago de reserva para ${reserva.publicacion.titulo}`,
         usuarioId: reserva.usuarioId,
-        reservaId,
+        reservaId: BigInt(reservaId),
         fechaProcesamiento: new Date()
       }
     });
@@ -300,7 +306,7 @@ export class TransaccionesService {
     const pendingUrl = ensureUrl(process.env.MP_PENDING_URL, '/pago-exitoso');
     const isLocalFrontend = /^http:\/\/(127\.0\.0\.1|localhost)/i.test(frontendBase);
 
-      const body: any = {
+    const body: any = {
       items: [
         {
           title: `Pago de reserva: ${reserva.publicacion.titulo}`,
@@ -316,8 +322,8 @@ export class TransaccionesService {
       },
       metadata: {
         reservaId,
-        usuarioId: reserva.usuarioId,
-        transaccionId: transaccion.id
+        usuarioId: String(reserva.usuarioId),
+        transaccionId: String(transaccion.id)
       },
       back_urls: {
         success: successUrl,
@@ -327,7 +333,7 @@ export class TransaccionesService {
       
       binary_mode: true,
       statement_descriptor: 'ReSolVelo',
-      external_reference: transaccion.id
+      external_reference: String(transaccion.id)
     };
 
     // No usar auto_return en sandbox para evitar validaciones adicionales de MP
@@ -382,7 +388,7 @@ export class TransaccionesService {
     return {
       ok: true,
       preferenciaId: result.id,
-      transaccionId: transaccion.id,
+      transaccionId: String(transaccion.id),
       init_point: result?.init_point,
       sandbox_init_point: result?.sandbox_init_point,
       redirectUrl
@@ -434,7 +440,7 @@ export class TransaccionesService {
       if (estadoPago === 'APPROVED') {
         // Marcar transacción como completada y actualizar reserva
         const transaccion = await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: {
             estado: 'COMPLETADA',
             fechaCompletado: new Date(),
@@ -464,12 +470,12 @@ export class TransaccionesService {
         }
       } else if (estadoPago === 'PENDING' || estadoPago === 'IN_PROCESS') {
         await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: { estado: 'PENDIENTE', referenciaExterna: String(paymentDetail?.id || ''), notasInternas: JSON.stringify(paymentDetail) }
         });
       } else {
         await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: { estado: 'FALLIDA', referenciaExterna: String(paymentDetail?.id || ''), notasInternas: JSON.stringify(paymentDetail) }
         });
       }
@@ -500,7 +506,7 @@ export class TransaccionesService {
       }
 
       // Obtener la transacción actual (para conocer reservaId y preference_id guardado en referenciaExterna)
-      const tx = await this.prisma.transaccion.findUnique({ where: { id: transaccionId }, include: { reserva: true } });
+      const tx = await this.prisma.transaccion.findUnique({ where: { id: BigInt(transaccionId) }, include: { reserva: true } });
       if (!tx) {
         throw new NotFoundException('Transacción no encontrada');
       }
@@ -535,8 +541,8 @@ export class TransaccionesService {
       } catch {}
 
       if (estadoPago === 'APPROVED') {
-        const actualizada = await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+        const actualizada: any = await this.prisma.transaccion.update({
+          where: { id: BigInt(transaccionId) },
           data: {
             estado: 'COMPLETADA',
             fechaCompletado: new Date(),
@@ -555,18 +561,18 @@ export class TransaccionesService {
       }
       if (estadoPago === 'PENDING' || estadoPago === 'IN_PROCESS') {
         await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: { estado: 'PENDIENTE', referenciaExterna: String(ultimo?.id || tx.referenciaExterna || ''), notasInternas: ultimo ? JSON.stringify(ultimo) : tx.notasInternas }
         });
       } else if (estadoPago === 'REJECTED' || estadoPago === 'CANCELLED') {
         await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: { estado: 'FALLIDA', referenciaExterna: String(ultimo?.id || tx.referenciaExterna || ''), notasInternas: ultimo ? JSON.stringify(ultimo) : tx.notasInternas }
         });
       }
 
       // Devolver el estado actual desde DB
-      return await this.prisma.transaccion.findUnique({ where: { id: transaccionId }, include: { reserva: true } });
+      return await this.prisma.transaccion.findUnique({ where: { id: BigInt(transaccionId) }, include: { reserva: true } });
     } catch (error) {
       console.error('❌ [MP] Error verificando estado por transacción:', error);
       if (error instanceof BadRequestException || error instanceof NotFoundException) {
@@ -619,14 +625,14 @@ export class TransaccionesService {
       let transaccionId = String(ultimo?.external_reference || '');
       if (!transaccionId) {
         const txPref = await this.prisma.transaccion.findFirst({ where: { referenciaExterna: preferenceId } });
-        transaccionId = txPref?.id || '';
+        transaccionId = String(txPref?.id || '');
       }
       if (!transaccionId) {
         throw new NotFoundException('No se encontró transacción asociada a la preferencia');
       }
       if (estadoPago === 'APPROVED') {
         const actualizada = await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: {
             estado: 'COMPLETADA',
             fechaCompletado: new Date(),
@@ -642,16 +648,16 @@ export class TransaccionesService {
       }
       if (estadoPago === 'PENDING' || estadoPago === 'IN_PROCESS') {
         await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: { estado: 'PENDIENTE', referenciaExterna: String(ultimo?.id || preferenceId), notasInternas: ultimo ? JSON.stringify(ultimo) : undefined }
         });
       } else if (estadoPago === 'REJECTED' || estadoPago === 'CANCELLED') {
         await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: { estado: 'FALLIDA', referenciaExterna: String(ultimo?.id || preferenceId), notasInternas: ultimo ? JSON.stringify(ultimo) : undefined }
         });
       }
-      return await this.prisma.transaccion.findUnique({ where: { id: transaccionId }, include: { reserva: true } });
+      return await this.prisma.transaccion.findUnique({ where: { id: BigInt(transaccionId) }, include: { reserva: true } });
     } catch (error) {
       console.error('❌ [MP] Error verificando estado por preference:', error);
       if (error instanceof BadRequestException || error instanceof NotFoundException) {
@@ -695,7 +701,7 @@ export class TransaccionesService {
       const estadoPago = String(paymentDetail?.status || '').toUpperCase();
       if (estadoPago === 'APPROVED') {
         const transaccion = await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: {
             estado: 'COMPLETADA',
             fechaCompletado: new Date(),
@@ -723,12 +729,12 @@ export class TransaccionesService {
         }
       } else if (estadoPago === 'PENDING' || estadoPago === 'IN_PROCESS') {
         await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: { estado: 'PENDIENTE', referenciaExterna: String(paymentDetail?.id || ''), notasInternas: JSON.stringify(paymentDetail) }
         });
       } else {
         await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: { estado: 'FALLIDA', referenciaExterna: String(paymentDetail?.id || ''), notasInternas: JSON.stringify(paymentDetail) }
         });
       }
@@ -759,14 +765,14 @@ export class TransaccionesService {
       let transaccionId = String(body.transaccionId || '');
       if (!transaccionId && body.preferenceId) {
         const tx = await this.prisma.transaccion.findFirst({ where: { referenciaExterna: body.preferenceId } });
-        transaccionId = tx?.id || '';
+        transaccionId = String(tx?.id || '');
       }
       if (!transaccionId) {
         throw new BadRequestException('No se pudo asociar el pago a una transacción');
       }
 
-      const txFull = await this.prisma.transaccion.findUnique({
-        where: { id: transaccionId },
+      const txFull: TransaccionConDetalles | null = await this.prisma.transaccion.findUnique({
+        where: { id: BigInt(transaccionId) },
         include: {
           reserva: {
             include: {
@@ -849,7 +855,7 @@ export class TransaccionesService {
       const estadoPago = String(result?.status || '').toUpperCase();
       if (estadoPago === 'APPROVED') {
         const transaccion = await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: {
             estado: 'COMPLETADA',
             fechaCompletado: new Date(),
@@ -860,24 +866,27 @@ export class TransaccionesService {
         });
         if (transaccion?.reservaId) {
           await this.prisma.reserva.update({ where: { id: transaccion.reservaId }, data: { estado: 'EN_CURSO' } });
-          if (this.notificaciones && transaccion.reserva) {
-            try { await this.notificaciones.emitirPagoCompletado(transaccion.reserva, transaccion) } catch {}
+          if (this.notificaciones) {
+            try {
+              const res = await this.prisma.reserva.findUnique({ where: { id: transaccion.reservaId }, include: { publicacion: { select: { titulo: true, id: true } } } })
+              if (res) await this.notificaciones.emitirPagoCompletado(res, transaccion)
+            } catch {}
           }
         }
         return transaccion;
       }
       if (estadoPago === 'PENDING' || estadoPago === 'IN_PROCESS') {
         await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: { estado: 'PENDIENTE', referenciaExterna: String(result?.id || ''), notasInternas: JSON.stringify(result) },
         });
       } else {
         await this.prisma.transaccion.update({
-          where: { id: transaccionId },
+          where: { id: BigInt(transaccionId) },
           data: { estado: 'FALLIDA', referenciaExterna: String(result?.id || ''), notasInternas: JSON.stringify(result) },
         });
       }
-      return await this.prisma.transaccion.findUnique({ where: { id: transaccionId }, include: { reserva: true } });
+      return await this.prisma.transaccion.findUnique({ where: { id: BigInt(transaccionId) }, include: { reserva: true } });
     } catch (error: any) {
       console.error('❌ [MP Brick] Error creando pago:', error);
       if (error instanceof BadRequestException || error instanceof NotFoundException) {

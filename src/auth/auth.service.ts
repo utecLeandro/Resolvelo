@@ -64,7 +64,6 @@ export class AuthService {
           telefonoVerificado: false,
           perfilPublico: true,
           activo: true,
-          primerLoginPendiente: true,
         },
       });
 
@@ -72,7 +71,7 @@ export class AuthService {
       const verificationOk = true; // mock
 
       // Generar token JWT real
-      const payload = { sub: usuario.id, email: usuario.email };
+      const payload = { sub: String(usuario.id), email: usuario.email };
       const accessToken = this.jwtService.sign(payload);
 
       return {
@@ -123,6 +122,11 @@ export class AuthService {
         throw new UnauthorizedException('Cuenta desactivada');
       }
 
+      // Política: primer login debe ser con gub.uy (usa bandera en schema)
+      if (usuario.primerLoginPendiente === true) {
+        throw new UnauthorizedException('Primer login: debes iniciar por “Entrar con gub.uy”');
+      }
+
       // Verificar contraseña usando bcrypt
       const passwordValida = await bcrypt.compare(data.password, usuario.passwordHash);
       
@@ -130,9 +134,7 @@ export class AuthService {
         throw new UnauthorizedException('Credenciales incorrectas');
       }
 
-      if ((usuario as any).primerLoginPendiente) {
-        throw new UnauthorizedException('Primer login debe ser por gub.uy (simulado)');
-      }
+      
 
       if (usuario.estadoVerificacion !== 'VERIFICADA') {
         throw new ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
@@ -154,7 +156,7 @@ export class AuthService {
       }
 
       // Generar token JWT real
-      const payload = { sub: usuario.id, email: usuario.email };
+      const payload = { sub: String(usuario.id), email: usuario.email };
       const accessToken = this.jwtService.sign(payload);
 
       return {
@@ -198,8 +200,15 @@ export class AuthService {
         throw new UnauthorizedException('Token inválido');
       }
 
+      const subStr = String(userId)
+      const where: any = (typeof userId === 'bigint')
+        ? { id: userId }
+        : (/^\d+$/.test(subStr) ? { id: BigInt(subStr) } : (payload.email ? { email: payload.email } : null))
+      if (!where) {
+        throw new UnauthorizedException('Token inválido')
+      }
       const usuario = await this.prisma.usuario.findUnique({
-        where: { id: userId },
+        where,
         select: {
           id: true,
           nombre: true,
@@ -394,7 +403,11 @@ export class AuthService {
     if (usuario.estadoVerificacion !== 'VERIFICADA') {
       throw new ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
     }
-    const payload = { sub: usuario.id, email: usuario.email };
+    // Completar primer login
+    try {
+      await this.prisma.usuario.update({ where: { id: usuario.id }, data: { primerLoginPendiente: false } })
+    } catch {}
+    const payload = { sub: String(usuario.id), email: usuario.email };
     const accessToken = this.jwtService.sign(payload);
     this.gubuyCodes.delete(code);
     return {
@@ -433,16 +446,23 @@ export class AuthService {
     if (!nombreOk || !apellidoOk || !emailOk || !docOk) {
       throw new UnauthorizedException('Datos no coinciden');
     }
-    const passwordValida = await bcrypt.compare(data.password, usuario.passwordHash);
-    if (!passwordValida) {
-      throw new UnauthorizedException('Credenciales incorrectas');
+    // Tolerar usuarios sin passwordHash en flujo gub.uy (importados), si existe comparar
+    if (usuario.passwordHash) {
+      const passwordValida = await bcrypt.compare(data.password, usuario.passwordHash);
+      if (!passwordValida) {
+        throw new UnauthorizedException('Credenciales incorrectas');
+      }
     }
     if (usuario.estadoVerificacion !== 'VERIFICADA') {
       throw new ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
     }
-    const payload = { sub: usuario.id, email: usuario.email };
+    // Completar primer login
+    try {
+      await this.prisma.usuario.update({ where: { id: usuario.id }, data: { primerLoginPendiente: false } })
+    } catch {}
+    const payload = { sub: String(usuario.id), email: usuario.email };
     const accessToken = this.jwtService.sign(payload);
-    await this.prisma.usuario.update({ where: { id: usuario.id }, data: { primerLoginPendiente: false } });
+    
     return {
       access_token: accessToken,
       user: {

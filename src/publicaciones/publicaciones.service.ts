@@ -26,10 +26,13 @@ export class PublicacionesService {
     try {
       // Verificar que el usuario existe y está activo
       const usuario = await this.prisma.usuario.findUnique({
-        where: { id: usuarioId, activo: true }
+        where: { id: BigInt(usuarioId) }
       });
 
       if (!usuario) {
+        throw new NotFoundException('Usuario no encontrado o inactivo');
+      }
+      if (!usuario.activo) {
         throw new NotFoundException('Usuario no encontrado o inactivo');
       }
 
@@ -40,7 +43,7 @@ export class PublicacionesService {
       const publicacion = await this.prisma.publicacion.create({
         data: {
           ...crearPublicacionDto,
-          propietarioId: usuarioId,
+          propietarioId: BigInt(usuarioId),
           estado: EstadoPublicacion.ACTIVA,
           estadoModeracion: EstadoModeracion.PENDIENTE_REVISION,
           fechaPublicacion: new Date(),
@@ -151,18 +154,18 @@ export class PublicacionesService {
    */
   async aprobarPublicacion(publicacionId: string, moderadorId: string, comentario?: string): Promise<Publicacion> {
     // Verificar existencia de la publicación
-    const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId } });
+    const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) } });
     if (!existente) {
       throw new NotFoundException('Publicación no encontrada');
     }
 
-    let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: moderadorId } });
+    let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(moderadorId) } });
     if (!admin) {
-      const usuario = await this.prisma.usuario.findUnique({ where: { id: moderadorId, activo: true } });
+      const usuario = await this.prisma.usuario.findFirst({ where: { id: BigInt(moderadorId), activo: true } });
       if (!usuario || (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')) {
         throw new ForbiddenException('El usuario autenticado no es administrador');
       }
-      admin = await this.prisma.administrador.create({ data: { usuarioId: moderadorId } });
+      admin = await this.prisma.administrador.create({ data: { usuarioId: BigInt(moderadorId) } });
     }
 
     const estadoAnterior = existente.estadoModeracion;
@@ -170,11 +173,11 @@ export class PublicacionesService {
     // Transacción para actualizar publicación y registrar moderación
     const [actualizada] = await this.prisma.$transaction([
       this.prisma.publicacion.update({
-        where: { id: publicacionId },
+        where: { id: BigInt(publicacionId) },
         data: {
           estadoModeracion: EstadoModeracion.APROBADA,
           fechaModeracion: new Date(),
-          moderadoPor: moderadorId,
+          moderadoPor: String(moderadorId),
           comentarioModeracion: comentario ?? null,
         },
         include: {
@@ -192,7 +195,7 @@ export class PublicacionesService {
           comentarios: comentario ?? null,
           estadoAnterior: estadoAnterior,
           estadoNuevo: EstadoModeracion.APROBADA,
-          publicacionId: publicacionId,
+          publicacionId: BigInt(publicacionId),
           moderadorId: admin.id,
         }
       })
@@ -205,29 +208,29 @@ export class PublicacionesService {
    * Rechazar una publicación (moderación)
    */
   async rechazarPublicacion(publicacionId: string, moderadorId: string, motivo?: string, comentario?: string): Promise<Publicacion> {
-    const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId } });
+    const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) } });
     if (!existente) {
       throw new NotFoundException('Publicación no encontrada');
     }
 
-    let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: moderadorId } });
+    let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(moderadorId) } });
     if (!admin) {
-      const usuario = await this.prisma.usuario.findUnique({ where: { id: moderadorId, activo: true } });
+      const usuario = await this.prisma.usuario.findFirst({ where: { id: BigInt(moderadorId), activo: true } });
       if (!usuario || (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')) {
         throw new ForbiddenException('El usuario autenticado no es administrador');
       }
-      admin = await this.prisma.administrador.create({ data: { usuarioId: moderadorId } });
+      admin = await this.prisma.administrador.create({ data: { usuarioId: BigInt(moderadorId) } });
     }
 
     const estadoAnterior = existente.estadoModeracion;
 
     const [actualizada] = await this.prisma.$transaction([
       this.prisma.publicacion.update({
-        where: { id: publicacionId },
+        where: { id: BigInt(publicacionId) },
         data: {
           estadoModeracion: EstadoModeracion.RECHAZADA,
           fechaModeracion: new Date(),
-          moderadoPor: moderadorId,
+          moderadoPor: String(moderadorId),
           comentarioModeracion: comentario ?? motivo ?? null,
         },
         include: {
@@ -245,7 +248,7 @@ export class PublicacionesService {
           comentarios: comentario ?? null,
           estadoAnterior: estadoAnterior,
           estadoNuevo: EstadoModeracion.RECHAZADA,
-          publicacionId: publicacionId,
+          publicacionId: BigInt(publicacionId),
           moderadorId: admin.id,
         }
       })
@@ -262,7 +265,7 @@ export class PublicacionesService {
   async obtenerPublicacionPorId(id: string): Promise<any> {
     try {
       const publicacion = await this.prisma.publicacion.findUnique({
-        where: { id },
+        where: { id: BigInt(id) },
         include: {
           propietario: {
             select: {
@@ -312,7 +315,7 @@ export class PublicacionesService {
 
       // Incrementar contador de visualizaciones
       await this.prisma.publicacion.update({
-        where: { id },
+        where: { id: BigInt(id) },
         data: { visualizaciones: { increment: 1 } }
       });
 
@@ -349,7 +352,7 @@ export class PublicacionesService {
     try {
       // Verificar que la publicación existe y pertenece al usuario
       const publicacionExistente = await this.prisma.publicacion.findUnique({
-        where: { id },
+        where: { id: BigInt(id) },
         select: { propietarioId: true, estado: true }
       });
 
@@ -357,7 +360,7 @@ export class PublicacionesService {
         throw new NotFoundException('Publicación no encontrada');
       }
 
-      if (publicacionExistente.propietarioId !== usuarioId) {
+      if (publicacionExistente.propietarioId !== BigInt(usuarioId)) {
         throw new ForbiddenException('No tienes permisos para actualizar esta publicación');
       }
 
@@ -370,7 +373,7 @@ export class PublicacionesService {
 
       // Actualizar la publicación
       const publicacionActualizada = await this.prisma.publicacion.update({
-        where: { id },
+        where: { id: BigInt(id) },
         data: {
           ...actualizarPublicacionDto,
           // Si se actualiza contenido importante, marcar para revisión
@@ -413,7 +416,7 @@ export class PublicacionesService {
     try {
       // Verificar que la publicación existe y pertenece al usuario
       const publicacion = await this.prisma.publicacion.findUnique({
-        where: { id },
+        where: { id: BigInt(id) },
         select: { 
           propietarioId: true, 
           estado: true,
@@ -435,7 +438,7 @@ export class PublicacionesService {
         throw new NotFoundException('Publicación no encontrada');
       }
 
-      if (publicacion.propietarioId !== usuarioId) {
+      if (publicacion.propietarioId !== BigInt(usuarioId)) {
         throw new ForbiddenException('No tienes permisos para eliminar esta publicación');
       }
 
@@ -446,7 +449,7 @@ export class PublicacionesService {
 
       // Soft delete - cambiar estado a ELIMINADA
       await this.prisma.publicacion.update({
-        where: { id },
+        where: { id: BigInt(id) },
         data: { 
           estado: EstadoPublicacion.ELIMINADA,
           disponible: false
@@ -472,7 +475,7 @@ export class PublicacionesService {
     // Para "Mis publicaciones", no aplicamos filtros de moderación
     // El usuario debe ver todas sus publicaciones independientemente del estado
     const condiciones: any = {
-      propietarioId: usuarioId,
+      propietarioId: BigInt(usuarioId),
       estado: EstadoPublicacion.ACTIVA, // Solo publicaciones activas (no eliminadas)
       // No filtramos por estadoModeracion para que vea todas sus publicaciones
     };
@@ -595,7 +598,7 @@ export class PublicacionesService {
     try {
       const reservas = await this.prisma.reserva.findMany({
         where: {
-          publicacionId: id,
+          publicacionId: BigInt(id),
           estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
         },
         select: { fechaInicio: true, fechaFin: true },
@@ -622,7 +625,7 @@ export class PublicacionesService {
       // Contar reservas activas que se solapan con el rango solicitado
       const solapadas = await this.prisma.reserva.count({
         where: {
-          publicacionId: id,
+          publicacionId: BigInt(id),
           estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
           NOT: {
             OR: [
@@ -810,9 +813,9 @@ export class PublicacionesService {
   }
 
   async listarImagenes(publicacionId: string): Promise<any[]> {
-    const pub = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { id: true } });
+    const pub = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { id: true } });
     if (!pub) throw new NotFoundException('Publicación no encontrada');
-    return await this.prisma.imagenPublicacion.findMany({ where: { publicacionId }, orderBy: { orden: 'asc' } });
+    return await this.prisma.imagenPublicacion.findMany({ where: { publicacionId: BigInt(publicacionId) }, orderBy: { orden: 'asc' } });
   }
 
   async guardarImagenes(
@@ -823,16 +826,16 @@ export class PublicacionesService {
     if (!Array.isArray(images) || images.length === 0) throw new BadRequestException('Sin imágenes');
     if (images.length > 5) throw new BadRequestException('Máximo 5 imágenes por publicación');
 
-    const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { propietarioId: true } });
+    const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { propietarioId: true } });
     if (!existente) throw new NotFoundException('Publicación no encontrada');
-    if (existente.propietarioId !== usuarioId) throw new ForbiddenException('No autorizado');
+    if (existente.propietarioId !== BigInt(usuarioId)) throw new ForbiddenException('No autorizado');
 
-    const actuales = await this.prisma.imagenPublicacion.count({ where: { publicacionId } });
+    const actuales = await this.prisma.imagenPublicacion.count({ where: { publicacionId: BigInt(publicacionId) } });
     if (actuales + images.length > 5) throw new BadRequestException('Se excede el máximo de 5 imágenes');
 
     const principalSolicitado = images.find((i) => i.esPrincipal === true);
 
-    const maxOrden = await this.prisma.imagenPublicacion.aggregate({ where: { publicacionId }, _max: { orden: true } });
+    const maxOrden = await this.prisma.imagenPublicacion.aggregate({ where: { publicacionId: BigInt(publicacionId) }, _max: { orden: true } });
     let baseOrden = (maxOrden._max.orden ?? -1) + 1;
 
     const data = images.map((img) => ({
@@ -840,15 +843,15 @@ export class PublicacionesService {
       descripcion: img.descripcion ?? null,
       orden: img.orden ?? baseOrden++,
       esPrincipal: img.esPrincipal === true,
-      publicacionId,
+      publicacionId: BigInt(publicacionId),
     }));
 
     const created = await this.prisma.$transaction(async (tx) => {
       if (principalSolicitado) {
-        await tx.imagenPublicacion.updateMany({ where: { publicacionId }, data: { esPrincipal: false } });
+        await tx.imagenPublicacion.updateMany({ where: { publicacionId: BigInt(publicacionId) }, data: { esPrincipal: false } });
       }
       await tx.imagenPublicacion.createMany({ data });
-      const nuevas = await tx.imagenPublicacion.findMany({ where: { publicacionId }, orderBy: { orden: 'asc' } });
+      const nuevas = await tx.imagenPublicacion.findMany({ where: { publicacionId: BigInt(publicacionId) }, orderBy: { orden: 'asc' } });
       return nuevas;
     });
 
@@ -856,27 +859,27 @@ export class PublicacionesService {
   }
 
   async setImagenPrincipal(publicacionId: string, usuarioId: string, imagenId: string): Promise<void> {
-    const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { propietarioId: true } });
+    const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { propietarioId: true } });
     if (!existente) throw new NotFoundException('Publicación no encontrada');
-    if (existente.propietarioId !== usuarioId) throw new ForbiddenException('No autorizado');
+    if (existente.propietarioId !== BigInt(usuarioId)) throw new ForbiddenException('No autorizado');
 
-    const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: imagenId } });
-    if (!imagen || imagen.publicacionId !== publicacionId) throw new NotFoundException('Imagen no encontrada');
+    const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: BigInt(imagenId) } });
+    if (!imagen || imagen.publicacionId !== BigInt(publicacionId)) throw new NotFoundException('Imagen no encontrada');
 
     await this.prisma.$transaction([
-      this.prisma.imagenPublicacion.updateMany({ where: { publicacionId }, data: { esPrincipal: false } }),
-      this.prisma.imagenPublicacion.update({ where: { id: imagenId }, data: { esPrincipal: true } }),
+      this.prisma.imagenPublicacion.updateMany({ where: { publicacionId: BigInt(publicacionId) }, data: { esPrincipal: false } }),
+      this.prisma.imagenPublicacion.update({ where: { id: BigInt(imagenId) }, data: { esPrincipal: true } }),
     ]);
   }
 
   async eliminarImagen(publicacionId: string, usuarioId: string, imagenId: string): Promise<void> {
-    const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { propietarioId: true } });
+    const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { propietarioId: true } });
     if (!existente) throw new NotFoundException('Publicación no encontrada');
-    if (existente.propietarioId !== usuarioId) throw new ForbiddenException('No autorizado');
+    if (existente.propietarioId !== BigInt(usuarioId)) throw new ForbiddenException('No autorizado');
 
-    const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: imagenId } });
-    if (!imagen || imagen.publicacionId !== publicacionId) throw new NotFoundException('Imagen no encontrada');
+    const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: BigInt(imagenId) } });
+    if (!imagen || imagen.publicacionId !== BigInt(publicacionId)) throw new NotFoundException('Imagen no encontrada');
 
-    await this.prisma.imagenPublicacion.delete({ where: { id: imagenId } });
+    await this.prisma.imagenPublicacion.delete({ where: { id: BigInt(imagenId) } });
   }
 }

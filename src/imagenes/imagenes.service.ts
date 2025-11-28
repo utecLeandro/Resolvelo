@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotImplementedException } from '@nestjs/common'
 import { PresignRequestDto, PresignResponse, PresignUploadUrl } from './dto/presign.dto'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'node:crypto'
 
 @Injectable()
 export class ImagenesService {
@@ -18,7 +18,7 @@ export class ImagenesService {
 
     const uploads: PresignUploadUrl[] = payload.files.map((f) => {
       const ext = this.extensionFromContentType(f.contentType)
-      const key = `publicaciones/${payload.publicacionId}/${uuidv4()}.${ext}`
+      const key = `publicaciones/${payload.publicacionId}/${randomUUID()}.${ext}`
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
       const url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`
       return { key, url, method: 'PUT', expiresAt, contentType: f.contentType }
@@ -34,4 +34,3 @@ export class ImagenesService {
     return 'bin'
   }
 }
-

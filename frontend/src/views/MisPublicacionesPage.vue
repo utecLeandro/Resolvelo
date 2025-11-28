@@ -1365,7 +1365,7 @@ const confirmarRechazo = async () => {
 
 const formatearFecha = (fecha?: string) => {
   if (!fecha) return '-'
-  return new Date(fecha).toLocaleDateString('es-ES', {
+  return new Date(fecha).toLocaleDateString('es-UY', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'

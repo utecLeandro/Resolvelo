@@ -1,4 +1,10 @@
 "use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 require("reflect-metadata");
@@ -14,6 +20,34 @@ const prisma_service_1 = require("./prisma/prisma.service");
 const bodyParser = require("body-parser");
 const path_1 = require("path");
 const notificaciones_service_1 = require("./notificaciones/notificaciones.service");
+const common_2 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
+const operators_1 = require("rxjs/operators");
+let BigIntSerializerInterceptor = class BigIntSerializerInterceptor {
+    intercept(context, next) {
+        return next.handle().pipe((0, operators_1.map)((data) => serializeBigInt(data)));
+    }
+};
+BigIntSerializerInterceptor = __decorate([
+    (0, common_2.Injectable)()
+], BigIntSerializerInterceptor);
+function serializeBigInt(v) {
+    if (typeof v === 'bigint')
+        return v.toString();
+    if (v instanceof Date)
+        return v.toISOString();
+    if (v instanceof client_1.Prisma.Decimal)
+        return v.toString();
+    if (Array.isArray(v))
+        return v.map(serializeBigInt);
+    if (v && typeof v === 'object') {
+        const out = {};
+        for (const k of Object.keys(v))
+            out[k] = serializeBigInt(v[k]);
+        return out;
+    }
+    return v;
+}
 async function bootstrap() {
     console.log('[Main] Import debug -> typeof TransaccionesModule =', typeof transacciones_module_1.TransaccionesModule);
     console.log('[Main] Bootstrap iniciando...');
@@ -103,6 +137,7 @@ async function bootstrap() {
         };
         const notificacionesService = app.get(notificaciones_service_1.NotificacionesService);
         mensajesService = new mensajes_service_1.MensajesService(prismaService, notificacionesService);
+        app.useGlobalInterceptors(new BigIntSerializerInterceptor());
         express.get('/api/notificaciones/stream', async (req, res) => {
             try {
                 const userId = await authUserId(req);
@@ -118,7 +153,7 @@ async function bootstrap() {
                     if (usuarioId !== userId)
                         return;
                     try {
-                        res.write(`data: ${JSON.stringify(data)}\n\n`);
+                        res.write(`data: ${JSON.stringify(serializeBigInt(data))}\n\n`);
                     }
                     catch { }
                 });
@@ -138,7 +173,7 @@ async function bootstrap() {
                 const dto = req.body || {};
                 console.log('[MensajesFallback] userId=', userId, 'dto=', dto);
                 const resp = await mensajesService.enviarMensaje(dto, userId);
-                res.json(resp);
+                res.json(serializeBigInt(resp));
             }
             catch (e) {
                 const msg = typeof e === 'object' && e && 'message' in e ? e.message : String(e);
@@ -186,7 +221,7 @@ async function bootstrap() {
                 const take = req.query.take ? parseInt(String(req.query.take)) : 10;
                 const skip = req.query.skip ? parseInt(String(req.query.skip)) : 0;
                 const resultado = await calificacionesService.listarPorPublicacion(String(req.params.id), take, skip);
-                res.json({ ...resultado, timestamp: new Date().toISOString() });
+                res.json(serializeBigInt({ ...resultado, timestamp: new Date().toISOString() }));
             }
             catch (e) {
                 const msg = typeof e === 'object' && e && 'message' in e ? e.message : String(e);
@@ -198,7 +233,7 @@ async function bootstrap() {
             try {
                 const userId = await authUserId(req);
                 const resp = await mensajesService.listarPorReserva(String(req.params.reservaId), userId);
-                res.json(resp);
+                res.json(serializeBigInt(resp));
             }
             catch (e) {
                 const msg = typeof e === 'object' && e && 'message' in e ? e.message : String(e);
@@ -211,7 +246,7 @@ async function bootstrap() {
             try {
                 const userId = await authUserId(req);
                 const resp = await mensajesService.marcarLeidos(String(req.params.reservaId), userId);
-                res.json(resp);
+                res.json(serializeBigInt(resp));
             }
             catch (e) {
                 const msg = typeof e === 'object' && e && 'message' in e ? e.message : String(e);
@@ -223,7 +258,7 @@ async function bootstrap() {
             try {
                 const userId = await authUserId(req);
                 const resp = await mensajesService.listarMisConversaciones(userId);
-                res.json(resp);
+                res.json(serializeBigInt(resp));
             }
             catch (e) {
                 const msg = typeof e === 'object' && e && 'message' in e ? e.message : String(e);

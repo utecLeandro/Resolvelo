@@ -22,16 +22,19 @@ let PublicacionesService = class PublicacionesService {
     async crearPublicacion(usuarioId, crearPublicacionDto) {
         try {
             const usuario = await this.prisma.usuario.findUnique({
-                where: { id: usuarioId, activo: true }
+                where: { id: BigInt(usuarioId) }
             });
             if (!usuario) {
+                throw new common_1.NotFoundException('Usuario no encontrado o inactivo');
+            }
+            if (!usuario.activo) {
                 throw new common_1.NotFoundException('Usuario no encontrado o inactivo');
             }
             this.validarPrecios(crearPublicacionDto);
             const publicacion = await this.prisma.publicacion.create({
                 data: {
                     ...crearPublicacionDto,
-                    propietarioId: usuarioId,
+                    propietarioId: BigInt(usuarioId),
                     estado: client_1.EstadoPublicacion.ACTIVA,
                     estadoModeracion: client_1.EstadoModeracion.PENDIENTE_REVISION,
                     fechaPublicacion: new Date(),
@@ -122,26 +125,26 @@ let PublicacionesService = class PublicacionesService {
         }
     }
     async aprobarPublicacion(publicacionId, moderadorId, comentario) {
-        const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId } });
+        const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) } });
         if (!existente) {
             throw new common_1.NotFoundException('Publicación no encontrada');
         }
-        let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: moderadorId } });
+        let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(moderadorId) } });
         if (!admin) {
-            const usuario = await this.prisma.usuario.findUnique({ where: { id: moderadorId, activo: true } });
+            const usuario = await this.prisma.usuario.findFirst({ where: { id: BigInt(moderadorId), activo: true } });
             if (!usuario || (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')) {
                 throw new common_1.ForbiddenException('El usuario autenticado no es administrador');
             }
-            admin = await this.prisma.administrador.create({ data: { usuarioId: moderadorId } });
+            admin = await this.prisma.administrador.create({ data: { usuarioId: BigInt(moderadorId) } });
         }
         const estadoAnterior = existente.estadoModeracion;
         const [actualizada] = await this.prisma.$transaction([
             this.prisma.publicacion.update({
-                where: { id: publicacionId },
+                where: { id: BigInt(publicacionId) },
                 data: {
                     estadoModeracion: client_1.EstadoModeracion.APROBADA,
                     fechaModeracion: new Date(),
-                    moderadoPor: moderadorId,
+                    moderadoPor: String(moderadorId),
                     comentarioModeracion: comentario ?? null,
                 },
                 include: {
@@ -159,7 +162,7 @@ let PublicacionesService = class PublicacionesService {
                     comentarios: comentario ?? null,
                     estadoAnterior: estadoAnterior,
                     estadoNuevo: client_1.EstadoModeracion.APROBADA,
-                    publicacionId: publicacionId,
+                    publicacionId: BigInt(publicacionId),
                     moderadorId: admin.id,
                 }
             })
@@ -167,26 +170,26 @@ let PublicacionesService = class PublicacionesService {
         return actualizada;
     }
     async rechazarPublicacion(publicacionId, moderadorId, motivo, comentario) {
-        const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId } });
+        const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) } });
         if (!existente) {
             throw new common_1.NotFoundException('Publicación no encontrada');
         }
-        let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: moderadorId } });
+        let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(moderadorId) } });
         if (!admin) {
-            const usuario = await this.prisma.usuario.findUnique({ where: { id: moderadorId, activo: true } });
+            const usuario = await this.prisma.usuario.findFirst({ where: { id: BigInt(moderadorId), activo: true } });
             if (!usuario || (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')) {
                 throw new common_1.ForbiddenException('El usuario autenticado no es administrador');
             }
-            admin = await this.prisma.administrador.create({ data: { usuarioId: moderadorId } });
+            admin = await this.prisma.administrador.create({ data: { usuarioId: BigInt(moderadorId) } });
         }
         const estadoAnterior = existente.estadoModeracion;
         const [actualizada] = await this.prisma.$transaction([
             this.prisma.publicacion.update({
-                where: { id: publicacionId },
+                where: { id: BigInt(publicacionId) },
                 data: {
                     estadoModeracion: client_1.EstadoModeracion.RECHAZADA,
                     fechaModeracion: new Date(),
-                    moderadoPor: moderadorId,
+                    moderadoPor: String(moderadorId),
                     comentarioModeracion: comentario ?? motivo ?? null,
                 },
                 include: {
@@ -204,7 +207,7 @@ let PublicacionesService = class PublicacionesService {
                     comentarios: comentario ?? null,
                     estadoAnterior: estadoAnterior,
                     estadoNuevo: client_1.EstadoModeracion.RECHAZADA,
-                    publicacionId: publicacionId,
+                    publicacionId: BigInt(publicacionId),
                     moderadorId: admin.id,
                 }
             })
@@ -214,7 +217,7 @@ let PublicacionesService = class PublicacionesService {
     async obtenerPublicacionPorId(id) {
         try {
             const publicacion = await this.prisma.publicacion.findUnique({
-                where: { id },
+                where: { id: BigInt(id) },
                 include: {
                     propietario: {
                         select: {
@@ -259,7 +262,7 @@ let PublicacionesService = class PublicacionesService {
                 throw new common_1.NotFoundException('Publicación no encontrada');
             }
             await this.prisma.publicacion.update({
-                where: { id },
+                where: { id: BigInt(id) },
                 data: { visualizaciones: { increment: 1 } }
             });
             const publicacionConPreciosNumericos = {
@@ -281,13 +284,13 @@ let PublicacionesService = class PublicacionesService {
     async actualizarPublicacion(id, usuarioId, actualizarPublicacionDto) {
         try {
             const publicacionExistente = await this.prisma.publicacion.findUnique({
-                where: { id },
+                where: { id: BigInt(id) },
                 select: { propietarioId: true, estado: true }
             });
             if (!publicacionExistente) {
                 throw new common_1.NotFoundException('Publicación no encontrada');
             }
-            if (publicacionExistente.propietarioId !== usuarioId) {
+            if (publicacionExistente.propietarioId !== BigInt(usuarioId)) {
                 throw new common_1.ForbiddenException('No tienes permisos para actualizar esta publicación');
             }
             if (actualizarPublicacionDto.precioPorDia ||
@@ -296,7 +299,7 @@ let PublicacionesService = class PublicacionesService {
                 this.validarPrecios(actualizarPublicacionDto);
             }
             const publicacionActualizada = await this.prisma.publicacion.update({
-                where: { id },
+                where: { id: BigInt(id) },
                 data: {
                     ...actualizarPublicacionDto,
                     ...(this.requiereModeracion(actualizarPublicacionDto) && {
@@ -331,7 +334,7 @@ let PublicacionesService = class PublicacionesService {
     async eliminarPublicacion(id, usuarioId) {
         try {
             const publicacion = await this.prisma.publicacion.findUnique({
-                where: { id },
+                where: { id: BigInt(id) },
                 select: {
                     propietarioId: true,
                     estado: true,
@@ -351,14 +354,14 @@ let PublicacionesService = class PublicacionesService {
             if (!publicacion) {
                 throw new common_1.NotFoundException('Publicación no encontrada');
             }
-            if (publicacion.propietarioId !== usuarioId) {
+            if (publicacion.propietarioId !== BigInt(usuarioId)) {
                 throw new common_1.ForbiddenException('No tienes permisos para eliminar esta publicación');
             }
             if (publicacion._count.reservas > 0) {
                 throw new common_1.BadRequestException('No se puede eliminar una publicación con reservas activas');
             }
             await this.prisma.publicacion.update({
-                where: { id },
+                where: { id: BigInt(id) },
                 data: {
                     estado: client_1.EstadoPublicacion.ELIMINADA,
                     disponible: false
@@ -376,7 +379,7 @@ let PublicacionesService = class PublicacionesService {
     }
     async obtenerPublicacionesUsuario(usuarioId, filtros) {
         const condiciones = {
-            propietarioId: usuarioId,
+            propietarioId: BigInt(usuarioId),
             estado: client_1.EstadoPublicacion.ACTIVA,
         };
         if (filtros.busqueda) {
@@ -474,7 +477,7 @@ let PublicacionesService = class PublicacionesService {
         try {
             const reservas = await this.prisma.reserva.findMany({
                 where: {
-                    publicacionId: id,
+                    publicacionId: BigInt(id),
                     estado: { in: [client_1.EstadoReserva.PENDIENTE, client_1.EstadoReserva.CONFIRMADA, client_1.EstadoReserva.EN_CURSO] },
                 },
                 select: { fechaInicio: true, fechaFin: true },
@@ -496,7 +499,7 @@ let PublicacionesService = class PublicacionesService {
             }
             const solapadas = await this.prisma.reserva.count({
                 where: {
-                    publicacionId: id,
+                    publicacionId: BigInt(id),
                     estado: { in: [client_1.EstadoReserva.PENDIENTE, client_1.EstadoReserva.CONFIRMADA, client_1.EstadoReserva.EN_CURSO] },
                     NOT: {
                         OR: [
@@ -617,68 +620,68 @@ let PublicacionesService = class PublicacionesService {
         return camposCriticos.some(campo => datosActualizacion[campo] !== undefined);
     }
     async listarImagenes(publicacionId) {
-        const pub = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { id: true } });
+        const pub = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { id: true } });
         if (!pub)
             throw new common_1.NotFoundException('Publicación no encontrada');
-        return await this.prisma.imagenPublicacion.findMany({ where: { publicacionId }, orderBy: { orden: 'asc' } });
+        return await this.prisma.imagenPublicacion.findMany({ where: { publicacionId: BigInt(publicacionId) }, orderBy: { orden: 'asc' } });
     }
     async guardarImagenes(publicacionId, usuarioId, images) {
         if (!Array.isArray(images) || images.length === 0)
             throw new common_1.BadRequestException('Sin imágenes');
         if (images.length > 5)
             throw new common_1.BadRequestException('Máximo 5 imágenes por publicación');
-        const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { propietarioId: true } });
+        const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { propietarioId: true } });
         if (!existente)
             throw new common_1.NotFoundException('Publicación no encontrada');
-        if (existente.propietarioId !== usuarioId)
+        if (existente.propietarioId !== BigInt(usuarioId))
             throw new common_1.ForbiddenException('No autorizado');
-        const actuales = await this.prisma.imagenPublicacion.count({ where: { publicacionId } });
+        const actuales = await this.prisma.imagenPublicacion.count({ where: { publicacionId: BigInt(publicacionId) } });
         if (actuales + images.length > 5)
             throw new common_1.BadRequestException('Se excede el máximo de 5 imágenes');
         const principalSolicitado = images.find((i) => i.esPrincipal === true);
-        const maxOrden = await this.prisma.imagenPublicacion.aggregate({ where: { publicacionId }, _max: { orden: true } });
+        const maxOrden = await this.prisma.imagenPublicacion.aggregate({ where: { publicacionId: BigInt(publicacionId) }, _max: { orden: true } });
         let baseOrden = (maxOrden._max.orden ?? -1) + 1;
         const data = images.map((img) => ({
             url: img.url,
             descripcion: img.descripcion ?? null,
             orden: img.orden ?? baseOrden++,
             esPrincipal: img.esPrincipal === true,
-            publicacionId,
+            publicacionId: BigInt(publicacionId),
         }));
         const created = await this.prisma.$transaction(async (tx) => {
             if (principalSolicitado) {
-                await tx.imagenPublicacion.updateMany({ where: { publicacionId }, data: { esPrincipal: false } });
+                await tx.imagenPublicacion.updateMany({ where: { publicacionId: BigInt(publicacionId) }, data: { esPrincipal: false } });
             }
             await tx.imagenPublicacion.createMany({ data });
-            const nuevas = await tx.imagenPublicacion.findMany({ where: { publicacionId }, orderBy: { orden: 'asc' } });
+            const nuevas = await tx.imagenPublicacion.findMany({ where: { publicacionId: BigInt(publicacionId) }, orderBy: { orden: 'asc' } });
             return nuevas;
         });
         return created;
     }
     async setImagenPrincipal(publicacionId, usuarioId, imagenId) {
-        const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { propietarioId: true } });
+        const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { propietarioId: true } });
         if (!existente)
             throw new common_1.NotFoundException('Publicación no encontrada');
-        if (existente.propietarioId !== usuarioId)
+        if (existente.propietarioId !== BigInt(usuarioId))
             throw new common_1.ForbiddenException('No autorizado');
-        const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: imagenId } });
-        if (!imagen || imagen.publicacionId !== publicacionId)
+        const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: BigInt(imagenId) } });
+        if (!imagen || imagen.publicacionId !== BigInt(publicacionId))
             throw new common_1.NotFoundException('Imagen no encontrada');
         await this.prisma.$transaction([
-            this.prisma.imagenPublicacion.updateMany({ where: { publicacionId }, data: { esPrincipal: false } }),
-            this.prisma.imagenPublicacion.update({ where: { id: imagenId }, data: { esPrincipal: true } }),
+            this.prisma.imagenPublicacion.updateMany({ where: { publicacionId: BigInt(publicacionId) }, data: { esPrincipal: false } }),
+            this.prisma.imagenPublicacion.update({ where: { id: BigInt(imagenId) }, data: { esPrincipal: true } }),
         ]);
     }
     async eliminarImagen(publicacionId, usuarioId, imagenId) {
-        const existente = await this.prisma.publicacion.findUnique({ where: { id: publicacionId }, select: { propietarioId: true } });
+        const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { propietarioId: true } });
         if (!existente)
             throw new common_1.NotFoundException('Publicación no encontrada');
-        if (existente.propietarioId !== usuarioId)
+        if (existente.propietarioId !== BigInt(usuarioId))
             throw new common_1.ForbiddenException('No autorizado');
-        const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: imagenId } });
-        if (!imagen || imagen.publicacionId !== publicacionId)
+        const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: BigInt(imagenId) } });
+        if (!imagen || imagen.publicacionId !== BigInt(publicacionId))
             throw new common_1.NotFoundException('Imagen no encontrada');
-        await this.prisma.imagenPublicacion.delete({ where: { id: imagenId } });
+        await this.prisma.imagenPublicacion.delete({ where: { id: BigInt(imagenId) } });
     }
 };
 exports.PublicacionesService = PublicacionesService;

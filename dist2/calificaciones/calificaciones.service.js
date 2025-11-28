@@ -18,22 +18,22 @@ let CalificacionesService = class CalificacionesService {
         this.prisma = prisma;
     }
     async crear(usuarioId, dto) {
-        const reserva = await this.prisma.reserva.findUnique({ where: { id: dto.reservaId } });
+        const reserva = await this.prisma.reserva.findUnique({ where: { id: BigInt(dto.reservaId) } });
         if (!reserva)
             throw new common_1.NotFoundException('Reserva no encontrada');
-        if (reserva.usuarioId !== usuarioId)
+        if (reserva.usuarioId !== BigInt(usuarioId))
             throw new common_1.ForbiddenException('No autorizado para calificar esta reserva');
         if (reserva.estado !== 'COMPLETADA')
             throw new common_1.BadRequestException('Solo se puede calificar reservas completadas');
-        const yaExiste = await this.prisma.calificacion.findFirst({ where: { reservaId: dto.reservaId, usuarioCalificadorId: usuarioId } });
+        const yaExiste = await this.prisma.calificacion.findFirst({ where: { reservaId: BigInt(dto.reservaId), usuarioCalificadorId: BigInt(usuarioId) } });
         if (yaExiste)
             throw new common_1.BadRequestException('Ya has calificado esta reserva');
         try {
             const calificacion = await this.prisma.calificacion.create({
                 data: {
-                    reservaId: dto.reservaId,
+                    reservaId: BigInt(dto.reservaId),
                     publicacionId: reserva.publicacionId,
-                    usuarioCalificadorId: usuarioId,
+                    usuarioCalificadorId: BigInt(usuarioId),
                     usuarioCalificadoId: reserva.propietarioId,
                     puntuacion: dto.puntuacion,
                     comentario: dto.comentario ?? null,
@@ -79,7 +79,7 @@ let CalificacionesService = class CalificacionesService {
     }
     async listarPorPublicacion(publicacionId, take = 10, skip = 0) {
         const calificaciones = await this.prisma.calificacion.findMany({
-            where: { publicacionId },
+            where: { publicacionId: BigInt(publicacionId) },
             include: {
                 usuarioCalificador: { select: { id: true, nombre: true, apellido: true } },
             },

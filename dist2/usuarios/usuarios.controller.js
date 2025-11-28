@@ -237,7 +237,8 @@ __decorate([
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
         storage: (0, multer_1.diskStorage)({
             destination: (req, file, cb) => {
-                const dest = path.join(__dirname, '..', '..', 'uploads', 'usuarios', req.params.id);
+                const base = process.env.UPLOAD_PATH || path.join(__dirname, '..', '..', 'uploads');
+                const dest = path.join(base, 'usuarios', req.params.id);
                 fs.mkdirSync(dest, { recursive: true });
                 cb(null, dest);
             },

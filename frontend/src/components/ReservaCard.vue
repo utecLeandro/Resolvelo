@@ -223,7 +223,7 @@ interface ReservaArrendatario {
   id: string
   fechaInicio: string
   fechaFin: string
-  precioTotal: number
+  precioTotal: number | string
   telefonoContacto?: string
   estado: 'PENDIENTE' | 'CONFIRMADA' | 'EN_CURSO' | 'COMPLETADA' | 'RECHAZADA' | 'CANCELADA'
   motivoRechazo?: string
@@ -232,7 +232,7 @@ interface ReservaArrendatario {
     id: string
     titulo: string
     descripcion: string
-    precioPorDia: number
+    precioPorDia: number | string
     categoria: string
     direccion: string
     ciudad: string
@@ -299,18 +299,20 @@ const formatearEstado = (estado: string): string => {
 }
 
 const formatearFecha = (fecha: string): string => {
-  return new Date(fecha).toLocaleDateString('es-ES', {
+  return new Date(fecha).toLocaleDateString('es-UY', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
   })
 }
 
-const formatearPrecio = (precio: number): string => {
+const formatearPrecio = (precio: number | string): string => {
+  const num = typeof precio === 'string' ? parseFloat(precio) : precio
+  if (isNaN(num)) return '0'
   return new Intl.NumberFormat('es-UY', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(precio)
+  }).format(num)
 }
 
 const errorImg = ref(false)

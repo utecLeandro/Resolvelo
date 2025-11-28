@@ -19,7 +19,30 @@ import type { Request, Response, NextFunction } from 'express';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { NotificacionesService } from './notificaciones/notificaciones.service'
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
+import { Observable } from 'rxjs'
+import { map } from 'rxjs/operators'
 
+@Injectable()
+class BigIntSerializerInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    return next.handle().pipe(map((data: any) => serializeBigInt(data)))
+  }
+}
+
+function serializeBigInt(v: any): any {
+  if (typeof v === 'bigint') return v.toString()
+  if (v instanceof Date) return v.toISOString()
+  if (v instanceof (Prisma as any).Decimal) return v.toString()
+  if (Array.isArray(v)) return v.map(serializeBigInt)
+  if (v && typeof v === 'object') {
+    const out: any = {}
+    for (const k of Object.keys(v)) out[k] = serializeBigInt((v as any)[k])
+    return out
+  }
+  return v
+}
 async function bootstrap() {
   console.log('[Main] Import debug -> typeof TransaccionesModule =', typeof TransaccionesModule);
   console.log('[Main] Bootstrap iniciando...')
@@ -133,6 +156,7 @@ async function bootstrap() {
 
     const notificacionesService = app.get(NotificacionesService)
     mensajesService = new MensajesService(prismaService, notificacionesService)
+    app.useGlobalInterceptors(new BigIntSerializerInterceptor())
 
     express.get('/api/notificaciones/stream', async (req: Request, res: Response) => {
       try {
@@ -147,7 +171,7 @@ async function bootstrap() {
         res.write(`data: ${JSON.stringify({ tipo: 'COUNTER', noLeidas: init.noLeidas })}\n\n`)
         const sub = notificacionesService.stream.subscribe(({ usuarioId, data }) => {
           if (usuarioId !== userId) return
-          try { res.write(`data: ${JSON.stringify(data)}\n\n`) } catch {}
+          try { res.write(`data: ${JSON.stringify(serializeBigInt(data))}\n\n`) } catch {}
         })
         req.on('close', () => { try { sub.unsubscribe() } catch {} })
       } catch (e) {
@@ -162,7 +186,7 @@ async function bootstrap() {
         const dto = (req as any).body || {};
         console.log('[MensajesFallback] userId=', userId, 'dto=', dto)
         const resp = await mensajesService.enviarMensaje(dto, userId);
-        res.json(resp);
+        res.json(serializeBigInt(resp));
       } catch (e) {
         const msg = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
         const code = /no autorizado|token inválido/i.test(msg) ? 401 : 400;
@@ -206,7 +230,7 @@ async function bootstrap() {
         const take = req.query.take ? parseInt(String(req.query.take)) : 10;
         const skip = req.query.skip ? parseInt(String(req.query.skip)) : 0;
         const resultado = await calificacionesService.listarPorPublicacion(String(req.params.id), take, skip);
-        res.json({ ...resultado, timestamp: new Date().toISOString() });
+        res.json(serializeBigInt({ ...resultado, timestamp: new Date().toISOString() }));
       } catch (e) {
         const msg = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
         res.status(400).json({ message: msg });
@@ -218,7 +242,7 @@ async function bootstrap() {
       try {
         const userId = await authUserId(req);
         const resp = await mensajesService.listarPorReserva(String(req.params.reservaId), userId);
-        res.json(resp);
+        res.json(serializeBigInt(resp));
       } catch (e) {
         const msg = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
         const code = /no autorizado|token inválido/i.test(msg) ? 401 : 400;
@@ -231,7 +255,7 @@ async function bootstrap() {
       try {
         const userId = await authUserId(req);
         const resp = await mensajesService.marcarLeidos(String(req.params.reservaId), userId);
-        res.json(resp);
+        res.json(serializeBigInt(resp));
       } catch (e) {
         const msg = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
         const code = /no autorizado|token inválido/i.test(msg) ? 401 : 400;
@@ -243,7 +267,7 @@ async function bootstrap() {
       try {
         const userId = await authUserId(req);
         const resp = await mensajesService.listarMisConversaciones(userId);
-        res.json(resp);
+        res.json(serializeBigInt(resp));
       } catch (e) {
         const msg = typeof e === 'object' && e && 'message' in (e as any) ? (e as any).message : String(e);
         const code = /no autorizado|token inválido/i.test(msg) ? 401 : 400;

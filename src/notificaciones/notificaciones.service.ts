@@ -14,17 +14,17 @@ export class NotificacionesService {
     return this.sse.asObservable()
   }
 
-  emitir(usuarioId: string, data: any) {
-    try { this.sse.next({ usuarioId, data }) } catch {}
+  emitir(usuarioId: string | number | bigint, data: any) {
+    try { this.sse.next({ usuarioId: String(usuarioId), data }) } catch {}
   }
 
-  async listar(usuarioId: string) {
+  async listar(usuarioId: string | number | bigint) {
     if (!usuarioId) throw new BadRequestException('Usuario no autenticado')
-    const usuario = await this.prisma.usuario.findUnique({ where: { id: usuarioId }, select: { fechaUltimoAcceso: true } })
+    const usuario = await this.prisma.usuario.findUnique({ where: { id: typeof usuarioId === 'bigint' ? usuarioId : BigInt(usuarioId) }, select: { fechaUltimoAcceso: true } })
     const ultimoVisto = usuario?.fechaUltimoAcceso ?? new Date(0)
 
     const reservasRecibidas = await this.prisma.reserva.findMany({
-      where: { propietarioId: usuarioId },
+      where: { propietarioId: typeof usuarioId === 'bigint' ? usuarioId : BigInt(usuarioId) },
       orderBy: { fechaCreacion: 'desc' },
       take: 20,
       select: {
@@ -41,8 +41,8 @@ export class NotificacionesService {
     const reservasActualizadas = await this.prisma.reserva.findMany({
       where: {
         OR: [
-          { usuarioId: usuarioId },
-          { propietarioId: usuarioId },
+          { usuarioId: typeof usuarioId === 'bigint' ? usuarioId : BigInt(usuarioId) },
+          { propietarioId: typeof usuarioId === 'bigint' ? usuarioId : BigInt(usuarioId) },
         ],
         fechaActualizacion: { gt: ultimoVisto }
       },
@@ -59,7 +59,7 @@ export class NotificacionesService {
     })
 
     const mensajes = await this.prisma.mensaje.findMany({
-      where: { receptorId: usuarioId },
+      where: { receptorId: typeof usuarioId === 'bigint' ? usuarioId : BigInt(usuarioId) },
       orderBy: { fechaCreacion: 'desc' },
       take: 20,
       select: {
@@ -73,7 +73,7 @@ export class NotificacionesService {
     })
 
     const calificaciones = await this.prisma.calificacion.findMany({
-      where: { publicacion: { propietarioId: usuarioId } },
+      where: { publicacion: { propietarioId: typeof usuarioId === 'bigint' ? usuarioId : BigInt(usuarioId) } },
       orderBy: { fechaCreacion: 'desc' },
       take: 20,
       select: {
@@ -87,7 +87,7 @@ export class NotificacionesService {
     })
 
     const moderaciones = await this.prisma.moderaccionPublicacion.findMany({
-      where: { publicacion: { propietarioId: usuarioId } },
+      where: { publicacion: { propietarioId: typeof usuarioId === 'bigint' ? usuarioId : BigInt(usuarioId) } },
       orderBy: { fechaCreacion: 'desc' },
       take: 20,
       select: {
@@ -160,18 +160,18 @@ export class NotificacionesService {
     return { items, noLeidas }
   }
 
-  async marcarLeidas(usuarioId: string) {
+  async marcarLeidas(usuarioId: string | number | bigint) {
     if (!usuarioId) throw new BadRequestException('Usuario no autenticado')
     await this.prisma.$transaction([
-      this.prisma.usuario.update({ where: { id: usuarioId }, data: { fechaUltimoAcceso: new Date() } }),
-      this.prisma.mensaje.updateMany({ where: { receptorId: usuarioId, leido: false }, data: { leido: true, fechaLectura: new Date() } }),
+      this.prisma.usuario.update({ where: { id: typeof usuarioId === 'bigint' ? usuarioId : BigInt(usuarioId) }, data: { fechaUltimoAcceso: new Date() } }),
+      this.prisma.mensaje.updateMany({ where: { receptorId: typeof usuarioId === 'bigint' ? usuarioId : BigInt(usuarioId), leido: false }, data: { leido: true, fechaLectura: new Date() } }),
     ])
     return { ok: true }
   }
 
-  async enviarEmail(usuarioId: string, asunto: string, html: string) {
+  async enviarEmail(usuarioId: string | number | bigint, asunto: string, html: string) {
     try {
-      const usuario = await this.prisma.usuario.findUnique({ where: { id: usuarioId }, select: { email: true, nombre: true, notificacionesEmail: true } })
+      const usuario = await this.prisma.usuario.findUnique({ where: { id: typeof usuarioId === 'bigint' ? usuarioId : BigInt(usuarioId) }, select: { email: true, nombre: true, notificacionesEmail: true } })
       if (!usuario?.email || usuario?.notificacionesEmail === false) return
       const from = (process.env.EMAIL_FROM || 'noreply@resolvelo.com').trim()
       const region = (process.env.AWS_REGION || 'us-east-1').trim()

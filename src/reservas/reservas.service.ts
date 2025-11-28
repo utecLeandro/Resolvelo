@@ -24,7 +24,7 @@ export class ReservasService {
       console.log('🔍 [SERVICE] obtenerSolicitudesPendientes - Buscando solicitudes para propietarioId:', propietarioId);
       const solicitudes = await this.prisma.reserva.findMany({
         where: {
-          propietarioId: propietarioId,
+          propietarioId: BigInt(propietarioId),
           estado: 'PENDIENTE'
         },
         include: {
@@ -88,7 +88,7 @@ export class ReservasService {
       console.log('🔍 [SERVICE] obtenerTodasLasSolicitudes - Buscando todas las solicitudes para propietarioId:', propietarioId);
       const solicitudes = await this.prisma.reserva.findMany({
         where: {
-          propietarioId: propietarioId
+          propietarioId: BigInt(propietarioId)
         },
         include: {
           usuario: {
@@ -151,7 +151,7 @@ export class ReservasService {
     try {
       // 1. Validar que la publicación existe y está disponible
       const publicacion = await this.prisma.publicacion.findUnique({
-        where: { id: createReservaDto.publicacionId },
+        where: { id: BigInt(createReservaDto.publicacionId) },
         select: {
           id: true,
           titulo: true,
@@ -171,7 +171,7 @@ export class ReservasService {
 
       // 2. Validar que el usuario existe
       const usuario = await this.prisma.usuario.findUnique({
-        where: { id: createReservaDto.usuarioId },
+        where: { id: BigInt(createReservaDto.usuarioId) },
         select: { id: true, nombre: true, email: true }
       });
 
@@ -180,7 +180,7 @@ export class ReservasService {
       }
 
       // 3. Validar que el propietario existe y coincide con la publicación
-      if (publicacion.propietarioId !== createReservaDto.propietarioId) {
+      if (publicacion.propietarioId !== BigInt(createReservaDto.propietarioId)) {
         throw new BadRequestException('El propietario especificado no coincide con el propietario de la publicación');
       }
 
@@ -210,7 +210,7 @@ export class ReservasService {
       // 5. Verificar que no existan reservas conflictivas (solapamiento de fechas)
       const reservasConflictivas = await this.prisma.reserva.findMany({
         where: {
-          publicacionId: createReservaDto.publicacionId,
+          publicacionId: BigInt(createReservaDto.publicacionId),
           estado: {
             in: ['PENDIENTE', 'CONFIRMADA', 'EN_CURSO']
           },
@@ -252,9 +252,9 @@ export class ReservasService {
       // 7. Crear la reserva
       const reserva = await this.prisma.reserva.create({
         data: {
-          usuarioId: createReservaDto.usuarioId,
-          publicacionId: createReservaDto.publicacionId,
-          propietarioId: createReservaDto.propietarioId,
+          usuarioId: BigInt(createReservaDto.usuarioId),
+          publicacionId: BigInt(createReservaDto.publicacionId),
+          propietarioId: BigInt(createReservaDto.propietarioId),
           fechaInicio: fechaInicio,
           fechaFin: fechaFin,
           precioTotal: createReservaDto.precioTotal,
@@ -295,7 +295,7 @@ export class ReservasService {
       });
 
       if (this.notificaciones) {
-        await this.notificaciones.emitirReservaNueva(reserva.propietarioId, reserva)
+        await this.notificaciones.emitirReservaNueva(String(reserva.propietarioId), reserva)
       }
       return {
         success: true,
@@ -315,7 +315,7 @@ export class ReservasService {
 
   async obtenerReservas(usuarioId?: string) {
     try {
-      const where = usuarioId ? { usuarioId } : {};
+      const where = usuarioId ? { usuarioId: BigInt(usuarioId) } : {};
       
       const reservas = await this.prisma.reserva.findMany({
         where,
@@ -347,7 +347,7 @@ export class ReservasService {
           id: r.id,
           usuarioId: r.usuarioId,
           propietarioId: r.propietarioId,
-          publicacionTitulo: r.publicacion.titulo
+          publicacionTitulo: (r as any).publicacion?.titulo
         }))
       });
 
@@ -368,7 +368,7 @@ export class ReservasService {
   async obtenerReservaPorId(id: string) {
     try {
       const reserva = await this.prisma.reserva.findUnique({
-        where: { id },
+        where: { id: BigInt(id) },
         include: {
           usuario: {
             select: {
@@ -419,7 +419,7 @@ export class ReservasService {
       console.log('🔍 [SERVICE] obtenerReservasArrendatario - Buscando reservas para usuarioId:', usuarioId);
       const reservas = await this.prisma.reserva.findMany({
         where: { 
-          usuarioId: usuarioId 
+          usuarioId: BigInt(usuarioId) 
         },
         include: {
           publicacion: {
@@ -475,7 +475,7 @@ export class ReservasService {
     try {
       // Verificar que la reserva existe
       const reservaExistente = await this.prisma.reserva.findUnique({
-        where: { id }
+        where: { id: BigInt(id) }
       });
 
       if (!reservaExistente) {
@@ -490,7 +490,7 @@ export class ReservasService {
       if (data.precioTotal) updateData.precioTotal = data.precioTotal;
 
       const reserva = await this.prisma.reserva.update({
-        where: { id },
+        where: { id: BigInt(id) },
         data: updateData,
         include: {
           usuario: {
@@ -562,7 +562,7 @@ export class ReservasService {
       
       const reservas = await this.prisma.reserva.findMany({
         where: { 
-          propietarioId: propietarioId,
+          propietarioId: BigInt(propietarioId),
           estado: 'EN_CURSO',
           transacciones: {
             some: {
@@ -643,7 +643,7 @@ export class ReservasService {
       
       const reservas = await this.prisma.reserva.findMany({
         where: { 
-          propietarioId: propietarioId,
+          propietarioId: BigInt(propietarioId),
           // Unificamos estados de cancelación en 'CANCELADA' según el esquema actual
           estado: { in: ['COMPLETADA', 'CANCELADA', 'RECHAZADA'] }
         },

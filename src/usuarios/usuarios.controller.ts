@@ -91,7 +91,8 @@ export class UsuariosController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          const dest = path.join(__dirname, '..', '..', 'uploads', 'usuarios', req.params.id)
+          const base = process.env.UPLOAD_PATH || path.join(__dirname, '..', '..', 'uploads')
+          const dest = path.join(base, 'usuarios', req.params.id)
           fs.mkdirSync(dest, { recursive: true })
           cb(null, dest)
         },

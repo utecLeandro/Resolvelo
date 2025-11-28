@@ -28,7 +28,7 @@ let ReservasService = class ReservasService {
             console.log('🔍 [SERVICE] obtenerSolicitudesPendientes - Buscando solicitudes para propietarioId:', propietarioId);
             const solicitudes = await this.prisma.reserva.findMany({
                 where: {
-                    propietarioId: propietarioId,
+                    propietarioId: BigInt(propietarioId),
                     estado: 'PENDIENTE'
                 },
                 include: {
@@ -87,7 +87,7 @@ let ReservasService = class ReservasService {
             console.log('🔍 [SERVICE] obtenerTodasLasSolicitudes - Buscando todas las solicitudes para propietarioId:', propietarioId);
             const solicitudes = await this.prisma.reserva.findMany({
                 where: {
-                    propietarioId: propietarioId
+                    propietarioId: BigInt(propietarioId)
                 },
                 include: {
                     usuario: {
@@ -144,7 +144,7 @@ let ReservasService = class ReservasService {
     async crearReserva(createReservaDto) {
         try {
             const publicacion = await this.prisma.publicacion.findUnique({
-                where: { id: createReservaDto.publicacionId },
+                where: { id: BigInt(createReservaDto.publicacionId) },
                 select: {
                     id: true,
                     titulo: true,
@@ -160,13 +160,13 @@ let ReservasService = class ReservasService {
                 throw new common_1.BadRequestException('La publicación no está disponible para reservas');
             }
             const usuario = await this.prisma.usuario.findUnique({
-                where: { id: createReservaDto.usuarioId },
+                where: { id: BigInt(createReservaDto.usuarioId) },
                 select: { id: true, nombre: true, email: true }
             });
             if (!usuario) {
                 throw new common_1.NotFoundException('El usuario especificado no existe');
             }
-            if (publicacion.propietarioId !== createReservaDto.propietarioId) {
+            if (publicacion.propietarioId !== BigInt(createReservaDto.propietarioId)) {
                 throw new common_1.BadRequestException('El propietario especificado no coincide con el propietario de la publicación');
             }
             const fechaInicio = new Date(createReservaDto.fechaInicio);
@@ -187,7 +187,7 @@ let ReservasService = class ReservasService {
             }
             const reservasConflictivas = await this.prisma.reserva.findMany({
                 where: {
-                    publicacionId: createReservaDto.publicacionId,
+                    publicacionId: BigInt(createReservaDto.publicacionId),
                     estado: {
                         in: ['PENDIENTE', 'CONFIRMADA', 'EN_CURSO']
                     },
@@ -221,9 +221,9 @@ let ReservasService = class ReservasService {
             }
             const reserva = await this.prisma.reserva.create({
                 data: {
-                    usuarioId: createReservaDto.usuarioId,
-                    publicacionId: createReservaDto.publicacionId,
-                    propietarioId: createReservaDto.propietarioId,
+                    usuarioId: BigInt(createReservaDto.usuarioId),
+                    publicacionId: BigInt(createReservaDto.publicacionId),
+                    propietarioId: BigInt(createReservaDto.propietarioId),
                     fechaInicio: fechaInicio,
                     fechaFin: fechaFin,
                     precioTotal: createReservaDto.precioTotal,
@@ -263,7 +263,7 @@ let ReservasService = class ReservasService {
                 },
             });
             if (this.notificaciones) {
-                await this.notificaciones.emitirReservaNueva(reserva.propietarioId, reserva);
+                await this.notificaciones.emitirReservaNueva(String(reserva.propietarioId), reserva);
             }
             return {
                 success: true,
@@ -280,7 +280,7 @@ let ReservasService = class ReservasService {
     }
     async obtenerReservas(usuarioId) {
         try {
-            const where = usuarioId ? { usuarioId } : {};
+            const where = usuarioId ? { usuarioId: BigInt(usuarioId) } : {};
             const reservas = await this.prisma.reserva.findMany({
                 where,
                 include: {
@@ -310,7 +310,7 @@ let ReservasService = class ReservasService {
                     id: r.id,
                     usuarioId: r.usuarioId,
                     propietarioId: r.propietarioId,
-                    publicacionTitulo: r.publicacion.titulo
+                    publicacionTitulo: r.publicacion?.titulo
                 }))
             });
             return {
@@ -330,7 +330,7 @@ let ReservasService = class ReservasService {
     async obtenerReservaPorId(id) {
         try {
             const reserva = await this.prisma.reserva.findUnique({
-                where: { id },
+                where: { id: BigInt(id) },
                 include: {
                     usuario: {
                         select: {
@@ -378,7 +378,7 @@ let ReservasService = class ReservasService {
             console.log('🔍 [SERVICE] obtenerReservasArrendatario - Buscando reservas para usuarioId:', usuarioId);
             const reservas = await this.prisma.reserva.findMany({
                 where: {
-                    usuarioId: usuarioId
+                    usuarioId: BigInt(usuarioId)
                 },
                 include: {
                     publicacion: {
@@ -432,7 +432,7 @@ let ReservasService = class ReservasService {
     async actualizarReserva(id, data) {
         try {
             const reservaExistente = await this.prisma.reserva.findUnique({
-                where: { id }
+                where: { id: BigInt(id) }
             });
             if (!reservaExistente) {
                 throw new common_1.NotFoundException('Reserva no encontrada');
@@ -447,7 +447,7 @@ let ReservasService = class ReservasService {
             if (data.precioTotal)
                 updateData.precioTotal = data.precioTotal;
             const reserva = await this.prisma.reserva.update({
-                where: { id },
+                where: { id: BigInt(id) },
                 data: updateData,
                 include: {
                     usuario: {
@@ -507,7 +507,7 @@ let ReservasService = class ReservasService {
             console.log('🔍 [SERVICE] obtenerReservasActivasPropietario - Buscando reservas para propietarioId:', propietarioId);
             const reservas = await this.prisma.reserva.findMany({
                 where: {
-                    propietarioId: propietarioId,
+                    propietarioId: BigInt(propietarioId),
                     estado: 'EN_CURSO',
                     transacciones: {
                         some: {
@@ -582,7 +582,7 @@ let ReservasService = class ReservasService {
             console.log('🔍 [SERVICE] obtenerHistorialReservasPropietario - Buscando historial para propietarioId:', propietarioId);
             const reservas = await this.prisma.reserva.findMany({
                 where: {
-                    propietarioId: propietarioId,
+                    propietarioId: BigInt(propietarioId),
                     estado: { in: ['COMPLETADA', 'CANCELADA', 'RECHAZADA'] }
                 },
                 include: {

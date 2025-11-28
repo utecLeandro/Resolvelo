@@ -8,7 +8,7 @@ export class UsuariosService {
 
   async obtenerPorId(id: string) {
     const usuario = await this.prisma.usuario.findUnique({
-      where: { id },
+      where: { id: BigInt(id) },
       select: {
         id: true,
         nombre: true,
@@ -39,13 +39,13 @@ export class UsuariosService {
       throw new BadRequestException('No se enviaron cambios para actualizar')
     }
 
-    const usuarioExistente = await this.prisma.usuario.findUnique({ where: { id } })
+    const usuarioExistente = await this.prisma.usuario.findUnique({ where: { id: BigInt(id) } })
     if (!usuarioExistente) {
       throw new NotFoundException('Usuario no encontrado')
     }
 
     const actualizado = await this.prisma.usuario.update({
-      where: { id },
+      where: { id: BigInt(id) },
       data: {
         nombre: data.nombre ?? undefined,
         apellido: data.apellido ?? undefined,
@@ -71,12 +71,12 @@ export class UsuariosService {
   }
 
   async actualizarAvatar(id: string, avatarUrl: string) {
-    const usuarioExistente = await this.prisma.usuario.findUnique({ where: { id } })
+    const usuarioExistente = await this.prisma.usuario.findUnique({ where: { id: BigInt(id) } })
     if (!usuarioExistente) {
       throw new NotFoundException('Usuario no encontrado')
     }
     const actualizado = await this.prisma.usuario.update({
-      where: { id },
+      where: { id: BigInt(id) },
       data: { avatarUrl },
       select: { id: true, avatarUrl: true }
     })

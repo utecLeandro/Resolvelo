@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
   <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
@@ -198,12 +198,19 @@ const calcularDias = () => {
   if (!reserva.value) return 0
   const inicio = new Date(reserva.value.fechaInicio)
   const fin = new Date(reserva.value.fechaFin)
-  return Math.ceil((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) + 1
+  const diff = (fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)
+  const val = Math.ceil(diff) + 1
+  return isNaN(val) ? 0 : val
 }
 
 const calcularTotal = () => {
   if (!reserva.value) return 0
-  return reserva.value.publicacion.precioPorDia * calcularDias()
+  const precioPorDiaRaw = reserva.value.publicacion?.precioPorDia
+  const precioPorDia = typeof precioPorDiaRaw === 'string' ? parseFloat(precioPorDiaRaw) : Number(precioPorDiaRaw)
+  if (isNaN(precioPorDia)) return 0
+  const dias = calcularDias()
+  if (isNaN(dias)) return 0
+  return precioPorDia * dias
 }
 
 const formatearFecha = (fecha: string) => {
