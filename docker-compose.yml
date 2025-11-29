@@ -114,7 +114,7 @@ services:
       VERIFICATION_SERVICE_URL: http://localhost:3000/api/mock-verification
       VERIFICATION_SERVICE_KEY: mock_verification_key
       
-    command: sh -c "npx prisma db push --accept-data-loss --schema prisma/schema.prisma && node dist2/main"
+    command: sh -c "npx prisma db push --accept-data-loss --schema prisma/schema.prisma && node dist/main"
     ports:
       - "3000:3000"
     volumes:
