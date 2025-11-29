@@ -1,8 +1,18 @@
-import { Controller, Get, Patch, UseGuards, HttpCode, HttpStatus, Param, Body, Request } from '@nestjs/common'
-import { AdminService } from './admin.service'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { AdminGuard } from '../auth/admin.guard'
-import { CambiarRolDto } from './dto/cambiar-rol.dto'
+import {
+  Controller,
+  Get,
+  Patch,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Body,
+  Request,
+} from '@nestjs/common';
+import { AdminService } from './admin.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
+import { CambiarRolDto } from './dto/cambiar-rol.dto';
 
 @Controller('admin')
 export class AdminRolesController {
@@ -11,7 +21,7 @@ export class AdminRolesController {
   @Get('roles')
   @UseGuards(JwtAuthGuard, AdminGuard)
   async listarRoles() {
-    return this.adminService.listarRoles()
+    return this.adminService.listarRoles();
   }
 
   @Patch('usuarios/:id/rol')
@@ -22,6 +32,6 @@ export class AdminRolesController {
     @Body() body: CambiarRolDto,
     @Request() req: any,
   ) {
-    return this.adminService.cambiarRolUsuario(req.user.id, id, body.rol)
+    return this.adminService.cambiarRolUsuario(req.user.id, id, body.rol);
   }
 }

@@ -1,20 +1,20 @@
-import { Controller, Get } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
+import { Controller, Get } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
-@Controller("admin-debug")
+@Controller('admin-debug')
 export class AdminDebugController {
   constructor(private readonly prisma: PrismaService) {
     console.log(
-      "[AdminDebugController] Cargado y listo. Ruta: GET /api/admin-debug/ping",
+      '[AdminDebugController] Cargado y listo. Ruta: GET /api/admin-debug/ping',
     );
   }
 
-  @Get("ping")
+  @Get('ping')
   ping() {
     return { ok: true, ts: new Date().toISOString() };
   }
 
-  @Get("db-check")
+  @Get('db-check')
   async checkDb() {
     try {
       // 1. Verificar conexión básica
@@ -29,7 +29,7 @@ export class AdminDebugController {
       const userCount = await this.prisma.usuario.count();
 
       return {
-        status: "online",
+        status: 'online',
         connection: connectionCheck,
         tableCount: tables.length,
         tables: tables.map((t) => t.table_name),
@@ -38,7 +38,7 @@ export class AdminDebugController {
       };
     } catch (error: any) {
       return {
-        status: "offline",
+        status: 'offline',
         error: error.message,
         timestamp: new Date().toISOString(),
       };

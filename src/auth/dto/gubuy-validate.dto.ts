@@ -1,22 +1,22 @@
-import { IsString, IsEmail, MinLength } from 'class-validator'
+import { IsString, IsEmail, MinLength } from 'class-validator';
 
 export class GubuyValidateDto {
   @IsString()
   @MinLength(1)
-  nombre!: string
+  nombre!: string;
 
   @IsString()
   @MinLength(1)
-  apellido!: string
+  apellido!: string;
 
   @IsString()
   @MinLength(3)
-  documentoIdentidad!: string
+  documentoIdentidad!: string;
 
   @IsEmail()
-  email!: string
+  email!: string;
 
   @IsString()
   @MinLength(6)
-  password!: string
+  password!: string;
 }

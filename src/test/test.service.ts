@@ -1,8 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class TestService {
   test() {
-    return { message: "Módulo de prueba funcionando correctamente" };
+    return { message: 'Módulo de prueba funcionando correctamente' };
   }
 }

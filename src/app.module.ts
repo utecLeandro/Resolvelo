@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Module } from '@nestjs/common';
+﻿import { Module } from '@nestjs/common';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -27,18 +27,28 @@ import { ImagenesModule } from './imagenes/imagenes.module';
     NotificacionesModule,
     ImagenesModule,
   ],
-  controllers: [HealthController, AdminDebugController, TransaccionesController, TransaccionesWebhookController],
+  controllers: [
+    HealthController,
+    AdminDebugController,
+    TransaccionesController,
+    TransaccionesWebhookController,
+  ],
   providers: [TransaccionesService],
 })
 export class AppModule {
   constructor() {
     try {
-      // @ts-ignore
       const resolvedAppModule = require.resolve('./app.module');
-      console.log('[AppModule] require.resolve(./app.module) ->', resolvedAppModule);
+      console.log(
+        '[AppModule] require.resolve(./app.module) ->',
+        resolvedAppModule,
+      );
     } catch {}
     console.log('[AppModule] __APP_MODULE_MARKER__ ->', __APP_MODULE_MARKER__);
-    console.log('[AppModule] typeof TransaccionesModule ->', typeof TransaccionesModule);
+    console.log(
+      '[AppModule] typeof TransaccionesModule ->',
+      typeof TransaccionesModule,
+    );
   }
 }
 // Marcador para verificar que este AppModule se está compilando y usando en dist

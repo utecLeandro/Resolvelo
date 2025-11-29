@@ -2,7 +2,19 @@
  * Controlador de autenticación.
  * Implementa el registro de usuario siguiendo TDD.
  */
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, Headers, UnauthorizedException, Query, Res, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Get,
+  Headers,
+  UnauthorizedException,
+  Query,
+  Res,
+  BadRequestException,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -16,7 +28,7 @@ import { GubuyValidateDto } from './dto/gubuy-validate.dto';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly passwordStrengthService: PasswordStrengthService
+    private readonly passwordStrengthService: PasswordStrengthService,
   ) {}
 
   /**
@@ -66,7 +78,11 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() body: ResetPasswordDto) {
-    return this.authService.resetearContrasena(body.email, body.token, body.newPassword);
+    return this.authService.resetearContrasena(
+      body.email,
+      body.token,
+      body.newPassword,
+    );
   }
 
   /**
@@ -92,7 +108,12 @@ export class AuthController {
     @Query('scope') scope?: string,
   ) {
     if (!redirectUri) throw new BadRequestException('redirect_uri requerido');
-    const { code } = await this.authService.gubuyAuthorize({ redirectUri, state, nonce, scope });
+    const { code } = await this.authService.gubuyAuthorize({
+      redirectUri,
+      state,
+      nonce,
+      scope,
+    });
     const sep = redirectUri.includes('?') ? '&' : '?';
     const url = `${redirectUri}${sep}code=${encodeURIComponent(code)}${state ? `&state=${encodeURIComponent(state)}` : ''}`;
     res.redirect(url);

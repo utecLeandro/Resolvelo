@@ -1,0 +1,16 @@
+﻿2025-11-29T02:31:00.7475911Z ##[group]Run npm run lint
+2025-11-29T02:31:00.7476217Z [36;1mnpm run lint[0m
+2025-11-29T02:31:00.7508201Z shell: /usr/bin/bash -e {0}
+2025-11-29T02:31:00.7508434Z env:
+2025-11-29T02:31:00.7508605Z   NODE_VERSION: 18
+2025-11-29T02:31:00.7508802Z   POSTGRES_VERSION: 14
+2025-11-29T02:31:00.7508994Z ##[endgroup]
+2025-11-29T02:31:01.1213760Z npm error Missing script: "lint"
+2025-11-29T02:31:01.1214351Z npm error
+2025-11-29T02:31:01.1214703Z npm error Did you mean this?
+2025-11-29T02:31:01.1215253Z npm error   npm link # Symlink a package folder
+2025-11-29T02:31:01.1215797Z npm error
+2025-11-29T02:31:01.1216272Z npm error To see a list of scripts, run:
+2025-11-29T02:31:01.1216816Z npm error   npm run
+2025-11-29T02:31:01.1233982Z npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2025-11-29T02_31_00_825Z-debug-0.log
+2025-11-29T02:31:01.1306823Z ##[error]Process completed with exit code 1.

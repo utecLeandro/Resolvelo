@@ -1,0 +1,41 @@
+﻿2025-11-29T02:31:13.0965589Z ##[group]Run npx prisma migrate deploy
+2025-11-29T02:31:13.0965934Z [36;1mnpx prisma migrate deploy[0m
+2025-11-29T02:31:13.0966199Z [36;1mnpx prisma generate[0m
+2025-11-29T02:31:13.0999043Z shell: /usr/bin/bash -e {0}
+2025-11-29T02:31:13.0999263Z env:
+2025-11-29T02:31:13.0999424Z   NODE_VERSION: 18
+2025-11-29T02:31:13.0999781Z   POSTGRES_VERSION: 14
+2025-11-29T02:31:13.1000282Z   DATABASE_URL: ***localhost:5432/resolvelo_test
+2025-11-29T02:31:13.1000541Z ##[endgroup]
+2025-11-29T02:31:13.9067002Z Prisma schema loaded from prisma/schema.prisma
+2025-11-29T02:31:13.9176436Z Datasource "db": PostgreSQL database "resolvelo_test", schema "public" at "localhost:5432"
+2025-11-29T02:31:13.9960975Z 
+2025-11-29T02:31:13.9961567Z 1 migration found in prisma/migrations
+2025-11-29T02:31:13.9961953Z 
+2025-11-29T02:31:14.0513946Z Applying migration `20251013011849_init`
+2025-11-29T02:31:14.1912697Z 
+2025-11-29T02:31:14.1920918Z The following migration(s) have been applied:
+2025-11-29T02:31:14.1921306Z 
+2025-11-29T02:31:14.1921523Z migrations/
+2025-11-29T02:31:14.1922128Z   └─ 20251013011849_init/
+2025-11-29T02:31:14.1922816Z     └─ migration.sql
+2025-11-29T02:31:14.1923178Z       
+2025-11-29T02:31:14.1923630Z All migrations have been successfully applied.
+2025-11-29T02:31:15.0130595Z Prisma schema loaded from prisma/schema.prisma
+2025-11-29T02:31:15.6956631Z 
+2025-11-29T02:31:15.6957823Z ✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 309ms
+2025-11-29T02:31:15.6958316Z 
+2025-11-29T02:31:15.6958829Z Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+2025-11-29T02:31:15.6959311Z 
+2025-11-29T02:31:15.6960079Z Tip: Want real-time updates to your database without manual polling? Discover how with Pulse: https://pris.ly/tip-0-pulse
+2025-11-29T02:31:15.6960801Z 
+2025-11-29T02:31:15.7275854Z ┌─────────────────────────────────────────────────────────┐
+2025-11-29T02:31:15.7276862Z │  Update available 5.22.0 -> 7.0.1                       │
+2025-11-29T02:31:15.7277644Z │                                                         │
+2025-11-29T02:31:15.7278498Z │  This is a major update - please follow the guide at    │
+2025-11-29T02:31:15.7279404Z │  https://pris.ly/d/major-version-upgrade                │
+2025-11-29T02:31:15.7280419Z │                                                         │
+2025-11-29T02:31:15.7281285Z │  Run the following to update                            │
+2025-11-29T02:31:15.7282495Z │    npm i --save-dev prisma@latest                       │
+2025-11-29T02:31:15.7283384Z │    npm i @prisma/client@latest                          │
+2025-11-29T02:31:15.7284250Z └─────────────────────────────────────────────────────────┘

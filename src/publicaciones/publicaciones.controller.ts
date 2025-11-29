@@ -11,7 +11,6 @@ import {
   Request,
   HttpStatus,
   HttpCode,
-  ParseUUIDPipe,
   ValidationPipe,
   UsePipes,
   UseInterceptors,
@@ -47,7 +46,10 @@ export class PublicacionesController {
     @Body() crearPublicacionDto: CrearPublicacionDto,
     @Request() req: any,
   ) {
-    return this.publicacionesService.crearPublicacion(req.user.id, crearPublicacionDto);
+    return this.publicacionesService.crearPublicacion(
+      req.user.id,
+      crearPublicacionDto,
+    );
   }
 
   /**
@@ -67,7 +69,10 @@ export class PublicacionesController {
   async obtenerMisPublicaciones(@Request() req: any) {
     const usuarioId = req.user.id; // El ID del usuario viene del objeto user
     const filtros: FiltrosPublicacionDto = {};
-    return this.publicacionesService.obtenerPublicacionesUsuario(usuarioId, filtros);
+    return this.publicacionesService.obtenerPublicacionesUsuario(
+      usuarioId,
+      filtros,
+    );
   }
 
   /**
@@ -109,7 +114,11 @@ export class PublicacionesController {
     @Body() dto: FinalizarImagenesDto,
     @Request() req: any,
   ) {
-    return this.publicacionesService.guardarImagenes(id, req.user.id, dto.images);
+    return this.publicacionesService.guardarImagenes(
+      id,
+      req.user.id,
+      dto.images,
+    );
   }
 
   @Patch(':id/imagenes/:imagenId/principal')
@@ -119,7 +128,11 @@ export class PublicacionesController {
     @Param('imagenId') imagenId: string,
     @Request() req: any,
   ) {
-    await this.publicacionesService.setImagenPrincipal(id, req.user.id, imagenId);
+    await this.publicacionesService.setImagenPrincipal(
+      id,
+      req.user.id,
+      imagenId,
+    );
     return { success: true };
   }
 
@@ -140,7 +153,14 @@ export class PublicacionesController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          const dest = path.join(__dirname, '..', '..', 'uploads', 'publicaciones', req.params.id);
+          const dest = path.join(
+            __dirname,
+            '..',
+            '..',
+            'uploads',
+            'publicaciones',
+            req.params.id,
+          );
           fs.mkdirSync(dest, { recursive: true });
           cb(null, dest);
         },
@@ -158,17 +178,23 @@ export class PublicacionesController {
       },
     }),
   )
-  async uploadLocal(
-    @Param('id') id: string,
-    @Request() req: any,
-  ) {
+  async uploadLocal(@Param('id') id: string, @Request() req: any) {
     const file = (req as any).file as Express.Multer.File;
     if (!file) return { error: 'Archivo requerido' };
     const url = `/uploads/publicaciones/${id}/${file.filename}`;
     const { descripcion, orden, esPrincipal } = req.body || {};
-    const creado = await this.publicacionesService.guardarImagenes(id, req.user.id, [
-      { url, descripcion, orden: orden ? Number(orden) : undefined, esPrincipal: esPrincipal === 'true' },
-    ]);
+    const creado = await this.publicacionesService.guardarImagenes(
+      id,
+      req.user.id,
+      [
+        {
+          url,
+          descripcion,
+          orden: orden ? Number(orden) : undefined,
+          esPrincipal: esPrincipal === 'true',
+        },
+      ],
+    );
     return { success: true, data: creado };
   }
 
@@ -179,10 +205,7 @@ export class PublicacionesController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async eliminar(
-    @Param('id') id: string,
-    @Request() req: any,
-  ) {
+  async eliminar(@Param('id') id: string, @Request() req: any) {
     await this.publicacionesService.eliminarPublicacion(id, req.user.id);
   }
 
@@ -199,7 +222,7 @@ export class PublicacionesController {
       ...filtros,
       busqueda: termino,
     };
-    
+
     return this.publicacionesService.obtenerPublicaciones(filtrosConBusqueda);
   }
 
@@ -216,7 +239,7 @@ export class PublicacionesController {
       ...filtros,
       categoria: categoria as any, // Conversión temporal hasta validar enum
     };
-    
+
     return this.publicacionesService.obtenerPublicaciones(filtrosConCategoria);
   }
 
@@ -235,7 +258,7 @@ export class PublicacionesController {
       fechaInicio: new Date(fechaInicio),
       fechaFin: new Date(fechaFin),
     };
-    
+
     return this.publicacionesService.obtenerPublicaciones(filtrosConFechas);
   }
 
@@ -261,7 +284,7 @@ export class PublicacionesController {
     return this.publicacionesService.verificarDisponibilidadPublicacion(
       id,
       new Date(fechaInicio),
-      new Date(fechaFin)
+      new Date(fechaFin),
     );
   }
 }

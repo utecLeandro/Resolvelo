@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum } from "class-validator";
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class ProcesarPagoDto {
   @IsString()
@@ -7,7 +7,7 @@ export class ProcesarPagoDto {
 
   @IsString()
   @IsOptional()
-  metodoPago?: string = "TARJETA_CREDITO";
+  metodoPago?: string = 'TARJETA_CREDITO';
 
   @IsString()
   @IsOptional()

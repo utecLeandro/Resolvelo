@@ -1,0 +1,8 @@
+﻿2025-11-29T02:31:10.4375933Z ##[group]Run npm audit --audit-level moderate
+2025-11-29T02:31:10.4376314Z [36;1mnpm audit --audit-level moderate[0m
+2025-11-29T02:31:10.4408937Z shell: /usr/bin/bash -e {0}
+2025-11-29T02:31:10.4409177Z env:
+2025-11-29T02:31:10.4409339Z   NODE_VERSION: 18
+2025-11-29T02:31:10.4409539Z   POSTGRES_VERSION: 14
+2025-11-29T02:31:10.4409741Z ##[endgroup]
+2025-11-29T02:31:11.1285107Z found 0 vulnerabilities

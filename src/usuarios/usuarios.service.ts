@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
-import { PrismaService } from '../prisma/prisma.service'
-import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto'
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto';
 
 @Injectable()
 export class UsuariosService {
@@ -24,24 +28,26 @@ export class UsuariosService {
         estadoVerificacion: true,
         documentoIdentidad: true,
       },
-    })
+    });
 
     if (!usuario) {
-      throw new NotFoundException('Usuario no encontrado')
+      throw new NotFoundException('Usuario no encontrado');
     }
 
-    return usuario
+    return usuario;
   }
 
   async actualizarPerfil(id: string, data: ActualizarPerfilDto) {
-    const tieneCambios = Object.keys(data).length > 0
+    const tieneCambios = Object.keys(data).length > 0;
     if (!tieneCambios) {
-      throw new BadRequestException('No se enviaron cambios para actualizar')
+      throw new BadRequestException('No se enviaron cambios para actualizar');
     }
 
-    const usuarioExistente = await this.prisma.usuario.findUnique({ where: { id: BigInt(id) } })
+    const usuarioExistente = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(id) },
+    });
     if (!usuarioExistente) {
-      throw new NotFoundException('Usuario no encontrado')
+      throw new NotFoundException('Usuario no encontrado');
     }
 
     const actualizado = await this.prisma.usuario.update({
@@ -62,24 +68,26 @@ export class UsuariosService {
         direccion: true,
         avatarUrl: true,
       },
-    })
+    });
 
     return {
       message: 'Perfil actualizado correctamente',
       usuario: actualizado,
-    }
+    };
   }
 
   async actualizarAvatar(id: string, avatarUrl: string) {
-    const usuarioExistente = await this.prisma.usuario.findUnique({ where: { id: BigInt(id) } })
+    const usuarioExistente = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(id) },
+    });
     if (!usuarioExistente) {
-      throw new NotFoundException('Usuario no encontrado')
+      throw new NotFoundException('Usuario no encontrado');
     }
     const actualizado = await this.prisma.usuario.update({
       where: { id: BigInt(id) },
       data: { avatarUrl },
-      select: { id: true, avatarUrl: true }
-    })
-    return actualizado
+      select: { id: true, avatarUrl: true },
+    });
+    return actualizado;
   }
 }

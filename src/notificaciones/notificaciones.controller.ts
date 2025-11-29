@@ -1,6 +1,13 @@
-import { Controller, Get, Post, UseGuards, Request, Body } from '@nestjs/common'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { NotificacionesService } from './notificaciones.service'
+import {
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Request,
+  Body,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { NotificacionesService } from './notificaciones.service';
 
 @Controller('notificaciones')
 export class NotificacionesController {
@@ -9,21 +16,21 @@ export class NotificacionesController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async listar(@Request() req: any) {
-    const usuarioId = req.user?.id
-    return await this.service.listar(usuarioId)
+    const usuarioId = req.user?.id;
+    return await this.service.listar(usuarioId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('marcar-leidas')
   async marcarLeidas(@Request() req: any) {
-    const usuarioId = req.user?.id
-    return await this.service.marcarLeidas(usuarioId)
+    const usuarioId = req.user?.id;
+    return await this.service.marcarLeidas(usuarioId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('interaccion')
   async registrarInteraccion(@Body() body: any, @Request() req: any) {
-    const usuarioId = req.user?.id
+    const usuarioId = req.user?.id;
     const payload = {
       usuarioId,
       id: body?.id,
@@ -31,8 +38,10 @@ export class NotificacionesController {
       data: body?.data,
       ua: req.headers['user-agent'],
       at: new Date().toISOString(),
-    }
-    try { console.log('[Notificaciones] Interacción', payload) } catch {}
-    return { ok: true }
+    };
+    try {
+      console.log('[Notificaciones] Interacción', payload);
+    } catch {}
+    return { ok: true };
   }
 }

@@ -2,7 +2,15 @@
  * Servicio de autenticación.
  * Maneja lógica de registro con hash + salt y verificación mock.
  */
-import { Injectable, UnauthorizedException, NotFoundException, ConflictException, ServiceUnavailableException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+  ConflictException,
+  ServiceUnavailableException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -14,12 +22,17 @@ import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import * as nodemailer from 'nodemailer';
 
 interface GubuyCodeData {
-  redirectUri: string
-  state?: string
-  nonce?: string
-  scope?: string
-  claims: { email: string; nombre: string; apellido: string; documentoIdentidad: string }
-  createdAt: number
+  redirectUri: string;
+  state?: string;
+  nonce?: string;
+  scope?: string;
+  claims: {
+    email: string;
+    nombre: string;
+    apellido: string;
+    documentoIdentidad: string;
+  };
+  createdAt: number;
 }
 
 @Injectable()
@@ -45,7 +58,9 @@ export class AuthService {
   async register(data: RegisterDto) {
     try {
       // Generar salt único por usuario
-      const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS || '12', 10));
+      const salt = await bcrypt.genSalt(
+        parseInt(process.env.BCRYPT_ROUNDS || '12', 10),
+      );
       // Hashear contraseña con bcrypt y salt
       const passwordHash = await bcrypt.hash(data.password, salt);
 
@@ -94,8 +109,13 @@ export class AuthService {
         throw new ConflictException('El email ya está registrado');
       }
       // BD no disponible (Prisma no puede conectar)
-      if (error.code === 'P1001' || error.name === 'PrismaClientInitializationError') {
-        throw new ServiceUnavailableException('Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.');
+      if (
+        error.code === 'P1001' ||
+        error.name === 'PrismaClientInitializationError'
+      ) {
+        throw new ServiceUnavailableException(
+          'Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.',
+        );
       }
       // Re-lanzar otros errores
       throw error;
@@ -124,34 +144,55 @@ export class AuthService {
 
       // Política: primer login debe ser con gub.uy (usa bandera en schema)
       if (usuario.primerLoginPendiente === true) {
-        throw new UnauthorizedException('Primer login: debes iniciar por “Entrar con gub.uy”');
+        throw new UnauthorizedException(
+          'Primer login: debes iniciar por “Entrar con gub.uy”',
+        );
       }
 
       // Verificar contraseña usando bcrypt
-      const passwordValida = await bcrypt.compare(data.password, usuario.passwordHash);
-      
+      const passwordValida = await bcrypt.compare(
+        data.password,
+        usuario.passwordHash,
+      );
+
       if (!passwordValida) {
         throw new UnauthorizedException('Credenciales incorrectas');
       }
 
-      
-
       if (usuario.estadoVerificacion !== 'VERIFICADA') {
-        throw new ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
+        throw new ForbiddenException(
+          'Tu cuenta debe ser verificada por un administrador antes de acceder',
+        );
       }
 
       if (usuario.email === 'gtbump2012@gmail.com') {
         if (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN') {
           usuario = await this.prisma.usuario.update({
             where: { id: usuario.id },
-            data: { rol: 'SUPER_ADMIN', fechaAsignacionRol: new Date(), asignadoPor: 'SYSTEM', motivoRol: 'Admin permanente' },
+            data: {
+              rol: 'SUPER_ADMIN',
+              fechaAsignacionRol: new Date(),
+              asignadoPor: 'SYSTEM',
+              motivoRol: 'Admin permanente',
+            },
           });
         }
-        const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: usuario.id } });
+        const admin = await this.prisma.administrador.findUnique({
+          where: { usuarioId: usuario.id },
+        });
         if (!admin) {
-          await this.prisma.administrador.create({ data: { usuarioId: usuario.id, activo: true, motivoAsignacion: 'Admin permanente (system)' } });
+          await this.prisma.administrador.create({
+            data: {
+              usuarioId: usuario.id,
+              activo: true,
+              motivoAsignacion: 'Admin permanente (system)',
+            },
+          });
         } else if (!admin.activo) {
-          await this.prisma.administrador.update({ where: { id: admin.id }, data: { activo: true } });
+          await this.prisma.administrador.update({
+            where: { id: admin.id },
+            data: { activo: true },
+          });
         }
       }
 
@@ -172,8 +213,13 @@ export class AuthService {
         },
       };
     } catch (error: any) {
-      if (error.code === 'P1001' || error.name === 'PrismaClientInitializationError') {
-        throw new ServiceUnavailableException('Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.');
+      if (
+        error.code === 'P1001' ||
+        error.name === 'PrismaClientInitializationError'
+      ) {
+        throw new ServiceUnavailableException(
+          'Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.',
+        );
       }
       throw error;
     }
@@ -200,12 +246,17 @@ export class AuthService {
         throw new UnauthorizedException('Token inválido');
       }
 
-      const subStr = String(userId)
-      const where: any = (typeof userId === 'bigint')
-        ? { id: userId }
-        : (/^\d+$/.test(subStr) ? { id: BigInt(subStr) } : (payload.email ? { email: payload.email } : null))
+      const subStr = String(userId);
+      const where: any =
+        typeof userId === 'bigint'
+          ? { id: userId }
+          : /^\d+$/.test(subStr)
+            ? { id: BigInt(subStr) }
+            : payload.email
+              ? { email: payload.email }
+              : null;
       if (!where) {
-        throw new UnauthorizedException('Token inválido')
+        throw new UnauthorizedException('Token inválido');
       }
       const usuario = await this.prisma.usuario.findUnique({
         where,
@@ -229,11 +280,19 @@ export class AuthService {
 
       return usuario;
     } catch (error: any) {
-      if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      if (
+        error.name === 'JsonWebTokenError' ||
+        error.name === 'TokenExpiredError'
+      ) {
         throw new UnauthorizedException('Token inválido o expirado');
       }
-      if (error.code === 'P1001' || error.name === 'PrismaClientInitializationError') {
-        throw new ServiceUnavailableException('Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.');
+      if (
+        error.code === 'P1001' ||
+        error.name === 'PrismaClientInitializationError'
+      ) {
+        throw new ServiceUnavailableException(
+          'Base de datos no disponible. Inicia PostgreSQL (Docker) y vuelve a intentar.',
+        );
       }
       throw error;
     }
@@ -247,7 +306,10 @@ export class AuthService {
     const usuario = await this.prisma.usuario.findUnique({ where: { email } });
     if (!usuario) {
       // No revelar existencia del email por seguridad
-      return { message: 'Si el email existe, se enviarán instrucciones para recuperar la contraseña' };
+      return {
+        message:
+          'Si el email existe, se enviarán instrucciones para recuperar la contraseña',
+      };
     }
 
     // Generar token seguro
@@ -260,7 +322,7 @@ export class AuthService {
       data: {
         tokenRecuperacion: token,
         fechaExpiracionToken: expiracion,
-      }
+      },
     });
 
     // Construir link de recuperación
@@ -276,7 +338,10 @@ export class AuthService {
           Source: from,
           Destination: { ToAddresses: [email] },
           Message: {
-            Subject: { Data: 'Recuperación de contraseña - ReSolVelo', Charset: 'UTF-8' },
+            Subject: {
+              Data: 'Recuperación de contraseña - ReSolVelo',
+              Charset: 'UTF-8',
+            },
             Body: {
               Html: {
                 Data: `
@@ -292,17 +357,20 @@ export class AuthService {
           },
         });
         await ses.send(command);
-      } catch (e1) {
+      } catch (_e1) {
         try {
           const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST || 'localhost',
             port: parseInt(process.env.SMTP_PORT || '1025', 10),
             secure: process.env.SMTP_SECURE === 'true',
-            auth: (process.env.SMTP_USER || process.env.SMTP_PASS) ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+            auth:
+              process.env.SMTP_USER || process.env.SMTP_PASS
+                ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+                : undefined,
             connectionTimeout: 2000,
             greetingTimeout: 2000,
             socketTimeout: 3000,
-          })
+          });
           await transporter.sendMail({
             from: from,
             to: email,
@@ -314,16 +382,25 @@ export class AuthService {
           <p>Este enlace expira en 1 hora. Si no solicitaste esto, ignora este mensaje.</p>
           <p>Equipo ReSolVelo</p>
         `,
-          })
+          });
         } catch (e2) {
-          console.warn('No se pudo enviar email de recuperación (SMTP):', (e2 as any)?.message);
+          console.warn(
+            'No se pudo enviar email de recuperación (SMTP):',
+            (e2 as any)?.message,
+          );
         }
       }
     } catch (e) {
-      console.warn('No se pudo enviar email de recuperación:', (e as any)?.message);
+      console.warn(
+        'No se pudo enviar email de recuperación:',
+        (e as any)?.message,
+      );
     }
 
-    return { message: 'Si el email existe, se enviarán instrucciones para recuperar la contraseña' };
+    return {
+      message:
+        'Si el email existe, se enviarán instrucciones para recuperar la contraseña',
+    };
   }
 
   /**
@@ -335,7 +412,9 @@ export class AuthService {
       throw new NotFoundException('Usuario no encontrado');
     }
     if (!usuario.tokenRecuperacion || !usuario.fechaExpiracionToken) {
-      throw new BadRequestException('No hay una solicitud de recuperación activa');
+      throw new BadRequestException(
+        'No hay una solicitud de recuperación activa',
+      );
     }
     if (usuario.tokenRecuperacion !== token) {
       throw new UnauthorizedException('Token inválido');
@@ -345,7 +424,9 @@ export class AuthService {
     }
 
     // Generar nuevo hash + salt
-    const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS || '12', 10));
+    const salt = await bcrypt.genSalt(
+      parseInt(process.env.BCRYPT_ROUNDS || '12', 10),
+    );
     const passwordHash = await bcrypt.hash(newPassword, salt);
 
     await this.prisma.usuario.update({
@@ -355,14 +436,20 @@ export class AuthService {
         passwordSalt: salt,
         tokenRecuperacion: null,
         fechaExpiracionToken: null,
-      }
+      },
     });
 
     return { message: 'Contraseña actualizada correctamente' };
   }
 
-  async gubuyAuthorize(params: { redirectUri: string; state?: string; nonce?: string; scope?: string }) {
-    if (!this.gubuyEnabled()) throw new UnauthorizedException('Simulación gub.uy deshabilitada');
+  async gubuyAuthorize(params: {
+    redirectUri: string;
+    state?: string;
+    nonce?: string;
+    scope?: string;
+  }) {
+    if (!this.gubuyEnabled())
+      throw new UnauthorizedException('Simulación gub.uy deshabilitada');
     const { redirectUri, state, nonce, scope } = params;
     if (!redirectUri) throw new BadRequestException('redirect_uri requerido');
     const code = crypto.randomBytes(16).toString('hex');
@@ -373,12 +460,20 @@ export class AuthService {
       apellido: 'Gubuy',
       documentoIdentidad: documento,
     };
-    this.gubuyCodes.set(code, { redirectUri, state, nonce, scope, claims, createdAt: Date.now() });
+    this.gubuyCodes.set(code, {
+      redirectUri,
+      state,
+      nonce,
+      scope,
+      claims,
+      createdAt: Date.now(),
+    });
     return { code };
   }
 
   async gubuyTokenExchange(code: string, redirectUri: string) {
-    if (!this.gubuyEnabled()) throw new UnauthorizedException('Simulación gub.uy deshabilitada');
+    if (!this.gubuyEnabled())
+      throw new UnauthorizedException('Simulación gub.uy deshabilitada');
     if (!code) throw new BadRequestException('code requerido');
     if (!redirectUri) throw new BadRequestException('redirect_uri requerido');
     const data = this.gubuyCodes.get(code);
@@ -388,24 +483,36 @@ export class AuthService {
       this.gubuyCodes.delete(code);
       throw new UnauthorizedException('Código expirado');
     }
-    if (data.redirectUri !== redirectUri) throw new UnauthorizedException('redirect_uri no coincide');
+    if (data.redirectUri !== redirectUri)
+      throw new UnauthorizedException('redirect_uri no coincide');
     const claims = data.claims;
-    let usuario = await this.prisma.usuario.findFirst({ where: { documentoIdentidad: claims.documentoIdentidad } });
+    let usuario = await this.prisma.usuario.findFirst({
+      where: { documentoIdentidad: claims.documentoIdentidad },
+    });
     if (!usuario && claims.email) {
-      usuario = await this.prisma.usuario.findUnique({ where: { email: claims.email } });
+      usuario = await this.prisma.usuario.findUnique({
+        where: { email: claims.email },
+      });
     }
     if (!usuario) {
-      throw new UnauthorizedException('Usuario no registrado. Completa el registro en la web.');
+      throw new UnauthorizedException(
+        'Usuario no registrado. Completa el registro en la web.',
+      );
     }
     if (!usuario.activo) {
       throw new UnauthorizedException('Cuenta desactivada');
     }
     if (usuario.estadoVerificacion !== 'VERIFICADA') {
-      throw new ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
+      throw new ForbiddenException(
+        'Tu cuenta debe ser verificada por un administrador antes de acceder',
+      );
     }
     // Completar primer login
     try {
-      await this.prisma.usuario.update({ where: { id: usuario.id }, data: { primerLoginPendiente: false } })
+      await this.prisma.usuario.update({
+        where: { id: usuario.id },
+        data: { primerLoginPendiente: false },
+      });
     } catch {}
     const payload = { sub: String(usuario.id), email: usuario.email };
     const accessToken = this.jwtService.sign(payload);
@@ -425,14 +532,20 @@ export class AuthService {
   }
 
   private generarDocumentoFake() {
-    const d = Array.from({ length: 7 }, () => Math.floor(Math.random() * 10)).join('');
+    const d = Array.from({ length: 7 }, () =>
+      Math.floor(Math.random() * 10),
+    ).join('');
     const dv = Math.floor(Math.random() * 10);
     return `${d}-${dv}`;
   }
 
   async gubuyValidate(data: GubuyValidateDto) {
-    const usuarioByDoc = await this.prisma.usuario.findFirst({ where: { documentoIdentidad: data.documentoIdentidad } });
-    const usuario = usuarioByDoc || (await this.prisma.usuario.findUnique({ where: { email: data.email } }));
+    const usuarioByDoc = await this.prisma.usuario.findFirst({
+      where: { documentoIdentidad: data.documentoIdentidad },
+    });
+    const usuario =
+      usuarioByDoc ||
+      (await this.prisma.usuario.findUnique({ where: { email: data.email } }));
     if (!usuario) {
       throw new UnauthorizedException('Usuario no registrado');
     }
@@ -441,28 +554,40 @@ export class AuthService {
     }
     const nombreOk = (usuario.nombre || '').trim() === data.nombre.trim();
     const apellidoOk = (usuario.apellido || '').trim() === data.apellido.trim();
-    const emailOk = (usuario.email || '').trim().toLowerCase() === data.email.trim().toLowerCase();
-    const docOk = (usuario.documentoIdentidad || '').trim() === data.documentoIdentidad.trim();
+    const emailOk =
+      (usuario.email || '').trim().toLowerCase() ===
+      data.email.trim().toLowerCase();
+    const docOk =
+      (usuario.documentoIdentidad || '').trim() ===
+      data.documentoIdentidad.trim();
     if (!nombreOk || !apellidoOk || !emailOk || !docOk) {
       throw new UnauthorizedException('Datos no coinciden');
     }
     // Tolerar usuarios sin passwordHash en flujo gub.uy (importados), si existe comparar
     if (usuario.passwordHash) {
-      const passwordValida = await bcrypt.compare(data.password, usuario.passwordHash);
+      const passwordValida = await bcrypt.compare(
+        data.password,
+        usuario.passwordHash,
+      );
       if (!passwordValida) {
         throw new UnauthorizedException('Credenciales incorrectas');
       }
     }
     if (usuario.estadoVerificacion !== 'VERIFICADA') {
-      throw new ForbiddenException('Tu cuenta debe ser verificada por un administrador antes de acceder');
+      throw new ForbiddenException(
+        'Tu cuenta debe ser verificada por un administrador antes de acceder',
+      );
     }
     // Completar primer login
     try {
-      await this.prisma.usuario.update({ where: { id: usuario.id }, data: { primerLoginPendiente: false } })
+      await this.prisma.usuario.update({
+        where: { id: usuario.id },
+        data: { primerLoginPendiente: false },
+      });
     } catch {}
     const payload = { sub: String(usuario.id), email: usuario.email };
     const accessToken = this.jwtService.sign(payload);
-    
+
     return {
       access_token: accessToken,
       user: {

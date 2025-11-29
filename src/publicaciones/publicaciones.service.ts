@@ -4,13 +4,26 @@
  * Implementa operaciones CRUD y búsquedas avanzadas
  */
 
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CrearPublicacionDto } from './dto/crear-publicacion.dto';
 import { ActualizarPublicacionDto } from './dto/actualizar-publicacion.dto';
 import { FiltrosPublicacionDto } from './dto/filtros-publicacion.dto';
-import { Publicacion, EstadoPublicacion, EstadoModeracion, EstadoReserva } from '@prisma/client';
-import { extraerPalabrasClave, crearCondicionesBusqueda } from './utils/text-utils';
+import {
+  Publicacion,
+  EstadoPublicacion,
+  EstadoModeracion,
+  EstadoReserva,
+} from '@prisma/client';
+import {
+  extraerPalabrasClave,
+  crearCondicionesBusqueda,
+} from './utils/text-utils';
 
 @Injectable()
 export class PublicacionesService {
@@ -22,11 +35,14 @@ export class PublicacionesService {
    * @param crearPublicacionDto Datos de la publicación
    * @returns Publicación creada
    */
-  async crearPublicacion(usuarioId: string, crearPublicacionDto: CrearPublicacionDto): Promise<Publicacion> {
+  async crearPublicacion(
+    usuarioId: string,
+    crearPublicacionDto: CrearPublicacionDto,
+  ): Promise<Publicacion> {
     try {
       // Verificar que el usuario existe y está activo
       const usuario = await this.prisma.usuario.findUnique({
-        where: { id: BigInt(usuarioId) }
+        where: { id: BigInt(usuarioId) },
       });
 
       if (!usuario) {
@@ -57,15 +73,18 @@ export class PublicacionesService {
               email: true,
               calificacionPromedio: true,
               totalCalificaciones: true,
-            }
+            },
           },
           imagenes: true,
-        }
+        },
       });
 
       return publicacion;
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       throw new BadRequestException('Error al crear la publicación');
@@ -78,7 +97,12 @@ export class PublicacionesService {
    * @returns Lista paginada de publicaciones
    */
   async obtenerPublicaciones(filtros: FiltrosPublicacionDto) {
-    const { pagina = 1, limite = 10, ordenarPor = 'fechaCreacion', direccionOrden = 'desc' } = filtros;
+    const {
+      pagina = 1,
+      limite = 10,
+      ordenarPor = 'fechaCreacion',
+      direccionOrden = 'desc',
+    } = filtros;
     const saltar = (pagina - 1) * limite;
 
     // Construir condiciones de filtrado
@@ -99,21 +123,21 @@ export class PublicacionesService {
                 apellido: true,
                 calificacionPromedio: true,
                 totalCalificaciones: true,
-              }
+              },
             },
             imagenes: {
               select: {
                 id: true,
                 url: true,
                 esPrincipal: true,
-              }
+              },
             },
             _count: {
               select: {
                 reservas: true,
                 calificaciones: true,
-              }
-            }
+              },
+            },
           },
           orderBy: ordenamiento,
           skip: saltar,
@@ -124,16 +148,20 @@ export class PublicacionesService {
         }),
       ]);
 
-
-
       // Convertir precios Decimal a números para el frontend
-      const publicacionesConPreciosNumericos = publicaciones.map(publicacion => ({
-        ...publicacion,
-        precioPorDia: Number(publicacion.precioPorDia),
-        precioPorSemana: publicacion.precioPorSemana ? Number(publicacion.precioPorSemana) : null,
-        precioPorMes: publicacion.precioPorMes ? Number(publicacion.precioPorMes) : null,
-        deposito: publicacion.deposito ? Number(publicacion.deposito) : null,
-      }));
+      const publicacionesConPreciosNumericos = publicaciones.map(
+        (publicacion) => ({
+          ...publicacion,
+          precioPorDia: Number(publicacion.precioPorDia),
+          precioPorSemana: publicacion.precioPorSemana
+            ? Number(publicacion.precioPorSemana)
+            : null,
+          precioPorMes: publicacion.precioPorMes
+            ? Number(publicacion.precioPorMes)
+            : null,
+          deposito: publicacion.deposito ? Number(publicacion.deposito) : null,
+        }),
+      );
 
       return {
         publicaciones: publicacionesConPreciosNumericos,
@@ -142,9 +170,9 @@ export class PublicacionesService {
           totalPaginas: Math.ceil(total / limite),
           totalElementos: total,
           elementosPorPagina: limite,
-        }
+        },
       };
-    } catch (error) {
+    } catch (_error) {
       throw new BadRequestException('Error al obtener las publicaciones');
     }
   }
@@ -152,20 +180,37 @@ export class PublicacionesService {
   /**
    * Aprobar una publicación (moderación)
    */
-  async aprobarPublicacion(publicacionId: string, moderadorId: string, comentario?: string): Promise<Publicacion> {
+  async aprobarPublicacion(
+    publicacionId: string,
+    moderadorId: string,
+    comentario?: string,
+  ): Promise<Publicacion> {
     // Verificar existencia de la publicación
-    const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) } });
+    const existente = await this.prisma.publicacion.findUnique({
+      where: { id: BigInt(publicacionId) },
+    });
     if (!existente) {
       throw new NotFoundException('Publicación no encontrada');
     }
 
-    let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(moderadorId) } });
+    let admin = await this.prisma.administrador.findUnique({
+      where: { usuarioId: BigInt(moderadorId) },
+    });
     if (!admin) {
-      const usuario = await this.prisma.usuario.findFirst({ where: { id: BigInt(moderadorId), activo: true } });
-      if (!usuario || (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')) {
-        throw new ForbiddenException('El usuario autenticado no es administrador');
+      const usuario = await this.prisma.usuario.findFirst({
+        where: { id: BigInt(moderadorId), activo: true },
+      });
+      if (
+        !usuario ||
+        (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')
+      ) {
+        throw new ForbiddenException(
+          'El usuario autenticado no es administrador',
+        );
       }
-      admin = await this.prisma.administrador.create({ data: { usuarioId: BigInt(moderadorId) } });
+      admin = await this.prisma.administrador.create({
+        data: { usuarioId: BigInt(moderadorId) },
+      });
     }
 
     const estadoAnterior = existente.estadoModeracion;
@@ -182,11 +227,17 @@ export class PublicacionesService {
         },
         include: {
           propietario: {
-            select: { id: true, nombre: true, apellido: true, calificacionPromedio: true, totalCalificaciones: true }
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              calificacionPromedio: true,
+              totalCalificaciones: true,
+            },
           },
           imagenes: { select: { id: true, url: true, esPrincipal: true } },
-          _count: { select: { reservas: true, calificaciones: true } }
-        }
+          _count: { select: { reservas: true, calificaciones: true } },
+        },
       }),
       this.prisma.moderaccionPublicacion.create({
         data: {
@@ -197,8 +248,8 @@ export class PublicacionesService {
           estadoNuevo: EstadoModeracion.APROBADA,
           publicacionId: BigInt(publicacionId),
           moderadorId: admin.id,
-        }
-      })
+        },
+      }),
     ]);
 
     return actualizada as unknown as Publicacion;
@@ -207,19 +258,37 @@ export class PublicacionesService {
   /**
    * Rechazar una publicación (moderación)
    */
-  async rechazarPublicacion(publicacionId: string, moderadorId: string, motivo?: string, comentario?: string): Promise<Publicacion> {
-    const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) } });
+  async rechazarPublicacion(
+    publicacionId: string,
+    moderadorId: string,
+    motivo?: string,
+    comentario?: string,
+  ): Promise<Publicacion> {
+    const existente = await this.prisma.publicacion.findUnique({
+      where: { id: BigInt(publicacionId) },
+    });
     if (!existente) {
       throw new NotFoundException('Publicación no encontrada');
     }
 
-    let admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(moderadorId) } });
+    let admin = await this.prisma.administrador.findUnique({
+      where: { usuarioId: BigInt(moderadorId) },
+    });
     if (!admin) {
-      const usuario = await this.prisma.usuario.findFirst({ where: { id: BigInt(moderadorId), activo: true } });
-      if (!usuario || (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')) {
-        throw new ForbiddenException('El usuario autenticado no es administrador');
+      const usuario = await this.prisma.usuario.findFirst({
+        where: { id: BigInt(moderadorId), activo: true },
+      });
+      if (
+        !usuario ||
+        (usuario.rol !== 'ADMINISTRADOR' && usuario.rol !== 'SUPER_ADMIN')
+      ) {
+        throw new ForbiddenException(
+          'El usuario autenticado no es administrador',
+        );
       }
-      admin = await this.prisma.administrador.create({ data: { usuarioId: BigInt(moderadorId) } });
+      admin = await this.prisma.administrador.create({
+        data: { usuarioId: BigInt(moderadorId) },
+      });
     }
 
     const estadoAnterior = existente.estadoModeracion;
@@ -235,11 +304,17 @@ export class PublicacionesService {
         },
         include: {
           propietario: {
-            select: { id: true, nombre: true, apellido: true, calificacionPromedio: true, totalCalificaciones: true }
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              calificacionPromedio: true,
+              totalCalificaciones: true,
+            },
           },
           imagenes: { select: { id: true, url: true, esPrincipal: true } },
-          _count: { select: { reservas: true, calificaciones: true } }
-        }
+          _count: { select: { reservas: true, calificaciones: true } },
+        },
       }),
       this.prisma.moderaccionPublicacion.create({
         data: {
@@ -250,8 +325,8 @@ export class PublicacionesService {
           estadoNuevo: EstadoModeracion.RECHAZADA,
           publicacionId: BigInt(publicacionId),
           moderadorId: admin.id,
-        }
-      })
+        },
+      }),
     ]);
 
     return actualizada as unknown as Publicacion;
@@ -277,10 +352,10 @@ export class PublicacionesService {
               calificacionPromedio: true,
               totalCalificaciones: true,
               fechaCreacion: true,
-            }
+            },
           },
           imagenes: {
-            orderBy: { orden: 'asc' }
+            orderBy: { orden: 'asc' },
           },
           calificaciones: {
             include: {
@@ -289,8 +364,8 @@ export class PublicacionesService {
                   id: true,
                   nombre: true,
                   apellido: true,
-                }
-              }
+                },
+              },
             },
             orderBy: { fechaCreacion: 'desc' },
             take: 10,
@@ -299,9 +374,9 @@ export class PublicacionesService {
             select: {
               reservas: true,
               calificaciones: true,
-            }
-          }
-        }
+            },
+          },
+        },
       });
 
       if (!publicacion) {
@@ -316,15 +391,19 @@ export class PublicacionesService {
       // Incrementar contador de visualizaciones
       await this.prisma.publicacion.update({
         where: { id: BigInt(id) },
-        data: { visualizaciones: { increment: 1 } }
+        data: { visualizaciones: { increment: 1 } },
       });
 
       // Convertir precios Decimal a números para el frontend
       const publicacionConPreciosNumericos = {
         ...publicacion,
         precioPorDia: Number(publicacion.precioPorDia),
-        precioPorSemana: publicacion.precioPorSemana ? Number(publicacion.precioPorSemana) : null,
-        precioPorMes: publicacion.precioPorMes ? Number(publicacion.precioPorMes) : null,
+        precioPorSemana: publicacion.precioPorSemana
+          ? Number(publicacion.precioPorSemana)
+          : null,
+        precioPorMes: publicacion.precioPorMes
+          ? Number(publicacion.precioPorMes)
+          : null,
         deposito: publicacion.deposito ? Number(publicacion.deposito) : null,
       };
 
@@ -345,15 +424,15 @@ export class PublicacionesService {
    * @returns Publicación actualizada
    */
   async actualizarPublicacion(
-    id: string, 
-    usuarioId: string, 
-    actualizarPublicacionDto: ActualizarPublicacionDto
+    id: string,
+    usuarioId: string,
+    actualizarPublicacionDto: ActualizarPublicacionDto,
   ): Promise<Publicacion> {
     try {
       // Verificar que la publicación existe y pertenece al usuario
       const publicacionExistente = await this.prisma.publicacion.findUnique({
         where: { id: BigInt(id) },
-        select: { propietarioId: true, estado: true }
+        select: { propietarioId: true, estado: true },
       });
 
       if (!publicacionExistente) {
@@ -361,13 +440,17 @@ export class PublicacionesService {
       }
 
       if (publicacionExistente.propietarioId !== BigInt(usuarioId)) {
-        throw new ForbiddenException('No tienes permisos para actualizar esta publicación');
+        throw new ForbiddenException(
+          'No tienes permisos para actualizar esta publicación',
+        );
       }
 
       // Validar precios si se están actualizando
-      if (actualizarPublicacionDto.precioPorDia || 
-          actualizarPublicacionDto.precioPorSemana || 
-          actualizarPublicacionDto.precioPorMes) {
+      if (
+        actualizarPublicacionDto.precioPorDia ||
+        actualizarPublicacionDto.precioPorSemana ||
+        actualizarPublicacionDto.precioPorMes
+      ) {
         this.validarPrecios(actualizarPublicacionDto);
       }
 
@@ -378,8 +461,8 @@ export class PublicacionesService {
           ...actualizarPublicacionDto,
           // Si se actualiza contenido importante, marcar para revisión
           ...(this.requiereModeracion(actualizarPublicacionDto) && {
-            estadoModeracion: EstadoModeracion.PENDIENTE_REVISION
-          })
+            estadoModeracion: EstadoModeracion.PENDIENTE_REVISION,
+          }),
         },
         include: {
           propietario: {
@@ -390,17 +473,19 @@ export class PublicacionesService {
               email: true,
               calificacionPromedio: true,
               totalCalificaciones: true,
-            }
+            },
           },
           imagenes: true,
-        }
+        },
       });
 
       return publicacionActualizada;
     } catch (error) {
-      if (error instanceof NotFoundException || 
-          error instanceof ForbiddenException || 
-          error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       throw new BadRequestException('Error al actualizar la publicación');
@@ -417,21 +502,21 @@ export class PublicacionesService {
       // Verificar que la publicación existe y pertenece al usuario
       const publicacion = await this.prisma.publicacion.findUnique({
         where: { id: BigInt(id) },
-        select: { 
-          propietarioId: true, 
+        select: {
+          propietarioId: true,
           estado: true,
           _count: {
             select: {
               reservas: {
                 where: {
                   estado: {
-                    in: ['PENDIENTE', 'CONFIRMADA', 'EN_CURSO']
-                  }
-                }
-              }
-            }
-          }
-        }
+                    in: ['PENDIENTE', 'CONFIRMADA', 'EN_CURSO'],
+                  },
+                },
+              },
+            },
+          },
+        },
       });
 
       if (!publicacion) {
@@ -439,26 +524,32 @@ export class PublicacionesService {
       }
 
       if (publicacion.propietarioId !== BigInt(usuarioId)) {
-        throw new ForbiddenException('No tienes permisos para eliminar esta publicación');
+        throw new ForbiddenException(
+          'No tienes permisos para eliminar esta publicación',
+        );
       }
 
       // Verificar que no tenga reservas activas
       if (publicacion._count.reservas > 0) {
-        throw new BadRequestException('No se puede eliminar una publicación con reservas activas');
+        throw new BadRequestException(
+          'No se puede eliminar una publicación con reservas activas',
+        );
       }
 
       // Soft delete - cambiar estado a ELIMINADA
       await this.prisma.publicacion.update({
         where: { id: BigInt(id) },
-        data: { 
+        data: {
           estado: EstadoPublicacion.ELIMINADA,
-          disponible: false
-        }
+          disponible: false,
+        },
       });
     } catch (error) {
-      if (error instanceof NotFoundException || 
-          error instanceof ForbiddenException || 
-          error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       throw new BadRequestException('Error al eliminar la publicación');
@@ -471,7 +562,10 @@ export class PublicacionesService {
    * @param filtros Filtros adicionales
    * @returns Publicaciones del usuario
    */
-  async obtenerPublicacionesUsuario(usuarioId: string, filtros: FiltrosPublicacionDto) {
+  async obtenerPublicacionesUsuario(
+    usuarioId: string,
+    filtros: FiltrosPublicacionDto,
+  ) {
     // Para "Mis publicaciones", no aplicamos filtros de moderación
     // El usuario debe ver todas sus publicaciones independientemente del estado
     const condiciones: any = {
@@ -499,7 +593,10 @@ export class PublicacionesService {
     }
 
     if (filtros.departamento) {
-      condiciones['departamento'] = { contains: filtros.departamento, mode: 'insensitive' };
+      condiciones['departamento'] = {
+        contains: filtros.departamento,
+        mode: 'insensitive',
+      };
     }
 
     if (filtros.precioMinimo || filtros.precioMaximo) {
@@ -537,57 +634,82 @@ export class PublicacionesService {
               id: true,
               url: true,
               esPrincipal: true,
-            }
+            },
           },
           _count: {
             select: {
               reservas: true,
               calificaciones: true,
-            }
+            },
           },
           reservas: {
             select: {
               id: true,
               estado: true,
-            }
-          }
+            },
+          },
         },
-        orderBy: { fechaCreacion: 'desc' }
+        orderBy: { fechaCreacion: 'desc' },
       });
 
       // Convertir precios Decimal a números para el frontend y agregar estadísticas de reservas
-      const publicacionesConPreciosNumericos = publicaciones.map(publicacion => {
-        // Calcular estadísticas de reservas por estado
-        const estadisticasReservas = {
-          total: publicacion.reservas.length,
-          pendientes: publicacion.reservas.filter(r => r.estado === EstadoReserva.PENDIENTE).length,
-          // En el esquema actual no existe el estado APROBADA; usamos CONFIRMADA como equivalente
-          aprobadas: publicacion.reservas.filter(r => r.estado === EstadoReserva.CONFIRMADA).length,
-          confirmadas: publicacion.reservas.filter(r => r.estado === EstadoReserva.CONFIRMADA).length,
-          // EN_CURSO no existe en el esquema actual
-          activas: publicacion.reservas.filter(r => r.estado === EstadoReserva.CONFIRMADA).length,
-          completadas: publicacion.reservas.filter(r => r.estado === EstadoReserva.COMPLETADA).length,
-          rechazadas: publicacion.reservas.filter(r => r.estado === EstadoReserva.RECHAZADA).length,
-          // Unificamos cancelaciones en el estado CANCELADA
-          canceladas: publicacion.reservas.filter(r => r.estado === EstadoReserva.CANCELADA).length,
-        };
+      const publicacionesConPreciosNumericos = publicaciones.map(
+        (publicacion) => {
+          // Calcular estadísticas de reservas por estado
+          const estadisticasReservas = {
+            total: publicacion.reservas.length,
+            pendientes: publicacion.reservas.filter(
+              (r) => r.estado === EstadoReserva.PENDIENTE,
+            ).length,
+            // En el esquema actual no existe el estado APROBADA; usamos CONFIRMADA como equivalente
+            aprobadas: publicacion.reservas.filter(
+              (r) => r.estado === EstadoReserva.CONFIRMADA,
+            ).length,
+            confirmadas: publicacion.reservas.filter(
+              (r) => r.estado === EstadoReserva.CONFIRMADA,
+            ).length,
+            // EN_CURSO no existe en el esquema actual
+            activas: publicacion.reservas.filter(
+              (r) => r.estado === EstadoReserva.CONFIRMADA,
+            ).length,
+            completadas: publicacion.reservas.filter(
+              (r) => r.estado === EstadoReserva.COMPLETADA,
+            ).length,
+            rechazadas: publicacion.reservas.filter(
+              (r) => r.estado === EstadoReserva.RECHAZADA,
+            ).length,
+            // Unificamos cancelaciones en el estado CANCELADA
+            canceladas: publicacion.reservas.filter(
+              (r) => r.estado === EstadoReserva.CANCELADA,
+            ).length,
+          };
 
-        // Remover el array de reservas para no enviarlo al frontend (solo necesitamos las estadísticas)
-        const { reservas, ...publicacionSinReservas } = publicacion;
+          // Remover el array de reservas para no enviarlo al frontend (solo necesitamos las estadísticas)
+          const { reservas: _reservas, ...publicacionSinReservas } =
+            publicacion;
 
-        return {
-          ...publicacionSinReservas,
-          precioPorDia: Number(publicacion.precioPorDia),
-          precioPorSemana: publicacion.precioPorSemana ? Number(publicacion.precioPorSemana) : null,
-          precioPorMes: publicacion.precioPorMes ? Number(publicacion.precioPorMes) : null,
-          deposito: publicacion.deposito ? Number(publicacion.deposito) : null,
-          estadisticasReservas,
-        };
-      });
+          return {
+            ...publicacionSinReservas,
+            precioPorDia: Number(publicacion.precioPorDia),
+            precioPorSemana: publicacion.precioPorSemana
+              ? Number(publicacion.precioPorSemana)
+              : null,
+            precioPorMes: publicacion.precioPorMes
+              ? Number(publicacion.precioPorMes)
+              : null,
+            deposito: publicacion.deposito
+              ? Number(publicacion.deposito)
+              : null,
+            estadisticasReservas,
+          };
+        },
+      );
 
       return publicacionesConPreciosNumericos;
-    } catch (error) {
-      throw new BadRequestException('Error al obtener las publicaciones del usuario');
+    } catch (_error) {
+      throw new BadRequestException(
+        'Error al obtener las publicaciones del usuario',
+      );
     }
   }
 
@@ -599,13 +721,19 @@ export class PublicacionesService {
       const reservas = await this.prisma.reserva.findMany({
         where: {
           publicacionId: BigInt(id),
-          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
+          estado: {
+            in: [
+              EstadoReserva.PENDIENTE,
+              EstadoReserva.CONFIRMADA,
+              EstadoReserva.EN_CURSO,
+            ],
+          },
         },
         select: { fechaInicio: true, fechaFin: true },
         orderBy: { fechaInicio: 'asc' },
       });
       return reservas;
-    } catch (error) {
+    } catch (_error) {
       throw new BadRequestException('Error al obtener reservas activas');
     }
   }
@@ -613,20 +741,39 @@ export class PublicacionesService {
   /**
    * Verificar disponibilidad de una publicación en un rango de fechas
    */
-  async verificarDisponibilidadPublicacion(id: string, fechaInicio: Date, fechaFin: Date) {
+  async verificarDisponibilidadPublicacion(
+    id: string,
+    fechaInicio: Date,
+    fechaFin: Date,
+  ) {
     try {
-      if (!fechaInicio || !fechaFin || isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
-        throw new BadRequestException('Las fechas proporcionadas no son válidas');
+      if (
+        !fechaInicio ||
+        !fechaFin ||
+        isNaN(fechaInicio.getTime()) ||
+        isNaN(fechaFin.getTime())
+      ) {
+        throw new BadRequestException(
+          'Las fechas proporcionadas no son válidas',
+        );
       }
       if (fechaInicio > fechaFin) {
-        throw new BadRequestException('El rango de fechas es inválido: fechaInicio es posterior a fechaFin');
+        throw new BadRequestException(
+          'El rango de fechas es inválido: fechaInicio es posterior a fechaFin',
+        );
       }
 
       // Contar reservas activas que se solapan con el rango solicitado
       const solapadas = await this.prisma.reserva.count({
         where: {
           publicacionId: BigInt(id),
-          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
+          estado: {
+            in: [
+              EstadoReserva.PENDIENTE,
+              EstadoReserva.CONFIRMADA,
+              EstadoReserva.EN_CURSO,
+            ],
+          },
           NOT: {
             OR: [
               { fechaFin: { lte: fechaInicio } },
@@ -652,19 +799,29 @@ export class PublicacionesService {
   /**
    * Validar coherencia de precios
    */
-  private validarPrecios(datos: CrearPublicacionDto | ActualizarPublicacionDto): void {
+  private validarPrecios(
+    datos: CrearPublicacionDto | ActualizarPublicacionDto,
+  ): void {
     const { precioPorDia, precioPorSemana, precioPorMes } = datos;
 
     if (precioPorDia && precioPorDia <= 0) {
       throw new BadRequestException('El precio por día debe ser mayor a 0');
     }
 
-    if (precioPorSemana && precioPorDia && precioPorSemana >= precioPorDia * 7) {
-      throw new BadRequestException('El precio por semana debe ser menor al precio diario multiplicado por 7');
+    if (
+      precioPorSemana &&
+      precioPorDia &&
+      precioPorSemana >= precioPorDia * 7
+    ) {
+      throw new BadRequestException(
+        'El precio por semana debe ser menor al precio diario multiplicado por 7',
+      );
     }
 
     if (precioPorMes && precioPorDia && precioPorMes >= precioPorDia * 30) {
-      throw new BadRequestException('El precio por mes debe ser menor al precio diario multiplicado por 30');
+      throw new BadRequestException(
+        'El precio por mes debe ser menor al precio diario multiplicado por 30',
+      );
     }
   }
 
@@ -691,31 +848,39 @@ export class PublicacionesService {
     if (filtros.busqueda) {
       // Extraer palabras clave y sus variaciones del texto de búsqueda
       const palabrasClave = extraerPalabrasClave(filtros.busqueda);
-      
+
       if (palabrasClave.length > 0) {
         // Crear condiciones de búsqueda para cada campo usando todas las palabras clave
         const condicionesBusqueda = [];
-        
+
         // Buscar en título
-        condicionesBusqueda.push(...crearCondicionesBusqueda('titulo', palabrasClave));
-        
+        condicionesBusqueda.push(
+          ...crearCondicionesBusqueda('titulo', palabrasClave),
+        );
+
         // Buscar en descripción
-        condicionesBusqueda.push(...crearCondicionesBusqueda('descripcion', palabrasClave));
-        
+        condicionesBusqueda.push(
+          ...crearCondicionesBusqueda('descripcion', palabrasClave),
+        );
+
         // Buscar en marca
-        condicionesBusqueda.push(...crearCondicionesBusqueda('marca', palabrasClave));
-        
+        condicionesBusqueda.push(
+          ...crearCondicionesBusqueda('marca', palabrasClave),
+        );
+
         // Buscar en modelo
-        condicionesBusqueda.push(...crearCondicionesBusqueda('modelo', palabrasClave));
-        
+        condicionesBusqueda.push(
+          ...crearCondicionesBusqueda('modelo', palabrasClave),
+        );
+
         // También mantener la búsqueda original como fallback
         condicionesBusqueda.push(
           { titulo: { contains: filtros.busqueda, mode: 'insensitive' } },
           { descripcion: { contains: filtros.busqueda, mode: 'insensitive' } },
           { marca: { contains: filtros.busqueda, mode: 'insensitive' } },
-          { modelo: { contains: filtros.busqueda, mode: 'insensitive' } }
+          { modelo: { contains: filtros.busqueda, mode: 'insensitive' } },
         );
-        
+
         condiciones.OR = condicionesBusqueda;
       }
     }
@@ -729,7 +894,10 @@ export class PublicacionesService {
     }
 
     if (filtros.departamento) {
-      condiciones.departamento = { contains: filtros.departamento, mode: 'insensitive' };
+      condiciones.departamento = {
+        contains: filtros.departamento,
+        mode: 'insensitive',
+      };
     }
 
     if (filtros.precioMinimo || filtros.precioMaximo) {
@@ -759,19 +927,31 @@ export class PublicacionesService {
     }
 
     // Disponibilidad por rango de fechas: excluir publicaciones con reservas que se solapen
-    if (filtros as any && (filtros as any).fechaInicio && (filtros as any).fechaFin) {
+    if (
+      (filtros as any) &&
+      (filtros as any).fechaInicio &&
+      (filtros as any).fechaFin
+    ) {
       const fechaInicio = (filtros as any).fechaInicio as Date;
       const fechaFin = (filtros as any).fechaFin as Date;
 
       // Asegurar que el rango es válido
       if (fechaInicio > fechaFin) {
-        throw new BadRequestException('El rango de fechas es inválido: fechaInicio es posterior a fechaFin');
+        throw new BadRequestException(
+          'El rango de fechas es inválido: fechaInicio es posterior a fechaFin',
+        );
       }
 
       // Publicaciones sin reservas activas que se solapen con el rango solicitado
       condiciones.reservas = {
         none: {
-          estado: { in: [EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO] },
+          estado: {
+            in: [
+              EstadoReserva.PENDIENTE,
+              EstadoReserva.CONFIRMADA,
+              EstadoReserva.EN_CURSO,
+            ],
+          },
           NOT: {
             OR: [
               { fechaFin: { lte: fechaInicio } }, // Reserva termina antes o el mismo día que inicia el rango
@@ -791,10 +971,17 @@ export class PublicacionesService {
   /**
    * Construir ordenamiento para Prisma
    */
-  private construirOrdenamiento(ordenarPor: string, direccionOrden: 'asc' | 'desc'): any {
+  private construirOrdenamiento(
+    ordenarPor: string,
+    direccionOrden: 'asc' | 'desc',
+  ): any {
     const camposValidos = [
-      'fechaCreacion', 'fechaActualizacion', 'precioPorDia', 
-      'calificacionPromedio', 'visualizaciones', 'totalReservas'
+      'fechaCreacion',
+      'fechaActualizacion',
+      'precioPorDia',
+      'calificacionPromedio',
+      'visualizaciones',
+      'totalReservas',
     ];
 
     if (!camposValidos.includes(ordenarPor)) {
@@ -807,35 +994,69 @@ export class PublicacionesService {
   /**
    * Determina si una actualización requiere revisión de moderación
    */
-  private requiereModeracion(datosActualizacion: ActualizarPublicacionDto): boolean {
-    const camposCriticos = ['titulo', 'descripcion', 'categoria', 'precioPorDia'] as const;
-    return camposCriticos.some(campo => datosActualizacion[campo as keyof ActualizarPublicacionDto] !== undefined);
+  private requiereModeracion(
+    datosActualizacion: ActualizarPublicacionDto,
+  ): boolean {
+    const camposCriticos = [
+      'titulo',
+      'descripcion',
+      'categoria',
+      'precioPorDia',
+    ] as const;
+    return camposCriticos.some(
+      (campo) =>
+        datosActualizacion[campo as keyof ActualizarPublicacionDto] !==
+        undefined,
+    );
   }
 
   async listarImagenes(publicacionId: string): Promise<any[]> {
-    const pub = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { id: true } });
+    const pub = await this.prisma.publicacion.findUnique({
+      where: { id: BigInt(publicacionId) },
+      select: { id: true },
+    });
     if (!pub) throw new NotFoundException('Publicación no encontrada');
-    return await this.prisma.imagenPublicacion.findMany({ where: { publicacionId: BigInt(publicacionId) }, orderBy: { orden: 'asc' } });
+    return await this.prisma.imagenPublicacion.findMany({
+      where: { publicacionId: BigInt(publicacionId) },
+      orderBy: { orden: 'asc' },
+    });
   }
 
   async guardarImagenes(
     publicacionId: string,
     usuarioId: string,
-    images: { url: string; descripcion?: string; orden?: number; esPrincipal?: boolean }[],
+    images: {
+      url: string;
+      descripcion?: string;
+      orden?: number;
+      esPrincipal?: boolean;
+    }[],
   ): Promise<any[]> {
-    if (!Array.isArray(images) || images.length === 0) throw new BadRequestException('Sin imágenes');
-    if (images.length > 5) throw new BadRequestException('Máximo 5 imágenes por publicación');
+    if (!Array.isArray(images) || images.length === 0)
+      throw new BadRequestException('Sin imágenes');
+    if (images.length > 5)
+      throw new BadRequestException('Máximo 5 imágenes por publicación');
 
-    const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { propietarioId: true } });
+    const existente = await this.prisma.publicacion.findUnique({
+      where: { id: BigInt(publicacionId) },
+      select: { propietarioId: true },
+    });
     if (!existente) throw new NotFoundException('Publicación no encontrada');
-    if (existente.propietarioId !== BigInt(usuarioId)) throw new ForbiddenException('No autorizado');
+    if (existente.propietarioId !== BigInt(usuarioId))
+      throw new ForbiddenException('No autorizado');
 
-    const actuales = await this.prisma.imagenPublicacion.count({ where: { publicacionId: BigInt(publicacionId) } });
-    if (actuales + images.length > 5) throw new BadRequestException('Se excede el máximo de 5 imágenes');
+    const actuales = await this.prisma.imagenPublicacion.count({
+      where: { publicacionId: BigInt(publicacionId) },
+    });
+    if (actuales + images.length > 5)
+      throw new BadRequestException('Se excede el máximo de 5 imágenes');
 
     const principalSolicitado = images.find((i) => i.esPrincipal === true);
 
-    const maxOrden = await this.prisma.imagenPublicacion.aggregate({ where: { publicacionId: BigInt(publicacionId) }, _max: { orden: true } });
+    const maxOrden = await this.prisma.imagenPublicacion.aggregate({
+      where: { publicacionId: BigInt(publicacionId) },
+      _max: { orden: true },
+    });
     let baseOrden = (maxOrden._max.orden ?? -1) + 1;
 
     const data = images.map((img) => ({
@@ -848,38 +1069,74 @@ export class PublicacionesService {
 
     const created = await this.prisma.$transaction(async (tx) => {
       if (principalSolicitado) {
-        await tx.imagenPublicacion.updateMany({ where: { publicacionId: BigInt(publicacionId) }, data: { esPrincipal: false } });
+        await tx.imagenPublicacion.updateMany({
+          where: { publicacionId: BigInt(publicacionId) },
+          data: { esPrincipal: false },
+        });
       }
       await tx.imagenPublicacion.createMany({ data });
-      const nuevas = await tx.imagenPublicacion.findMany({ where: { publicacionId: BigInt(publicacionId) }, orderBy: { orden: 'asc' } });
+      const nuevas = await tx.imagenPublicacion.findMany({
+        where: { publicacionId: BigInt(publicacionId) },
+        orderBy: { orden: 'asc' },
+      });
       return nuevas;
     });
 
     return created;
   }
 
-  async setImagenPrincipal(publicacionId: string, usuarioId: string, imagenId: string): Promise<void> {
-    const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { propietarioId: true } });
+  async setImagenPrincipal(
+    publicacionId: string,
+    usuarioId: string,
+    imagenId: string,
+  ): Promise<void> {
+    const existente = await this.prisma.publicacion.findUnique({
+      where: { id: BigInt(publicacionId) },
+      select: { propietarioId: true },
+    });
     if (!existente) throw new NotFoundException('Publicación no encontrada');
-    if (existente.propietarioId !== BigInt(usuarioId)) throw new ForbiddenException('No autorizado');
+    if (existente.propietarioId !== BigInt(usuarioId))
+      throw new ForbiddenException('No autorizado');
 
-    const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: BigInt(imagenId) } });
-    if (!imagen || imagen.publicacionId !== BigInt(publicacionId)) throw new NotFoundException('Imagen no encontrada');
+    const imagen = await this.prisma.imagenPublicacion.findUnique({
+      where: { id: BigInt(imagenId) },
+    });
+    if (!imagen || imagen.publicacionId !== BigInt(publicacionId))
+      throw new NotFoundException('Imagen no encontrada');
 
     await this.prisma.$transaction([
-      this.prisma.imagenPublicacion.updateMany({ where: { publicacionId: BigInt(publicacionId) }, data: { esPrincipal: false } }),
-      this.prisma.imagenPublicacion.update({ where: { id: BigInt(imagenId) }, data: { esPrincipal: true } }),
+      this.prisma.imagenPublicacion.updateMany({
+        where: { publicacionId: BigInt(publicacionId) },
+        data: { esPrincipal: false },
+      }),
+      this.prisma.imagenPublicacion.update({
+        where: { id: BigInt(imagenId) },
+        data: { esPrincipal: true },
+      }),
     ]);
   }
 
-  async eliminarImagen(publicacionId: string, usuarioId: string, imagenId: string): Promise<void> {
-    const existente = await this.prisma.publicacion.findUnique({ where: { id: BigInt(publicacionId) }, select: { propietarioId: true } });
+  async eliminarImagen(
+    publicacionId: string,
+    usuarioId: string,
+    imagenId: string,
+  ): Promise<void> {
+    const existente = await this.prisma.publicacion.findUnique({
+      where: { id: BigInt(publicacionId) },
+      select: { propietarioId: true },
+    });
     if (!existente) throw new NotFoundException('Publicación no encontrada');
-    if (existente.propietarioId !== BigInt(usuarioId)) throw new ForbiddenException('No autorizado');
+    if (existente.propietarioId !== BigInt(usuarioId))
+      throw new ForbiddenException('No autorizado');
 
-    const imagen = await this.prisma.imagenPublicacion.findUnique({ where: { id: BigInt(imagenId) } });
-    if (!imagen || imagen.publicacionId !== BigInt(publicacionId)) throw new NotFoundException('Imagen no encontrada');
+    const imagen = await this.prisma.imagenPublicacion.findUnique({
+      where: { id: BigInt(imagenId) },
+    });
+    if (!imagen || imagen.publicacionId !== BigInt(publicacionId))
+      throw new NotFoundException('Imagen no encontrada');
 
-    await this.prisma.imagenPublicacion.delete({ where: { id: BigInt(imagenId) } });
+    await this.prisma.imagenPublicacion.delete({
+      where: { id: BigInt(imagenId) },
+    });
   }
 }

@@ -1,27 +1,35 @@
-import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, Min } from 'class-validator'
+import {
+  IsArray,
+  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class FinalizarImagenDto {
   @IsString()
   @IsNotEmpty()
-  url!: string
+  url!: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  descripcion?: string
+  descripcion?: string;
 
   @IsOptional()
   @IsInt()
   @Min(0)
-  orden?: number
+  orden?: number;
 
   @IsOptional()
   @IsBoolean()
-  esPrincipal?: boolean
+  esPrincipal?: boolean;
 }
 
 export class FinalizarImagenesDto {
   @IsArray()
-  images!: FinalizarImagenDto[]
+  images!: FinalizarImagenDto[];
 }
-

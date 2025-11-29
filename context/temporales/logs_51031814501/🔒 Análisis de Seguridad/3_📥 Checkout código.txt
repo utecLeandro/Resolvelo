@@ -1,0 +1,74 @@
+﻿2025-11-29T02:30:56.0705875Z ##[group]Run actions/checkout@v4
+2025-11-29T02:30:56.0706443Z with:
+2025-11-29T02:30:56.0706651Z   repository: utecLeandro/Resolvelo
+2025-11-29T02:30:56.0707061Z   token: ***
+2025-11-29T02:30:56.0707246Z   ssh-strict: true
+2025-11-29T02:30:56.0707421Z   ssh-user: git
+2025-11-29T02:30:56.0707614Z   persist-credentials: true
+2025-11-29T02:30:56.0707825Z   clean: true
+2025-11-29T02:30:56.0708030Z   sparse-checkout-cone-mode: true
+2025-11-29T02:30:56.0708260Z   fetch-depth: 1
+2025-11-29T02:30:56.0708428Z   fetch-tags: false
+2025-11-29T02:30:56.0708609Z   show-progress: true
+2025-11-29T02:30:56.0708787Z   lfs: false
+2025-11-29T02:30:56.0708950Z   submodules: false
+2025-11-29T02:30:56.0709128Z   set-safe-directory: true
+2025-11-29T02:30:56.0709502Z env:
+2025-11-29T02:30:56.0709663Z   NODE_VERSION: 18
+2025-11-29T02:30:56.0709847Z   POSTGRES_VERSION: 14
+2025-11-29T02:30:56.0710063Z ##[endgroup]
+2025-11-29T02:30:56.1809844Z Syncing repository: utecLeandro/Resolvelo
+2025-11-29T02:30:56.1811840Z ##[group]Getting Git version info
+2025-11-29T02:30:56.1812568Z Working directory is '/home/runner/work/Resolvelo/Resolvelo'
+2025-11-29T02:30:56.1813519Z [command]/usr/bin/git version
+2025-11-29T02:30:56.1886998Z git version 2.51.2
+2025-11-29T02:30:56.1913482Z ##[endgroup]
+2025-11-29T02:30:56.1927722Z Temporarily overriding HOME='/home/runner/work/_temp/3f4437e2-4f70-4178-a4df-09e1f4aee58b' before making global git config changes
+2025-11-29T02:30:56.1928870Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-29T02:30:56.1940424Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Resolvelo/Resolvelo
+2025-11-29T02:30:56.1977166Z Deleting the contents of '/home/runner/work/Resolvelo/Resolvelo'
+2025-11-29T02:30:56.1980427Z ##[group]Initializing the repository
+2025-11-29T02:30:56.1984592Z [command]/usr/bin/git init /home/runner/work/Resolvelo/Resolvelo
+2025-11-29T02:30:56.2118525Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-11-29T02:30:56.2119187Z hint: is subject to change. To configure the initial branch name to use in all
+2025-11-29T02:30:56.2119808Z hint: of your new repositories, which will suppress this warning, call:
+2025-11-29T02:30:56.2120279Z hint:
+2025-11-29T02:30:56.2120597Z hint: 	git config --global init.defaultBranch <name>
+2025-11-29T02:30:56.2120956Z hint:
+2025-11-29T02:30:56.2121299Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-11-29T02:30:56.2121938Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-11-29T02:30:56.2122681Z hint:
+2025-11-29T02:30:56.2123093Z hint: 	git branch -m <name>
+2025-11-29T02:30:56.2123487Z hint:
+2025-11-29T02:30:56.2123869Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-11-29T02:30:56.2125059Z Initialized empty Git repository in /home/runner/work/Resolvelo/Resolvelo/.git/
+2025-11-29T02:30:56.2135653Z [command]/usr/bin/git remote add origin https://github.com/utecLeandro/Resolvelo
+2025-11-29T02:30:56.2170739Z ##[endgroup]
+2025-11-29T02:30:56.2171389Z ##[group]Disabling automatic garbage collection
+2025-11-29T02:30:56.2176151Z [command]/usr/bin/git config --local gc.auto 0
+2025-11-29T02:30:56.2203739Z ##[endgroup]
+2025-11-29T02:30:56.2204291Z ##[group]Setting up auth
+2025-11-29T02:30:56.2210993Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-29T02:30:56.2241685Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-29T02:30:56.2586115Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-29T02:30:56.2614884Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-29T02:30:56.2833346Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-11-29T02:30:56.2872387Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-11-29T02:30:56.3096409Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-11-29T02:30:56.3130198Z ##[endgroup]
+2025-11-29T02:30:56.3130892Z ##[group]Fetching the repository
+2025-11-29T02:30:56.3139119Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +daebd071b48739e419b83f6852f25e68a8c9101c:refs/remotes/origin/develop
+2025-11-29T02:30:56.7655138Z From https://github.com/utecLeandro/Resolvelo
+2025-11-29T02:30:56.7655928Z  * [new ref]         daebd071b48739e419b83f6852f25e68a8c9101c -> origin/develop
+2025-11-29T02:30:56.7688649Z ##[endgroup]
+2025-11-29T02:30:56.7689157Z ##[group]Determining the checkout info
+2025-11-29T02:30:56.7691067Z ##[endgroup]
+2025-11-29T02:30:56.7695981Z [command]/usr/bin/git sparse-checkout disable
+2025-11-29T02:30:56.7735940Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-11-29T02:30:56.7760808Z ##[group]Checking out the ref
+2025-11-29T02:30:56.7764703Z [command]/usr/bin/git checkout --progress --force -B develop refs/remotes/origin/develop
+2025-11-29T02:30:56.8056166Z Switched to a new branch 'develop'
+2025-11-29T02:30:56.8057863Z branch 'develop' set up to track 'origin/develop'.
+2025-11-29T02:30:56.8066042Z ##[endgroup]
+2025-11-29T02:30:56.8104075Z [command]/usr/bin/git log -1 --format=%H
+2025-11-29T02:30:56.8125661Z daebd071b48739e419b83f6852f25e68a8c9101c

@@ -1,0 +1,19 @@
+﻿2025-11-29T02:31:29.5833730Z ##[group]Run npm run test:cov
+2025-11-29T02:31:29.5834176Z [36;1mnpm run test:cov[0m
+2025-11-29T02:31:29.5883539Z shell: /usr/bin/bash -e {0}
+2025-11-29T02:31:29.5883939Z env:
+2025-11-29T02:31:29.5884226Z   NODE_VERSION: 18
+2025-11-29T02:31:29.5884575Z   POSTGRES_VERSION: 14
+2025-11-29T02:31:29.5885594Z   DATABASE_URL: ***localhost:5432/resolvelo_test
+2025-11-29T02:31:29.5886126Z   JWT_SECRET: test-secret-key
+2025-11-29T02:31:29.5886533Z   NODE_ENV: test
+2025-11-29T02:31:29.5886918Z ##[endgroup]
+2025-11-29T02:31:29.7283091Z npm error Missing script: "test:cov"
+2025-11-29T02:31:29.7283873Z npm error
+2025-11-29T02:31:29.7284444Z npm error Did you mean this?
+2025-11-29T02:31:29.7285165Z npm error   npm run test:e2e # run the "test:e2e" package script
+2025-11-29T02:31:29.7285755Z npm error
+2025-11-29T02:31:29.7286280Z npm error To see a list of scripts, run:
+2025-11-29T02:31:29.7286775Z npm error   npm run
+2025-11-29T02:31:29.7302125Z npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2025-11-29T02_31_29_666Z-debug-0.log
+2025-11-29T02:31:29.7356082Z ##[error]Process completed with exit code 1.

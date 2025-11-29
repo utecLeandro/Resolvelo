@@ -2,30 +2,26 @@ import {
   Controller,
   Get,
   Param,
-  Patch,
-  Body,
-  HttpCode,
-  HttpStatus,
   UsePipes,
   ValidationPipe,
-} from "@nestjs/common";
+} from '@nestjs/common';
 
-@Controller("reservas")
+@Controller('reservas')
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class ReservasFuncionalController {
   constructor() {}
 
-  @Get("test")
+  @Get('test')
   async test() {
     return {
-      message: "Controlador de reservas funcionando",
+      message: 'Controlador de reservas funcionando',
       timestamp: new Date().toISOString(),
-      status: "OK",
+      status: 'OK',
     };
   }
 
-  @Get(":id")
-  async obtenerPorId(@Param("id") id: string) {
+  @Get(':id')
+  async obtenerPorId(@Param('id') id: string) {
     return {
       message: `Obteniendo reserva con ID: ${id}`,
       id,

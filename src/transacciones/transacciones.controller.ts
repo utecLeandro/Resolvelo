@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Put, Body, Param, UseGuards, Request, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  BadRequestException,
+} from '@nestjs/common';
 import { TransaccionesService } from './transacciones.service';
 import { ProcesarPagoDto } from './dto/procesar-pago.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -14,18 +24,28 @@ export class TransaccionesController {
 
   @Post('procesar-pago')
   async procesarPago(@Body() procesarPagoDto: ProcesarPagoDto, @Request() req) {
-    console.log('🔄 [CONTROLLER] Procesando pago para reserva:', procesarPagoDto.reservaId);
+    console.log(
+      '🔄 [CONTROLLER] Procesando pago para reserva:',
+      procesarPagoDto.reservaId,
+    );
     console.log('👤 [CONTROLLER] Usuario:', req.user.sub);
-    
-    const resultado = await this.transaccionesService.procesarPago(procesarPagoDto);
-    
-    console.log('✅ [CONTROLLER] Pago procesado exitosamente:', resultado.transaccionId);
+
+    const resultado =
+      await this.transaccionesService.procesarPago(procesarPagoDto);
+
+    console.log(
+      '✅ [CONTROLLER] Pago procesado exitosamente:',
+      resultado.transaccionId,
+    );
     return resultado;
   }
 
   @Get('mis-transacciones')
   async obtenerMisTransacciones(@Request() req) {
-    console.log('📋 [CONTROLLER] Obteniendo transacciones del usuario:', req.user.sub);
+    console.log(
+      '📋 [CONTROLLER] Obteniendo transacciones del usuario:',
+      req.user.sub,
+    );
     return this.transaccionesService.obtenerTransaccionesUsuario(req.user.sub);
   }
 
@@ -36,31 +56,59 @@ export class TransaccionesController {
   }
 
   @Post('mercado-pago/crear-preferencia')
-  async crearPreferenciaMp(@Body() body: CrearPreferenciaMpDto, @Request() req) {
-    console.log('🧭 [CONTROLLER] Crear preferencia MP para reserva:', body.reservaId);
+  async crearPreferenciaMp(
+    @Body() body: CrearPreferenciaMpDto,
+    @Request() req,
+  ) {
+    console.log(
+      '🧭 [CONTROLLER] Crear preferencia MP para reserva:',
+      body.reservaId,
+    );
     console.log('👤 [CONTROLLER] Usuario:', req.user.sub);
 
-    const resultado = await this.transaccionesService.crearPreferenciaMercadoPago(body.reservaId, body.descripcion);
+    const resultado =
+      await this.transaccionesService.crearPreferenciaMercadoPago(
+        body.reservaId,
+        body.descripcion,
+      );
     console.log('✅ [CONTROLLER] Preferencia creada:', resultado.preferenciaId);
     return resultado;
   }
 
   @Post('mercado-pago/confirmar')
   async confirmarPagoMp(@Body() body: { paymentId: string }, @Request() req) {
-    console.log('🧭 [CONTROLLER] Confirmar pago MP paymentId:', body?.paymentId);
+    console.log(
+      '🧭 [CONTROLLER] Confirmar pago MP paymentId:',
+      body?.paymentId,
+    );
     console.log('👤 [CONTROLLER] Usuario:', req.user.sub);
     if (!body?.paymentId) {
       throw new Error('paymentId es requerido');
     }
-    const tx = await this.transaccionesService.confirmarPagoMercadoPago(body.paymentId);
-    console.log('✅ [CONTROLLER] Confirmación procesada para transacción:', tx?.id, 'estado:', tx?.estado);
+    const tx = await this.transaccionesService.confirmarPagoMercadoPago(
+      body.paymentId,
+    );
+    console.log(
+      '✅ [CONTROLLER] Confirmación procesada para transacción:',
+      tx?.id,
+      'estado:',
+      tx?.estado,
+    );
     return tx;
   }
 
   @Put(':id/completar')
   async completarTransaccion(@Param('id') id: string, @Request() req) {
-    console.log('🧭 [CONTROLLER] Completar transacción manual:', id, 'usuario:', req.user?.sub);
-    const tx = await this.transaccionesService.verificarEstadoMercadoPagoPorTransaccion(id);
+    console.log(
+      '🧭 [CONTROLLER] Completar transacción manual:',
+      id,
+      'usuario:',
+      req.user?.sub,
+    );
+    const tx =
+      await this.transaccionesService.verificarEstadoMercadoPagoPorTransaccion(
+        id,
+      );
     if (!tx || tx.estado !== 'COMPLETADA') {
       throw new BadRequestException('El pago no está aprobado aún');
     }
@@ -68,10 +116,21 @@ export class TransaccionesController {
   }
 
   @Post('mercado-pago/process-payment')
-  async processPaymentBrick(@Body() body: ProcesarPagoBrickDto, @Request() req) {
-    console.log('🧭 [CONTROLLER] process-payment Brick, usuario:', req.user?.sub);
+  async processPaymentBrick(
+    @Body() body: ProcesarPagoBrickDto,
+    @Request() req,
+  ) {
+    console.log(
+      '🧭 [CONTROLLER] process-payment Brick, usuario:',
+      req.user?.sub,
+    );
     const tx = await this.transaccionesService.procesarPagoBrick(body);
-    console.log('✅ [CONTROLLER] Brick payment procesado para transacción:', tx?.id, 'estado:', tx?.estado);
+    console.log(
+      '✅ [CONTROLLER] Brick payment procesado para transacción:',
+      tx?.id,
+      'estado:',
+      tx?.estado,
+    );
     return tx;
   }
 }

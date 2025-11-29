@@ -11,9 +11,13 @@ console.log('[TransaccionesModule] Cargando módulo de transacciones...');
 
 @Module({
   imports: [PrismaModule, NotificacionesModule],
-  controllers: [TransaccionesController, TransaccionesWebhookController, VerificacionPublicController],
+  controllers: [
+    TransaccionesController,
+    TransaccionesWebhookController,
+    VerificacionPublicController,
+  ],
   providers: [TransaccionesService],
-  exports: [TransaccionesService]
+  exports: [TransaccionesService],
 })
 export class TransaccionesModule {
   constructor() {

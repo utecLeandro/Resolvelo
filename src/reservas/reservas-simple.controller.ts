@@ -1,8 +1,8 @@
-import { Controller } from "@nestjs/common";
+import { Controller } from '@nestjs/common';
 
-@Controller("reservas-simple")
+@Controller('reservas-simple')
 export class ReservasSimpleController {
   test() {
-    return { message: "Controlador simple funcionando!" };
+    return { message: 'Controlador simple funcionando!' };
   }
 }

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RolUsuario } from '@prisma/client';
 
@@ -65,25 +70,43 @@ export class AdminService {
     };
   }
 
-  async cambiarEstadoUsuario(adminUsuarioId: string, objetivoUsuarioId: string, activo: boolean, motivo?: string) {
-    const usuario = await this.prisma.usuario.findUnique({ where: { id: BigInt(objetivoUsuarioId) } });
+  async cambiarEstadoUsuario(
+    adminUsuarioId: string,
+    objetivoUsuarioId: string,
+    activo: boolean,
+    motivo?: string,
+  ) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(objetivoUsuarioId) },
+    });
     if (!usuario) {
       throw new NotFoundException('Usuario objetivo no encontrado');
     }
 
     if (usuario.activo === activo) {
-      throw new BadRequestException(`El usuario ya está ${activo ? 'habilitado' : 'deshabilitado'}`);
+      throw new BadRequestException(
+        `El usuario ya está ${activo ? 'habilitado' : 'deshabilitado'}`,
+      );
     }
 
     const actualizado = await this.prisma.usuario.update({
       where: { id: BigInt(objetivoUsuarioId) },
       data: { activo },
-      select: { id: true, nombre: true, apellido: true, email: true, rol: true, activo: true },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        rol: true,
+        activo: true,
+      },
     });
 
     // Registrar acción administrativa
     // Buscar el registro del administrador (si existe)
-    const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(adminUsuarioId) } });
+    const admin = await this.prisma.administrador.findUnique({
+      where: { usuarioId: BigInt(adminUsuarioId) },
+    });
     const tipo = activo ? 'MODIFICAR_USUARIO' : 'SUSPENDER_USUARIO';
 
     if (admin) {
@@ -102,8 +125,14 @@ export class AdminService {
     return { message: 'Estado de usuario actualizado', usuario: actualizado };
   }
 
-  async verificarUsuario(adminUsuarioId: string, objetivoUsuarioId: string, motivo?: string) {
-    const usuario = await this.prisma.usuario.findUnique({ where: { id: BigInt(objetivoUsuarioId) } });
+  async verificarUsuario(
+    adminUsuarioId: string,
+    objetivoUsuarioId: string,
+    motivo?: string,
+  ) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(objetivoUsuarioId) },
+    });
     if (!usuario) {
       throw new NotFoundException('Usuario objetivo no encontrado');
     }
@@ -112,7 +141,9 @@ export class AdminService {
       throw new BadRequestException('El usuario ya está verificado');
     }
     if (usuario.estadoVerificacion !== 'PENDIENTE') {
-      throw new BadRequestException(`No se puede verificar un usuario con estado '${usuario.estadoVerificacion}'.`);
+      throw new BadRequestException(
+        `No se puede verificar un usuario con estado '${usuario.estadoVerificacion}'.`,
+      );
     }
 
     const actualizado = await this.prisma.usuario.update({
@@ -130,7 +161,9 @@ export class AdminService {
       },
     });
 
-    const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(adminUsuarioId) } });
+    const admin = await this.prisma.administrador.findUnique({
+      where: { usuarioId: BigInt(adminUsuarioId) },
+    });
     if (admin) {
       await this.prisma.accionAdministrativa.create({
         data: {
@@ -144,7 +177,10 @@ export class AdminService {
       });
     }
 
-    return { message: 'Usuario verificado correctamente', usuario: actualizado };
+    return {
+      message: 'Usuario verificado correctamente',
+      usuario: actualizado,
+    };
   }
 
   async listarRoles() {
@@ -155,8 +191,14 @@ export class AdminService {
     return { roles };
   }
 
-  async cambiarRolUsuario(adminUsuarioId: string, objetivoUsuarioId: string, rol: RolUsuario) {
-    const usuario = await this.prisma.usuario.findUnique({ where: { id: BigInt(objetivoUsuarioId) } });
+  async cambiarRolUsuario(
+    adminUsuarioId: string,
+    objetivoUsuarioId: string,
+    rol: RolUsuario,
+  ) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(objetivoUsuarioId) },
+    });
     if (!usuario) {
       throw new NotFoundException('Usuario objetivo no encontrado');
     }
@@ -166,16 +208,26 @@ export class AdminService {
       throw new BadRequestException('Rol inválido');
     }
 
-    if (usuario.email === 'gtbump2012@gmail.com' && rol !== 'ADMINISTRADOR' && rol !== 'SUPER_ADMIN') {
-      throw new BadRequestException('Este usuario posee privilegios permanentes. Debe ser ADMINISTRADOR o SUPER_ADMIN.');
+    if (
+      usuario.email === 'gtbump2012@gmail.com' &&
+      rol !== 'ADMINISTRADOR' &&
+      rol !== 'SUPER_ADMIN'
+    ) {
+      throw new BadRequestException(
+        'Este usuario posee privilegios permanentes. Debe ser ADMINISTRADOR o SUPER_ADMIN.',
+      );
     }
 
-    const adminUser = await this.prisma.usuario.findUnique({ where: { id: BigInt(adminUsuarioId) } });
+    const adminUser = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(adminUsuarioId) },
+    });
     if (!adminUser) {
       throw new ForbiddenException('Administrador no válido');
     }
     if (rol === 'SUPER_ADMIN' && adminUser.rol !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Solo un SUPER_ADMIN puede asignar el rol SUPER_ADMIN');
+      throw new ForbiddenException(
+        'Solo un SUPER_ADMIN puede asignar el rol SUPER_ADMIN',
+      );
     }
 
     const rolAnterior = usuario.rol;
@@ -194,7 +246,9 @@ export class AdminService {
       },
     });
 
-    const admin = await this.prisma.administrador.findUnique({ where: { usuarioId: BigInt(adminUsuarioId) } });
+    const admin = await this.prisma.administrador.findUnique({
+      where: { usuarioId: BigInt(adminUsuarioId) },
+    });
     if (admin) {
       await this.prisma.accionAdministrativa.create({
         data: {
@@ -213,11 +267,16 @@ export class AdminService {
 
   private formatearRol(rol: RolUsuario) {
     switch (rol) {
-      case 'USUARIO': return 'Usuario';
-      case 'MODERADOR': return 'Moderador';
-      case 'ADMINISTRADOR': return 'Administrador';
-      case 'SUPER_ADMIN': return 'Super Admin';
-      default: return String(rol);
+      case 'USUARIO':
+        return 'Usuario';
+      case 'MODERADOR':
+        return 'Moderador';
+      case 'ADMINISTRADOR':
+        return 'Administrador';
+      case 'SUPER_ADMIN':
+        return 'Super Admin';
+      default:
+        return String(rol);
     }
   }
 }

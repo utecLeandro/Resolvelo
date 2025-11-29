@@ -1,69 +1,75 @@
-import { IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator'
-import { Type } from 'class-transformer'
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 class PayerIdentificationDto {
   @IsOptional()
   @IsString()
-  type?: string
+  type?: string;
 
   @IsOptional()
   @IsString()
-  number?: string
+  number?: string;
 }
 
 class PayerDto {
   @IsOptional()
   @IsString()
-  firstName?: string
+  firstName?: string;
 
   @IsOptional()
   @IsString()
-  lastName?: string
+  lastName?: string;
 
   @IsOptional()
   @IsString()
-  email?: string
+  email?: string;
 
   @IsOptional()
   @ValidateNested()
   @Type(() => PayerIdentificationDto)
-  identification?: PayerIdentificationDto
+  identification?: PayerIdentificationDto;
 }
 
 export class ProcesarPagoBrickDto {
   @IsNumber()
-  transaction_amount!: number
+  transaction_amount!: number;
 
   @IsOptional()
   @IsString()
-  token?: string
+  token?: string;
 
   @IsOptional()
   @IsString()
-  payment_method_id?: string
+  payment_method_id?: string;
 
   @IsOptional()
   @IsNumber()
-  installments?: number
+  installments?: number;
 
   @IsOptional()
   @IsString()
-  issuer_id?: string
+  issuer_id?: string;
 
   @IsOptional()
   @ValidateNested()
   @Type(() => PayerDto)
-  payer?: PayerDto
+  payer?: PayerDto;
 
   @IsOptional()
   @IsString()
-  preferenceId?: string
+  preferenceId?: string;
 
   @IsOptional()
   @IsString()
-  transaccionId?: string
+  transaccionId?: string;
 
   @IsOptional()
   @IsBoolean()
-  binary_mode?: boolean
+  binary_mode?: boolean;
 }

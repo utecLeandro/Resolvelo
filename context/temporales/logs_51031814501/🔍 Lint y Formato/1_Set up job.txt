@@ -1,0 +1,44 @@
+﻿2025-11-29T02:30:36.0997936Z Current runner version: '2.329.0'
+2025-11-29T02:30:36.1023370Z ##[group]Runner Image Provisioner
+2025-11-29T02:30:36.1024184Z Hosted Compute Agent
+2025-11-29T02:30:36.1024840Z Version: 20251016.436
+2025-11-29T02:30:36.1025450Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-11-29T02:30:36.1026103Z Build Date: 2025-10-15T20:44:12Z
+2025-11-29T02:30:36.1026749Z ##[endgroup]
+2025-11-29T02:30:36.1027308Z ##[group]Operating System
+2025-11-29T02:30:36.1027826Z Ubuntu
+2025-11-29T02:30:36.1028435Z 24.04.3
+2025-11-29T02:30:36.1028870Z LTS
+2025-11-29T02:30:36.1029320Z ##[endgroup]
+2025-11-29T02:30:36.1029811Z ##[group]Runner Image
+2025-11-29T02:30:36.1030406Z Image: ubuntu-24.04
+2025-11-29T02:30:36.1030875Z Version: 20251112.124.1
+2025-11-29T02:30:36.1031919Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251112.124/images/ubuntu/Ubuntu2404-Readme.md
+2025-11-29T02:30:36.1033669Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251112.124
+2025-11-29T02:30:36.1034901Z ##[endgroup]
+2025-11-29T02:30:36.1037488Z ##[group]GITHUB_TOKEN Permissions
+2025-11-29T02:30:36.1039493Z Actions: write
+2025-11-29T02:30:36.1040053Z ArtifactMetadata: write
+2025-11-29T02:30:36.1040607Z Attestations: write
+2025-11-29T02:30:36.1041063Z Checks: write
+2025-11-29T02:30:36.1041665Z Contents: write
+2025-11-29T02:30:36.1042168Z Deployments: write
+2025-11-29T02:30:36.1042826Z Discussions: write
+2025-11-29T02:30:36.1043428Z Issues: write
+2025-11-29T02:30:36.1043880Z Metadata: read
+2025-11-29T02:30:36.1044353Z Models: read
+2025-11-29T02:30:36.1044945Z Packages: write
+2025-11-29T02:30:36.1045456Z Pages: write
+2025-11-29T02:30:36.1045910Z PullRequests: write
+2025-11-29T02:30:36.1046495Z RepositoryProjects: write
+2025-11-29T02:30:36.1047197Z SecurityEvents: write
+2025-11-29T02:30:36.1047696Z Statuses: write
+2025-11-29T02:30:36.1048276Z ##[endgroup]
+2025-11-29T02:30:36.1050331Z Secret source: Actions
+2025-11-29T02:30:36.1051055Z Prepare workflow directory
+2025-11-29T02:30:36.1597804Z Prepare all required actions
+2025-11-29T02:30:36.1654966Z Getting action download info
+2025-11-29T02:30:36.4704620Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2025-11-29T02:30:37.0403789Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-11-29T02:30:37.1329969Z Download action repository 'wagoid/commitlint-github-action@v5' (SHA:9763196e10f27aef304c9b8b660d31d97fce0f99)
+2025-11-29T02:30:37.5958901Z Complete job name: 🔍 Lint y Formato

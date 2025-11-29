@@ -8,31 +8,29 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidationArguments,
-} from "class-validator";
+} from 'class-validator';
 
 @ValidatorConstraint({ async: false })
-export class EsContrasenaSeguraConstraint
-  implements ValidatorConstraintInterface
-{
-  validate(password: string, args: ValidationArguments) {
+export class EsContrasenaSeguraConstraint implements ValidatorConstraintInterface {
+  validate(password: string, _args: ValidationArguments) {
     if (!password) return false;
 
     // Lista de contraseñas comunes prohibidas (OWASP)
     const contrasenasComunes = [
-      "password",
-      "123456",
-      "123456789",
-      "qwerty",
-      "abc123",
-      "password123",
-      "admin",
-      "letmein",
-      "welcome",
-      "monkey",
-      "1234567890",
-      "password1",
-      "123123",
-      "admin123",
+      'password',
+      '123456',
+      '123456789',
+      'qwerty',
+      'abc123',
+      'password123',
+      'admin',
+      'letmein',
+      'welcome',
+      'monkey',
+      '1234567890',
+      'password1',
+      '123123',
+      'admin123',
     ];
 
     // Verificar que no sea una contraseña común
@@ -58,8 +56,8 @@ export class EsContrasenaSeguraConstraint
     return true;
   }
 
-  defaultMessage(args: ValidationArguments) {
-    return "La contraseña no cumple con los criterios de seguridad: no debe ser una contraseña común, contener secuencias repetitivas o patrones de teclado";
+  defaultMessage(_args: ValidationArguments) {
+    return 'La contraseña no cumple con los criterios de seguridad: no debe ser una contraseña común, contener secuencias repetitivas o patrones de teclado';
   }
 }
 
@@ -67,7 +65,7 @@ export class EsContrasenaSeguraConstraint
  * Decorador para validar contraseñas seguras
  */
 export function EsContrasenaSegura(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,

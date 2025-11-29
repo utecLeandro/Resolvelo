@@ -8,18 +8,18 @@ import {
   ValidationArguments,
   ValidatorConstraint,
   ValidatorConstraintInterface,
-} from "class-validator";
+} from 'class-validator';
 
 /**
  * Validador que verifica que una fecha sea en el futuro
  */
-@ValidatorConstraint({ name: "isFutureDate", async: false })
+@ValidatorConstraint({ name: 'isFutureDate', async: false })
 export class IsFutureDateConstraint implements ValidatorConstraintInterface {
-  validate(value: any, args: ValidationArguments) {
+  validate(value: any, _args: ValidationArguments) {
     if (!value) return false;
 
     const parseLocalDate = (v: any) => {
-      if (typeof v === "string") {
+      if (typeof v === 'string') {
         const m = v.match(
           /^([0-9]{4})-([0-9]{2})-([0-9]{2})(?:[T ]([0-9]{2}):([0-9]{2}):([0-9]{2}))?$/,
         );
@@ -46,20 +46,20 @@ export class IsFutureDateConstraint implements ValidatorConstraintInterface {
 
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       return inputDate >= today;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
 
-  defaultMessage(args: ValidationArguments) {
-    return "La fecha debe ser desde el día actual en adelante";
+  defaultMessage(_args: ValidationArguments) {
+    return 'La fecha debe ser desde el día actual en adelante';
   }
 }
 
 /**
  * Validador que verifica que una fecha sea posterior a otra propiedad
  */
-@ValidatorConstraint({ name: "isAfter", async: false })
+@ValidatorConstraint({ name: 'isAfter', async: false })
 export class IsAfterConstraint implements ValidatorConstraintInterface {
   validate(value: any, args: ValidationArguments) {
     if (!value) return false;
@@ -70,7 +70,7 @@ export class IsAfterConstraint implements ValidatorConstraintInterface {
     if (!relatedValue) return false;
 
     const parseLocalDate = (v: any) => {
-      if (typeof v === "string") {
+      if (typeof v === 'string') {
         const m = v.match(
           /^([0-9]{4})-([0-9]{2})-([0-9]{2})(?:[T ]([0-9]{2}):([0-9]{2}):([0-9]{2}))?$/,
         );
@@ -96,7 +96,7 @@ export class IsAfterConstraint implements ValidatorConstraintInterface {
       }
 
       return currentDate >= relatedDate;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -111,7 +111,7 @@ export class IsAfterConstraint implements ValidatorConstraintInterface {
  * Decorador para validar que una fecha sea en el futuro
  */
 export function IsFutureDate(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
@@ -129,7 +129,7 @@ export function IsAfter(
   property: string,
   validationOptions?: ValidationOptions,
 ) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,

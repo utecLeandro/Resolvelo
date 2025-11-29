@@ -1,0 +1,44 @@
+﻿2025-11-29T02:30:36.5658677Z Current runner version: '2.329.0'
+2025-11-29T02:30:36.5682774Z ##[group]Runner Image Provisioner
+2025-11-29T02:30:36.5683615Z Hosted Compute Agent
+2025-11-29T02:30:36.5684132Z Version: 20251016.436
+2025-11-29T02:30:36.5685181Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-11-29T02:30:36.5685948Z Build Date: 2025-10-15T20:44:12Z
+2025-11-29T02:30:36.5686587Z ##[endgroup]
+2025-11-29T02:30:36.5687141Z ##[group]Operating System
+2025-11-29T02:30:36.5687739Z Ubuntu
+2025-11-29T02:30:36.5688237Z 24.04.3
+2025-11-29T02:30:36.5688756Z LTS
+2025-11-29T02:30:36.5689265Z ##[endgroup]
+2025-11-29T02:30:36.5689726Z ##[group]Runner Image
+2025-11-29T02:30:36.5690325Z Image: ubuntu-24.04
+2025-11-29T02:30:36.5690814Z Version: 20251112.124.1
+2025-11-29T02:30:36.5691874Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251112.124/images/ubuntu/Ubuntu2404-Readme.md
+2025-11-29T02:30:36.5693282Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251112.124
+2025-11-29T02:30:36.5694513Z ##[endgroup]
+2025-11-29T02:30:36.5697427Z ##[group]GITHUB_TOKEN Permissions
+2025-11-29T02:30:36.5699394Z Actions: write
+2025-11-29T02:30:36.5700037Z ArtifactMetadata: write
+2025-11-29T02:30:36.5700666Z Attestations: write
+2025-11-29T02:30:36.5701152Z Checks: write
+2025-11-29T02:30:36.5701690Z Contents: write
+2025-11-29T02:30:36.5702191Z Deployments: write
+2025-11-29T02:30:36.5702776Z Discussions: write
+2025-11-29T02:30:36.5703251Z Issues: write
+2025-11-29T02:30:36.5703855Z Metadata: read
+2025-11-29T02:30:36.5704365Z Models: read
+2025-11-29T02:30:36.5704995Z Packages: write
+2025-11-29T02:30:36.5705803Z Pages: write
+2025-11-29T02:30:36.5706302Z PullRequests: write
+2025-11-29T02:30:36.5706859Z RepositoryProjects: write
+2025-11-29T02:30:36.5707623Z SecurityEvents: write
+2025-11-29T02:30:36.5708175Z Statuses: write
+2025-11-29T02:30:36.5708694Z ##[endgroup]
+2025-11-29T02:30:36.5711182Z Secret source: Actions
+2025-11-29T02:30:36.5711935Z Prepare workflow directory
+2025-11-29T02:30:36.6097261Z Prepare all required actions
+2025-11-29T02:30:36.6136000Z Getting action download info
+2025-11-29T02:30:36.9714097Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2025-11-29T02:30:37.5818663Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-11-29T02:30:37.6705070Z Download action repository 'snyk/actions@master' (SHA:9adf32b1121593767fc3c057af55b55db032dc04)
+2025-11-29T02:30:38.1832407Z Complete job name: 🔒 Análisis de Seguridad

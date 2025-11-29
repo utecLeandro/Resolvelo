@@ -1,15 +1,15 @@
-import { IsString, IsOptional, MinLength } from 'class-validator'
+import { IsString, IsOptional, MinLength } from 'class-validator';
 
 export class EnviarMensajeDto {
   @IsString()
   @MinLength(1)
-  reservaId!: string
+  reservaId!: string;
 
   @IsString()
   @MinLength(1)
-  contenido!: string
+  contenido!: string;
 
   @IsOptional()
   @IsString()
-  receptorId?: string
+  receptorId?: string;
 }
