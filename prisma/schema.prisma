@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Usuario {
-  id                      String             @id @default(cuid())
+  id                      BigInt             @id @default(autoincrement())
   nombre                  String             @db.VarChar(100)
   apellido                String             @db.VarChar(100)
   email                   String             @unique @db.VarChar(255)
@@ -43,6 +43,7 @@ model Usuario {
   fechaActualizacion      DateTime           @updatedAt
   ultimoAcceso            DateTime?
   activo                  Boolean            @default(true)
+  primerLoginPendiente    Boolean            @default(true)
   tokenVerificacion       String?            @db.VarChar(255)
   tokenRecuperacion       String?            @db.VarChar(255)
   fechaExpiracionToken    DateTime?
@@ -71,7 +72,7 @@ model Usuario {
 }
 
 model Publicacion {
-  id                   String                   @id @default(cuid())
+  id                   BigInt                   @id @default(autoincrement())
   titulo               String                   @db.VarChar(200)
   descripcion          String
   categoria            CategoriaEquipo
@@ -108,7 +109,7 @@ model Publicacion {
   totalReservas        Int                      @default(0)
   calificacionPromedio Decimal?                 @db.Decimal(3, 2)
   totalCalificaciones  Int                      @default(0)
-  propietarioId        String
+  propietarioId        BigInt
   calificaciones       Calificacion[]
   disponibilidades     DisponibilidadFecha[]
   imagenes             ImagenPublicacion[]
@@ -129,7 +130,7 @@ model Publicacion {
 }
 
 model Reserva {
-  id                 String         @id @default(cuid())
+  id                 BigInt         @id @default(autoincrement())
   fechaInicio        DateTime
   fechaFin           DateTime
   fechaCreacion      DateTime       @default(now())
@@ -146,9 +147,9 @@ model Reserva {
   notasPropietario   String?
   notasInternas      String?
   telefonoContacto   String?        @db.VarChar(20)
-  usuarioId          String
-  publicacionId      String
-  propietarioId      String
+  usuarioId          BigInt
+  publicacionId      BigInt
+  propietarioId      BigInt
   calificaciones     Calificacion[]
   disputas           Disputa[]
   mensajes           Mensaje[]
@@ -167,7 +168,7 @@ model Reserva {
 }
 
 model Transaccion {
-  id                 String            @id @default(cuid())
+  id                 BigInt            @id @default(autoincrement())
   tipo               TipoTransaccion
   estado             EstadoTransaccion @default(PENDIENTE)
   monto              Decimal           @db.Decimal(10, 2)
@@ -183,8 +184,8 @@ model Transaccion {
   comisionPlataforma Decimal?          @db.Decimal(10, 2)
   comisionPasarela   Decimal?          @db.Decimal(10, 2)
   montoNeto          Decimal?          @db.Decimal(10, 2)
-  usuarioId          String
-  reservaId          String?
+  usuarioId          BigInt
+  reservaId          BigInt?
   reserva            Reserva?          @relation(fields: [reservaId], references: [id])
   usuario            Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
@@ -198,15 +199,15 @@ model Transaccion {
 }
 
 model Calificacion {
-  id                   String      @id @default(cuid())
+  id                   BigInt      @id @default(autoincrement())
   puntuacion           Int
   comentario           String?
   fechaCreacion        DateTime    @default(now())
   fechaActualizacion   DateTime    @updatedAt
-  usuarioCalificadorId String
-  usuarioCalificadoId  String
-  reservaId            String
-  publicacionId        String
+  usuarioCalificadorId BigInt
+  usuarioCalificadoId  BigInt
+  reservaId            BigInt
+  publicacionId        BigInt
   publicacion          Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
   reserva              Reserva     @relation(fields: [reservaId], references: [id], onDelete: Cascade)
   usuarioCalificado    Usuario     @relation("UsuarioCalificado", fields: [usuarioCalificadoId], references: [id], onDelete: Cascade)
@@ -222,13 +223,13 @@ model Calificacion {
 }
 
 model ImagenPublicacion {
-  id            String      @id @default(cuid())
+  id            BigInt      @id @default(autoincrement())
   url           String      @db.VarChar(500)
   descripcion   String?     @db.VarChar(255)
   orden         Int         @default(0)
   esPrincipal   Boolean     @default(false)
   fechaCreacion DateTime    @default(now())
-  publicacionId String
+  publicacionId BigInt
   publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
 
   @@index([publicacionId])
@@ -237,11 +238,11 @@ model ImagenPublicacion {
 }
 
 model DisponibilidadFecha {
-  id            String      @id @default(cuid())
+  id            BigInt      @id @default(autoincrement())
   fecha         DateTime    @db.Date
   disponible    Boolean     @default(true)
   motivo        String?     @db.VarChar(255)
-  publicacionId String
+  publicacionId BigInt
   publicacion   Publicacion @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
 
   @@unique([publicacionId, fecha])
@@ -251,14 +252,14 @@ model DisponibilidadFecha {
 }
 
 model Mensaje {
-  id            String    @id @default(cuid())
+  id            BigInt    @id @default(autoincrement())
   contenido     String
   leido         Boolean   @default(false)
   fechaCreacion DateTime  @default(now())
   fechaLectura  DateTime?
-  emisorId      String
-  receptorId    String
-  reservaId     String?
+  emisorId      BigInt
+  receptorId    BigInt
+  reservaId     BigInt?
   emisor        Usuario   @relation("UsuarioEmisor", fields: [emisorId], references: [id], onDelete: Cascade)
   receptor      Usuario   @relation("UsuarioReceptor", fields: [receptorId], references: [id], onDelete: Cascade)
   reserva       Reserva?  @relation(fields: [reservaId], references: [id])
@@ -272,15 +273,15 @@ model Mensaje {
 }
 
 model Reporte {
-  id                  String       @id @default(cuid())
+  id                  BigInt       @id @default(autoincrement())
   motivo              String       @db.VarChar(100)
   descripcion         String
   estado              String       @default("PENDIENTE") @db.VarChar(50)
   fechaCreacion       DateTime     @default(now())
   fechaResolucion     DateTime?
-  usuarioReportadorId String
-  usuarioReportadoId  String?
-  publicacionId       String?
+  usuarioReportadorId BigInt
+  usuarioReportadoId  BigInt?
+  publicacionId       BigInt?
   publicacion         Publicacion? @relation(fields: [publicacionId], references: [id])
   usuarioReportado    Usuario?     @relation("UsuarioReportado", fields: [usuarioReportadoId], references: [id])
   usuarioReportador   Usuario      @relation("UsuarioReportador", fields: [usuarioReportadorId], references: [id], onDelete: Cascade)
@@ -294,8 +295,8 @@ model Reporte {
 }
 
 model Administrador {
-  id                 String                   @id @default(cuid())
-  usuarioId          String                   @unique
+  id                 BigInt                   @id @default(autoincrement())
+  usuarioId          BigInt                   @unique
   fechaAsignacion    DateTime                 @default(now())
   asignadoPor        String?                  @db.VarChar(36)
   motivoAsignacion   String?
@@ -317,12 +318,12 @@ model Administrador {
 }
 
 model PermisoAdministrador {
-  id                 String        @id @default(cuid())
+  id                 BigInt        @id @default(autoincrement())
   tipo               TipoPermiso
   activo             Boolean       @default(true)
   fechaAsignacion    DateTime      @default(now())
   fechaExpiracion    DateTime?
-  administradorId    String
+  administradorId    BigInt
   fechaCreacion      DateTime      @default(now())
   fechaActualizacion DateTime      @updatedAt
   administrador      Administrador @relation(fields: [administradorId], references: [id], onDelete: Cascade)
@@ -335,7 +336,7 @@ model PermisoAdministrador {
 }
 
 model AccionAdministrativa {
-  id                    String          @id @default(cuid())
+  id                    BigInt          @id @default(autoincrement())
   tipo                  TipoAccionAdmin
   descripcion           String
   detalles              String?
@@ -347,7 +348,7 @@ model AccionAdministrativa {
   fechaCreacion         DateTime        @default(now())
   direccionIp           String?         @db.VarChar(45)
   userAgent             String?
-  administradorId       String
+  administradorId       BigInt
   administrador         Administrador   @relation(fields: [administradorId], references: [id], onDelete: Cascade)
 
   @@index([administradorId])
@@ -360,19 +361,19 @@ model AccionAdministrativa {
 }
 
 model Disputa {
-  id                   String             @id @default(cuid())
+  id                   BigInt             @id @default(autoincrement())
   tipo                 TipoDisputa
   titulo               String             @db.VarChar(200)
   descripcion          String
   estado               EstadoDisputa      @default(ABIERTA)
   severidad            SeveridadReporte   @default(MEDIA)
-  demandanteId         String
-  demandadoId          String
-  reservaId            String?
+  demandanteId         BigInt
+  demandadoId          BigInt
+  reservaId            BigInt?
   resolucion           String?
   compensacion         Decimal?           @db.Decimal(10, 2)
   fechaResolucion      DateTime?
-  administradorId      String?
+  administradorId      BigInt?
   fechaCreacion        DateTime           @default(now())
   fechaActualizacion   DateTime           @updatedAt
   fechaLimiteRespuesta DateTime?
@@ -395,11 +396,11 @@ model Disputa {
 }
 
 model MensajeDisputa {
-  id            String    @id @default(cuid())
+  id            BigInt    @id @default(autoincrement())
   contenido     String
   esInterno     Boolean   @default(false)
-  disputaId     String
-  autorId       String
+  disputaId     BigInt
+  autorId       BigInt
   fechaCreacion DateTime  @default(now())
   editado       Boolean   @default(false)
   fechaEdicion  DateTime?
@@ -414,14 +415,14 @@ model MensajeDisputa {
 }
 
 model EvidenciaDisputa {
-  id            String   @id @default(cuid())
+  id            BigInt   @id @default(autoincrement())
   tipo          String   @db.VarChar(50)
   nombre        String   @db.VarChar(255)
   url           String   @db.VarChar(500)
   tamano        Int?
   descripcion   String?
-  disputaId     String
-  subidoPor     String
+  disputaId     BigInt
+  subidoPor     BigInt
   fechaCreacion DateTime @default(now())
   disputa       Disputa  @relation(fields: [disputaId], references: [id], onDelete: Cascade)
   usuario       Usuario  @relation("UsuarioEvidencia", fields: [subidoPor], references: [id], onDelete: Cascade)
@@ -434,14 +435,14 @@ model EvidenciaDisputa {
 }
 
 model ModeraccionPublicacion {
-  id             String           @id @default(cuid())
+  id             BigInt           @id @default(autoincrement())
   accion         String           @db.VarChar(50)
   motivo         String?          @db.VarChar(200)
   comentarios    String?
   estadoAnterior EstadoModeracion
   estadoNuevo    EstadoModeracion
-  publicacionId  String
-  moderadorId    String
+  publicacionId  BigInt
+  moderadorId    BigInt
   fechaCreacion  DateTime         @default(now())
   moderador      Administrador    @relation(fields: [moderadorId], references: [id], onDelete: Cascade)
   publicacion    Publicacion      @relation(fields: [publicacionId], references: [id], onDelete: Cascade)
@@ -455,7 +456,7 @@ model ModeraccionPublicacion {
 }
 
 model EstadisticaSistema {
-  id            String   @id @default(cuid())
+  id            BigInt   @id @default(autoincrement())
   nombre        String   @db.VarChar(100)
   valor         Decimal  @db.Decimal(15, 2)
   unidad        String?  @db.VarChar(50)

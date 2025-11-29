@@ -1,16 +1,10 @@
 <template>
-  <div
-    class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 2xl:px-12 py-6 overflow-x-hidden"
-  >
+  <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 2xl:px-12 py-6 overflow-x-hidden">
     <!-- Encabezado -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">
-          Gestión de publicaciones
-        </h1>
-        <p class="text-sm text-gray-600">
-          Listado y moderación de publicaciones
-        </p>
+        <h1 class="text-2xl font-bold text-gray-900">Gestión de publicaciones</h1>
+        <p class="text-sm text-gray-600">Listado y moderación de publicaciones</p>
       </div>
       <div class="flex items-center gap-2">
         <button
@@ -18,19 +12,8 @@
           @click="cargarPublicaciones(1)"
           :disabled="isLoading"
         >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-16 0m16 8a8 8 0 01-16 0"
-            />
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-16 0m16 8a8 8 0 01-16 0" />
           </svg>
           Refrescar
         </button>
@@ -41,11 +24,7 @@
     <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-6">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="col-span-1 md:col-span-1">
-          <label
-            class="block text-sm font-medium text-gray-700 mb-1"
-            for="busqueda"
-            >Buscar</label
-          >
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="busqueda">Buscar</label>
           <input
             id="busqueda"
             v-model="busqueda"
@@ -56,11 +35,7 @@
           />
         </div>
         <div>
-          <label
-            class="block text-sm font-medium text-gray-700 mb-1"
-            for="categoria"
-            >Categoría</label
-          >
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="categoria">Categoría</label>
           <select
             id="categoria"
             v-model="categoria"
@@ -74,11 +49,7 @@
           </select>
         </div>
         <div>
-          <label
-            class="block text-sm font-medium text-gray-700 mb-1"
-            for="ordenarPor"
-            >Ordenar por</label
-          >
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="ordenarPor">Ordenar por</label>
           <select
             id="ordenarPor"
             v-model="ordenarPor"
@@ -91,11 +62,7 @@
           </select>
         </div>
         <div>
-          <label
-            class="block text-sm font-medium text-gray-700 mb-1"
-            for="estadoModeracion"
-            >Estado de moderación</label
-          >
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="estadoModeracion">Estado de moderación</label>
           <select
             id="estadoModeracion"
             v-model="estadoModeracion"
@@ -108,6 +75,7 @@
             <option value="RECHAZADA">Rechazada</option>
           </select>
         </div>
+        
       </div>
       <div class="mt-4 flex justify-end">
         <button
@@ -122,33 +90,14 @@
 
     <!-- Estados -->
     <div v-if="isLoading" class="flex items-center gap-2 text-gray-700 mb-4">
-      <svg
-        class="animate-spin h-5 w-5 text-blue-600"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle
-          class="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          stroke-width="4"
-        ></circle>
-        <path
-          class="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16 8 8 0 010-16z"
-        ></path>
+      <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16 8 8 0 010-16z"></path>
       </svg>
       Cargando publicaciones...
     </div>
 
-    <div
-      v-if="errorMensaje"
-      class="mb-4 rounded-md bg-red-50 border border-red-200 p-4 text-red-700"
-    >
+    <div v-if="errorMensaje" class="mb-4 rounded-md bg-red-50 border border-red-200 p-4 text-red-700">
       <div class="flex justify-between items-start">
         <div>
           <strong class="font-semibold">Error:</strong> {{ errorMensaje }}
@@ -170,129 +119,62 @@
       </div>
     </div>
 
-    <div
-      v-if="
-        !isLoading &&
-        !errorMensaje &&
-        (!publicaciones || publicaciones.length === 0)
-      "
-      class="bg-white border border-gray-200 rounded-lg p-6 text-center text-gray-600"
-    >
+    <div v-if="!isLoading && !errorMensaje && (!publicaciones || publicaciones.length === 0)" class="bg-white border border-gray-200 rounded-lg p-6 text-center text-gray-600">
       No hay publicaciones para mostrar.
     </div>
 
     <!-- Tabla -->
-    <div
-      v-if="
-        !isLoading && !errorMensaje && publicaciones && publicaciones.length > 0
-      "
-      class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"
-    >
+    <div v-if="!isLoading && !errorMensaje && publicaciones && publicaciones.length > 0" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
       <div>
         <table class="min-w-full w-full table-fixed divide-y divide-gray-200">
           <colgroup>
-            <col style="width: 24%" />
-            <col style="width: 14%" />
-            <col style="width: 20%" />
-            <col style="width: 12%" />
-            <col style="width: 10%" />
-            <col style="width: 20%" />
+            <col style="width:24%" />
+            <col style="width:14%" />
+            <col style="width:20%" />
+            <col style="width:12%" />
+            <col style="width:10%" />
+            <col style="width:20%" />
           </colgroup>
           <thead class="bg-gray-50">
             <tr>
-              <th
-                scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Título
-              </th>
-              <th
-                scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Categoría
-              </th>
-              <th
-                scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Propietario
-              </th>
-              <th
-                scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Moderación
-              </th>
-              <th
-                scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Creado
-              </th>
-              <th
-                scope="col"
-                class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Acciones
-              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Propietario</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Moderación</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creado</th>
+              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr
-              v-for="pub in publicaciones"
-              :key="pub.id"
-              class="hover:bg-gray-50"
-            >
+            <tr v-for="pub in publicaciones" :key="pub.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 align-top whitespace-normal break-words">
-                <div class="text-sm font-medium text-gray-900">
-                  {{ pub.titulo }}
-                </div>
-                <div class="text-xs text-gray-500 break-all">
-                  ID: {{ pub.id }}
-                </div>
+                <div class="text-sm font-medium text-gray-900">{{ pub.titulo }}</div>
+                <div class="text-xs text-gray-500 break-all">ID: {{ pub.id }}</div>
               </td>
               <td class="px-6 py-4 align-top whitespace-normal break-words">
-                <span
-                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800"
-                >
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                   {{ formatearCategoria(pub.categoria) }}
                 </span>
               </td>
               <td class="px-6 py-4 align-top whitespace-normal break-words">
                 <div class="flex items-center">
-                  <div
-                    class="w-8 h-8 shrink-0 aspect-square bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium mr-3"
-                  >
-                    {{
-                      obtenerIniciales(
-                        pub.propietario?.nombre,
-                        pub.propietario?.apellido,
-                      )
-                    }}
+                  <div class="w-8 h-8 shrink-0 aspect-square bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium mr-3">
+                    {{ obtenerIniciales(pub.propietario?.nombre, pub.propietario?.apellido) }}
                   </div>
                   <div>
                     <div class="text-sm font-medium text-gray-900">
-                      {{ pub.propietario?.nombre || "—" }}
-                      {{ pub.propietario?.apellido || "" }}
+                      {{ pub.propietario?.nombre || '—' }} {{ pub.propietario?.apellido || '' }}
                     </div>
-                    <div class="text-xs text-gray-500 break-all">
-                      ID: {{ pub.propietarioId || pub.propietario?.id || "—" }}
-                    </div>
+                    <div class="text-xs text-gray-500 break-all">ID: {{ pub.propietarioId || pub.propietario?.id || '—' }}</div>
                   </div>
                 </div>
               </td>
               <td class="px-6 py-4 align-top whitespace-normal break-words">
-                <span
-                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                  :class="estadoBadgeClass(pub.estadoModeracion)"
-                >
-                  {{ pub.estadoModeracion || "—" }}
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="estadoBadgeClass(pub.estadoModeracion)">
+                  {{ pub.estadoModeracion || '—' }}
                 </span>
               </td>
-              <td
-                class="px-6 py-4 align-top whitespace-normal break-words text-sm text-gray-500"
-              >
+              <td class="px-6 py-4 align-top whitespace-normal break-words text-sm text-gray-500">
                 {{ formatearFecha(pub.fechaCreacion) }}
               </td>
               <td class="px-6 py-4 align-top text-right text-sm font-medium">
@@ -315,12 +197,7 @@
                   >
                     Eliminar
                   </button>
-                  <template
-                    v-if="
-                      pub.estadoModeracion === 'PENDIENTE_REVISION' ||
-                      pub.estadoModeracion === 'EN_REVISION'
-                    "
-                  >
+                  <template v-if="pub.estadoModeracion === 'PENDIENTE_REVISION' || pub.estadoModeracion === 'EN_REVISION'">
                     <button
                       class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 bg-green-600 text-white hover:bg-green-700 focus:ring-green-500"
                       @click="aprobar(pub.id)"
@@ -342,13 +219,9 @@
       </div>
 
       <!-- Paginación -->
-      <div
-        class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between"
-      >
+      <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
         <div class="text-sm text-gray-600">
-          Página {{ paginacion.paginaActual }} de
-          {{ paginacion.totalPaginas }} — Total:
-          {{ paginacion.totalElementos }} publicaciones
+          Página {{ paginacion.paginaActual }} de {{ paginacion.totalPaginas }} — Total: {{ paginacion.totalElementos }} publicaciones
         </div>
         <div class="flex items-center gap-2">
           <button
@@ -360,9 +233,7 @@
           </button>
           <button
             class="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="
-              paginacion.paginaActual >= paginacion.totalPaginas || isLoading
-            "
+            :disabled="paginacion.paginaActual >= paginacion.totalPaginas || isLoading"
             @click="cargarPublicaciones(paginacion.paginaActual + 1)"
           >
             Siguiente
@@ -371,200 +242,182 @@
       </div>
     </div>
   </div>
+  
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { RouterLink } from "vue-router";
-import { type Publicacion, type RespuestaPublicaciones } from "../services/api";
-import { adminService } from "../services/admin";
+import { ref, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
+import { type Publicacion, type RespuestaPublicaciones } from '../services/api'
+import { adminService } from '../services/admin'
 
 // Estado
-const publicaciones = ref<Publicacion[]>([]);
-const paginacion = ref({
-  paginaActual: 1,
-  totalPaginas: 1,
-  totalElementos: 0,
-  elementosPorPagina: 10,
-});
-const isLoading = ref(false);
-const errorMensaje = ref<string | null>(null);
-const errorCodigo = ref<number | null>(null);
+const publicaciones = ref<Publicacion[]>([])
+const paginacion = ref({ paginaActual: 1, totalPaginas: 1, totalElementos: 0, elementosPorPagina: 10 })
+const isLoading = ref(false)
+const errorMensaje = ref<string | null>(null)
+const errorCodigo = ref<number | null>(null)
 
 // Catálogo de categorías (enum) — alineado con FiltrosBusqueda.vue
 const categorias = [
-  { valor: "GUITARRAS", etiqueta: "Guitarras" },
-  { valor: "BATERIAS", etiqueta: "Baterías" },
-  { valor: "TECLADOS", etiqueta: "Teclados" },
-  { valor: "VIENTOS", etiqueta: "Instrumentos de viento" },
-  { valor: "CUERDAS", etiqueta: "Instrumentos de cuerda" },
-  { valor: "AMPLIFICADORES", etiqueta: "Amplificadores" },
-  { valor: "AUDIO_PA", etiqueta: "Audio PA" },
-  { valor: "PERCUSION", etiqueta: "Percusión" },
-  { valor: "GRABACION", etiqueta: "Equipos de grabación" },
-  { valor: "ILUMINACION", etiqueta: "Iluminación" },
-  { valor: "ACCESORIOS", etiqueta: "Accesorios" },
-  { valor: "OTROS", etiqueta: "Otros" },
-];
+  { valor: 'GUITARRAS', etiqueta: 'Guitarras' },
+  { valor: 'BATERIAS', etiqueta: 'Baterías' },
+  { valor: 'TECLADOS', etiqueta: 'Teclados' },
+  { valor: 'VIENTOS', etiqueta: 'Vientos' },
+  { valor: 'CUERDAS', etiqueta: 'Cuerdas' },
+  { valor: 'AMPLIFICADORES', etiqueta: 'Amplificadores' },
+  { valor: 'AUDIO_PA', etiqueta: 'Audio PA' },
+  { valor: 'PERCUSION', etiqueta: 'Percusión' },
+  { valor: 'GRABACION', etiqueta: 'Home Studio' },
+  { valor: 'ILUMINACION', etiqueta: 'Iluminación' },
+  { valor: 'ACCESORIOS', etiqueta: 'Accesorios' },
+  { valor: 'OTROS', etiqueta: 'Otros' },
+  { valor: 'AUDIO_PA', etiqueta: 'Micrófonos' },
+  { valor: 'ACCESORIOS', etiqueta: 'Fundas' },
+  { valor: 'PERCUSION', etiqueta: 'Platillos' },
+  { valor: 'GUITARRAS', etiqueta: 'Bajos' },
+]
 
 // Filtros
-const busqueda = ref("");
-const categoria = ref("");
-const ordenarPor = ref("fechaCreacion");
-const direccionOrden = ref<"asc" | "desc">("desc");
-const estadoModeracion = ref("");
+const busqueda = ref('')
+const categoria = ref('')
+const ordenarPor = ref('fechaCreacion')
+const direccionOrden = ref<'asc' | 'desc'>('desc')
+const estadoModeracion = ref('')
 
 function aplicarFiltros() {
-  cargarPublicaciones(1);
+  cargarPublicaciones(1)
 }
 
 function limpiarFiltros() {
-  busqueda.value = "";
-  categoria.value = "";
-  ordenarPor.value = "fechaCreacion";
-  direccionOrden.value = "desc";
-  estadoModeracion.value = "";
-  cargarPublicaciones(1);
+  busqueda.value = ''
+  categoria.value = ''
+  ordenarPor.value = 'fechaCreacion'
+  direccionOrden.value = 'desc'
+  estadoModeracion.value = ''
+  cargarPublicaciones(1)
 }
 
 async function cargarPublicaciones(pagina = 1) {
   try {
-    isLoading.value = true;
-    errorMensaje.value = null;
-    errorCodigo.value = null;
-    const resp: RespuestaPublicaciones =
-      await adminService.listarPublicacionesAdmin({
-        busqueda: busqueda.value || undefined,
-        categoria: categoria.value || undefined,
-        ordenarPor: ordenarPor.value,
-        direccionOrden: direccionOrden.value,
-        incluirTodosEstadosModeracion: !estadoModeracion.value,
-        estadoModeracion: estadoModeracion.value || undefined,
-        pagina,
-        limite: paginacion.value.elementosPorPagina,
-      });
-    publicaciones.value = resp.publicaciones || [];
-    paginacion.value = resp.paginacion || paginacion.value;
+    isLoading.value = true
+    errorMensaje.value = null
+    errorCodigo.value = null
+    const resp: RespuestaPublicaciones = await adminService.listarPublicacionesAdmin({
+      busqueda: busqueda.value || undefined,
+      categoria: categoria.value || undefined,
+      ordenarPor: ordenarPor.value,
+      direccionOrden: direccionOrden.value,
+      incluirTodosEstadosModeracion: !estadoModeracion.value,
+      estadoModeracion: estadoModeracion.value || undefined,
+      pagina,
+      limite: paginacion.value.elementosPorPagina,
+    })
+    publicaciones.value = resp.publicaciones || []
+    paginacion.value = resp.paginacion || paginacion.value
   } catch (err: any) {
-    console.error("Error cargando publicaciones", err);
-    const status = err?.response?.status;
-    errorCodigo.value = typeof status === "number" ? status : null;
+    console.error('Error cargando publicaciones', err)
+    const status = err?.response?.status
+    errorCodigo.value = typeof status === 'number' ? status : null
     if (status === 401) {
-      errorMensaje.value =
-        "No autorizado. Inicia sesión con una cuenta de administrador.";
+      errorMensaje.value = 'No autorizado. Inicia sesión con una cuenta de administrador.'
     } else if (status === 403) {
-      errorMensaje.value =
-        "Acceso denegado. Necesitas rol de administrador para ver esta página.";
+      errorMensaje.value = 'Acceso denegado. Necesitas rol de administrador para ver esta página.'
     } else {
-      errorMensaje.value =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Error al cargar publicaciones";
+      errorMensaje.value = err?.response?.data?.message || err?.message || 'Error al cargar publicaciones'
     }
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 
 function formatearFecha(iso?: string) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleDateString();
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return d.toLocaleDateString()
 }
 
 function formatearCategoria(valor?: string) {
-  if (!valor) return "—";
-  const cat = categorias.find((c) => c.valor === valor);
-  return cat?.etiqueta || valor;
+  if (!valor) return '—'
+  const cat = categorias.find(c => c.valor === valor)
+  return cat?.etiqueta || valor
 }
 
 function obtenerIniciales(nombre?: string, apellido?: string) {
-  const n = (nombre || "").trim();
-  const a = (apellido || "").trim();
-  const ini = [n[0], a[0]].filter(Boolean).join("");
-  return ini ? ini.toUpperCase() : "PR";
+  const n = (nombre || '').trim()
+  const a = (apellido || '').trim()
+  const ini = [n[0], a[0]].filter(Boolean).join('')
+  return ini ? ini.toUpperCase() : 'PR'
 }
 
 function estadoBadgeClass(estado?: string) {
   switch (estado) {
-    case "APROBADA":
-      return "bg-green-100 text-green-800";
-    case "RECHAZADA":
-      return "bg-red-100 text-red-800";
-    case "PENDIENTE":
-    case "PENDIENTE_REVISION":
-      return "bg-yellow-100 text-yellow-800";
+    case 'APROBADA':
+      return 'bg-green-100 text-green-800'
+    case 'RECHAZADA':
+      return 'bg-red-100 text-red-800'
+    case 'PENDIENTE':
+    case 'PENDIENTE_REVISION':
+      return 'bg-yellow-100 text-yellow-800'
     default:
-      return "bg-gray-100 text-gray-800";
+      return 'bg-gray-100 text-gray-800'
   }
 }
 
 async function eliminar(id: string) {
   // Placeholder: la eliminación real debería requerir confirmación y usar publicacionesService.eliminarPublicacion
-  console.warn("Eliminar no implementado aún, id=", id);
+  console.warn('Eliminar no implementado aún, id=', id)
 }
 
 async function aprobar(id: string) {
   try {
-    isLoading.value = true;
-    await adminService.aprobarPublicacion(id);
-    await cargarPublicaciones(paginacion.value.paginaActual);
+    isLoading.value = true
+    await adminService.aprobarPublicacion(id)
+    await cargarPublicaciones(paginacion.value.paginaActual)
   } catch (err: any) {
-    console.error("Error al aprobar publicación", err);
-    const status = err?.response?.status;
-    errorCodigo.value = typeof status === "number" ? status : null;
+    console.error('Error al aprobar publicación', err)
+    const status = err?.response?.status
+    errorCodigo.value = typeof status === 'number' ? status : null
     if (status === 401) {
-      errorMensaje.value =
-        "No autorizado. Inicia sesión con una cuenta de administrador.";
+      errorMensaje.value = 'No autorizado. Inicia sesión con una cuenta de administrador.'
     } else if (status === 403) {
-      errorMensaje.value = "Acceso denegado. Necesitas rol de administrador.";
+      errorMensaje.value = 'Acceso denegado. Necesitas rol de administrador.'
     } else {
-      errorMensaje.value =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Error al aprobar publicación";
+      errorMensaje.value = err?.response?.data?.message || err?.message || 'Error al aprobar publicación'
     }
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 
 async function rechazar(id: string) {
-  const motivo = window.prompt("Motivo del rechazo (opcional):") || undefined;
-  const comentario =
-    window.prompt("Comentario adicional (opcional):") || undefined;
+  const motivo = window.prompt('Motivo del rechazo (opcional):') || undefined
+  const comentario = window.prompt('Comentario adicional (opcional):') || undefined
   try {
-    isLoading.value = true;
-    await adminService.rechazarPublicacion(id, motivo, comentario);
-    await cargarPublicaciones(paginacion.value.paginaActual);
+    isLoading.value = true
+    await adminService.rechazarPublicacion(id, motivo, comentario)
+    await cargarPublicaciones(paginacion.value.paginaActual)
   } catch (err: any) {
-    console.error("Error al rechazar publicación", err);
-    const status = err?.response?.status;
-    errorCodigo.value = typeof status === "number" ? status : null;
+    console.error('Error al rechazar publicación', err)
+    const status = err?.response?.status
+    errorCodigo.value = typeof status === 'number' ? status : null
     if (status === 401) {
-      errorMensaje.value =
-        "No autorizado. Inicia sesión con una cuenta de administrador.";
+      errorMensaje.value = 'No autorizado. Inicia sesión con una cuenta de administrador.'
     } else if (status === 403) {
-      errorMensaje.value = "Acceso denegado. Necesitas rol de administrador.";
+      errorMensaje.value = 'Acceso denegado. Necesitas rol de administrador.'
     } else {
-      errorMensaje.value =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Error al rechazar publicación";
+      errorMensaje.value = err?.response?.data?.message || err?.message || 'Error al rechazar publicación'
     }
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 
 onMounted(() => {
-  cargarPublicaciones(1);
-});
+  cargarPublicaciones(1)
+})
 </script>
 
 <style scoped>
-table th,
-table td {
-  white-space: nowrap;
-}
+table th, table td { white-space: nowrap; }
 </style>

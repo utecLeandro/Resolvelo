@@ -4,25 +4,18 @@
       <!-- Encabezado -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">Editar Publicación</h1>
-        <p class="mt-2 text-gray-600">
-          Modifica la información de tu instrumento musical
-        </p>
+        <p class="mt-2 text-gray-600">Modifica la información de tu instrumento musical</p>
       </div>
 
       <!-- Estado de carga -->
       <div v-if="cargandoPublicacion" class="text-center py-8">
-        <div class="text-gray-600">
-          Cargando información de la publicación...
-        </div>
+        <div class="text-gray-600">Cargando información de la publicación...</div>
       </div>
 
       <!-- Error al cargar -->
-      <div
-        v-else-if="errorCarga"
-        class="bg-red-50 border border-red-200 rounded-md p-4 mb-6"
-      >
+      <div v-else-if="errorCarga" class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
         <div class="text-red-800">{{ errorCarga }}</div>
-        <button
+        <button 
           @click="$router.push('/mis-publicaciones')"
           class="mt-2 text-red-600 hover:text-red-800 underline"
         >
@@ -35,10 +28,7 @@
         <form @submit.prevent="actualizarPublicacion" class="p-6 space-y-6">
           <!-- Título -->
           <div>
-            <label
-              for="titulo"
-              class="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label for="titulo" class="block text-sm font-medium text-gray-700 mb-2">
               Título de la publicación *
             </label>
             <input
@@ -53,10 +43,7 @@
 
           <!-- Categoría -->
           <div>
-            <label
-              for="categoria"
-              class="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label for="categoria" class="block text-sm font-medium text-gray-700 mb-2">
               Categoría *
             </label>
             <select
@@ -67,7 +54,7 @@
             >
               <option value="">Selecciona una categoría</option>
               <option value="GUITARRAS">Guitarras</option>
-              <option value="BATERIAS">Batería</option>
+              <option value="BATERIAS">Baterías</option>
               <option value="TECLADOS">Teclados</option>
               <option value="VIENTOS">Instrumentos de viento</option>
               <option value="CUERDAS">Instrumentos de cuerda</option>
@@ -78,16 +65,21 @@
               <option value="ILUMINACION">Iluminación</option>
               <option value="ACCESORIOS">Accesorios</option>
               <option value="OTROS">Otros</option>
+              <!-- Alias solicitados -->
+              <option value="AUDIO_PA">Micrófonos</option>
+              <option value="ACCESORIOS">Fundas</option>
+              <option value="PERCUSION">Platillos</option>
+              <option value="GUITARRAS">Bajos</option>
+              <option value="GRABACION">Home Studio</option>
+              <option value="VIENTOS">Vientos</option>
+              <option value="CUERDAS">Cuerdas</option>
             </select>
           </div>
 
           <!-- Marca, Modelo y Año -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label
-                for="marca"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="marca" class="block text-sm font-medium text-gray-700 mb-2">
                 Marca
               </label>
               <input
@@ -99,10 +91,7 @@
               />
             </div>
             <div>
-              <label
-                for="modelo"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="modelo" class="block text-sm font-medium text-gray-700 mb-2">
                 Modelo
               </label>
               <input
@@ -114,10 +103,7 @@
               />
             </div>
             <div>
-              <label
-                for="anio"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="anio" class="block text-sm font-medium text-gray-700 mb-2">
                 Año de fabricación
               </label>
               <input
@@ -134,10 +120,7 @@
 
           <!-- Descripción -->
           <div>
-            <label
-              for="descripcion"
-              class="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-2">
               Descripción *
             </label>
             <textarea
@@ -153,17 +136,11 @@
           <!-- Precio, Ciudad y Departamento -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label
-                for="precio"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="precio" class="block text-sm font-medium text-gray-700 mb-2">
                 Precio por día $ *
               </label>
               <div class="flex">
-                <span
-                  class="inline-flex items-center px-3 border border-gray-300 bg-gray-50 text-gray-700 rounded-l-md"
-                  >$</span
-                >
+                <span class="inline-flex items-center px-3 border border-gray-300 bg-gray-50 text-gray-700 rounded-l-md">$</span>
                 <input
                   id="precio"
                   v-model="formulario.precio"
@@ -177,10 +154,7 @@
               </div>
             </div>
             <div>
-              <label
-                for="ciudad"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="ciudad" class="block text-sm font-medium text-gray-700 mb-2">
                 Ciudad *
               </label>
               <input
@@ -193,10 +167,7 @@
               />
             </div>
             <div>
-              <label
-                for="departamento"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="departamento" class="block text-sm font-medium text-gray-700 mb-2">
                 Departamento *
               </label>
               <input
@@ -255,10 +226,13 @@
             </div>
           </div>
 
-          <!-- Botones -->
-          <div
-            class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200"
-          >
+        </form>
+        <div class="px-6 pb-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">Imágenes</h3>
+          <ImagenesUploader :publicacion-id="(route.params.id as string)" />
+        </div>
+        <div class="px-6 pb-6">
+          <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
             <button
               type="button"
               @click="cancelar"
@@ -267,118 +241,110 @@
               Cancelar
             </button>
             <button
-              type="submit"
+              type="button"
               :disabled="enviando"
+              @click="actualizarPublicacion"
               class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
-              {{ enviando ? "Actualizando..." : "Actualizar Publicación" }}
+              {{ enviando ? 'Actualizando...' : 'Actualizar Publicación' }}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import {
-  publicacionesService,
-  type ActualizarPublicacionRequest,
-} from "../services/api";
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { publicacionesService, type ActualizarPublicacionRequest } from '../services/api'
+import ImagenesUploader from '../components/ImagenesUploader.vue'
 
-const router = useRouter();
-const route = useRoute();
+const router = useRouter()
+const route = useRoute()
 
 // Estado del componente
-const cargandoPublicacion = ref(true);
-const enviando = ref(false);
-const errorCarga = ref<string | null>(null);
+const cargandoPublicacion = ref(true)
+const enviando = ref(false)
+const errorCarga = ref<string | null>(null)
 
 // Estado del formulario
 const formulario = ref({
-  titulo: "",
-  categoria: "",
-  descripcion: "",
-  precio: "",
-  ciudad: "",
-  departamento: "",
-  estadoInstrumento: "",
-  marca: "",
-  modelo: "",
-  anio: "",
-});
+  titulo: '',
+  categoria: '',
+  descripcion: '',
+  precio: '',
+  ciudad: '',
+  departamento: '',
+  estadoInstrumento: '',
+  marca: '',
+  modelo: '',
+  anio: ''
+})
 
 // Cargar datos de la publicación al montar el componente
 onMounted(async () => {
-  await cargarPublicacion();
-});
+  await cargarPublicacion()
+})
 
 // Método para cargar la publicación existente
 const cargarPublicacion = async () => {
   try {
-    cargandoPublicacion.value = true;
-    errorCarga.value = null;
-
-    const publicacionId = route.params.id as string;
+    cargandoPublicacion.value = true
+    errorCarga.value = null
+    
+    const publicacionId = route.params.id as string
     if (!publicacionId) {
-      throw new Error("ID de publicación no válido");
+      throw new Error('ID de publicación no válido')
     }
 
-    const publicacion =
-      await publicacionesService.obtenerPublicacionPorId(publicacionId);
-
+    const publicacion = await publicacionesService.obtenerPublicacionPorId(publicacionId)
+    
     // Pre-cargar el formulario con los datos existentes
     formulario.value = {
-      titulo: publicacion.titulo || "",
-      categoria: publicacion.categoria || "",
-      descripcion: publicacion.descripcion || "",
-      precio: publicacion.precioPorDia?.toString() || "",
-      ciudad: publicacion.ciudad || "",
-      departamento: publicacion.departamento || "",
-      estadoInstrumento: publicacion.estadoEquipo || "",
-      marca: publicacion.marca || "",
-      modelo: publicacion.modelo || "",
-      anio: publicacion.anioFabricacion?.toString() || "",
-    };
+      titulo: publicacion.titulo || '',
+      categoria: publicacion.categoria || '',
+      descripcion: publicacion.descripcion || '',
+      precio: publicacion.precioPorDia?.toString() || '',
+      ciudad: publicacion.ciudad || '',
+      departamento: publicacion.departamento || '',
+      estadoInstrumento: publicacion.estadoEquipo || '',
+      marca: publicacion.marca || '',
+      modelo: publicacion.modelo || '',
+      anio: publicacion.anioFabricacion?.toString() || ''
+    }
+    
   } catch (error: any) {
-    console.error("Error al cargar publicación:", error);
-    errorCarga.value =
-      error.message || "Error al cargar la información de la publicación";
+    console.error('Error al cargar publicación:', error)
+    errorCarga.value = error.message || 'Error al cargar la información de la publicación'
   } finally {
-    cargandoPublicacion.value = false;
+    cargandoPublicacion.value = false
   }
-};
+}
 
 // Método para actualizar la publicación
 const actualizarPublicacion = async () => {
   // Validar campos requeridos
-  if (
-    !formulario.value.titulo ||
-    !formulario.value.categoria ||
-    !formulario.value.descripcion ||
-    !formulario.value.precio ||
-    !formulario.value.ciudad ||
-    !formulario.value.departamento ||
-    !formulario.value.estadoInstrumento
-  ) {
-    alert("Por favor, completa todos los campos requeridos.");
-    return;
+  if (!formulario.value.titulo || !formulario.value.categoria || !formulario.value.descripcion || 
+      !formulario.value.precio || !formulario.value.ciudad || !formulario.value.departamento || 
+      !formulario.value.estadoInstrumento) {
+    alert('Por favor, completa todos los campos requeridos.')
+    return
   }
 
   // Validar que el precio sea un número válido
-  const precio = parseFloat(formulario.value.precio);
+  const precio = parseFloat(formulario.value.precio)
   if (isNaN(precio) || precio <= 0) {
-    alert("Por favor, ingresa un precio válido mayor a 0.");
-    return;
+    alert('Por favor, ingresa un precio válido mayor a 0.')
+    return
   }
 
   try {
-    enviando.value = true;
+    enviando.value = true
 
-    const publicacionId = route.params.id as string;
-
+    const publicacionId = route.params.id as string
+    
     // Preparar datos para enviar
     const datosActualizacion: ActualizarPublicacionRequest = {
       titulo: formulario.value.titulo,
@@ -387,47 +353,43 @@ const actualizarPublicacion = async () => {
       precioPorDia: precio,
       ciudad: formulario.value.ciudad,
       departamento: formulario.value.departamento,
-      estadoEquipo: formulario.value.estadoInstrumento,
-    };
+      estadoEquipo: formulario.value.estadoInstrumento
+    }
 
     // Agregar campos opcionales solo si tienen valor
     if (formulario.value.marca) {
-      datosActualizacion.marca = formulario.value.marca;
+      datosActualizacion.marca = formulario.value.marca
     }
     if (formulario.value.modelo) {
-      datosActualizacion.modelo = formulario.value.modelo;
+      datosActualizacion.modelo = formulario.value.modelo
     }
     if (formulario.value.anio) {
-      const anio = parseInt(formulario.value.anio);
+      const anio = parseInt(formulario.value.anio)
       if (!isNaN(anio)) {
-        datosActualizacion.anioFabricacion = anio;
+        datosActualizacion.anioFabricacion = anio
       }
     }
 
-    await publicacionesService.actualizarPublicacion(
-      publicacionId,
-      datosActualizacion,
-    );
+    await publicacionesService.actualizarPublicacion(publicacionId, datosActualizacion)
 
     // Mostrar mensaje de éxito y redirigir
-    alert("¡Publicación actualizada exitosamente!");
-    router.push("/mis-publicaciones");
+    alert('¡Publicación actualizada exitosamente!')
+    router.push('/mis-publicaciones')
+
   } catch (error: any) {
-    console.error("Error al actualizar publicación:", error);
+    console.error('Error al actualizar publicación:', error)
     if (error.response?.data?.message) {
-      alert(`Error: ${error.response.data.message}`);
+      alert(`Error: ${error.response.data.message}`)
     } else {
-      alert(
-        "Error al actualizar la publicación. Por favor, intenta nuevamente.",
-      );
+      alert('Error al actualizar la publicación. Por favor, intenta nuevamente.')
     }
   } finally {
-    enviando.value = false;
+    enviando.value = false
   }
-};
+}
 
 // Método para cancelar
 const cancelar = () => {
-  router.push("/mis-publicaciones");
-};
+  router.push('/mis-publicaciones')
+}
 </script>

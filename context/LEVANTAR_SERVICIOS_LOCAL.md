@@ -74,6 +74,25 @@ cd D:\TRAE\ReSolVelo\Resolvelo
 npx prisma studio --browser none
 ```
 
+## Acceso a PostgreSQL en navegador (Adminer)
+- Levantar Adminer (requiere `postgres` corriendo):
+
+```powershell
+cd D:\TRAE\ReSolVelo\Resolvelo
+docker compose up -d adminer
+```
+
+- URL de acceso: `http://127.0.0.1:8080`
+- Credenciales:
+  - Servidor: `postgres`
+  - Base de datos: `resolvelo_db`
+  - Usuario: `resolvelo_user`
+  - Contraseña: `resolvelo_password_2024`
+
+- Solución de problemas:
+  - Si no conecta, verificar que el contenedor `postgres` esté activo: `docker compose ps`.
+  - Asegurarse de que el puerto `8080` no esté ocupado por otra aplicación.
+
 ## Notas
 - En desarrollo local la notificación `notification_url` de Mercado Pago requiere HTTPS público; usa verificación manual cuando sea necesario.
 - No almacenar ni exponer credenciales sensibles en documentación o consola.

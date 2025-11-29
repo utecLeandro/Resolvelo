@@ -13,14 +13,16 @@
 
       <!-- Formulario -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <form @submit.prevent="crearPublicacion" class="space-y-6">
+        <div class="mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-2">Imágenes</h2>
+          <p class="text-sm text-gray-600 mb-4">Seleccioná imágenes ahora; se subirán al crear la publicación.</p>
+          <ImagenesUploader ref="uploaderRef" :publicacion-id="publicacionCreadaId" :defer="true" />
+        </div>
+        <form v-if="!publicacionCreadaId" @submit.prevent="crearPublicacion" class="space-y-6">
           <!-- Información básica -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label
-                for="titulo"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="titulo" class="block text-sm font-medium text-gray-700 mb-2">
                 Título de la publicación *
               </label>
               <input
@@ -34,10 +36,7 @@
             </div>
 
             <div>
-              <label
-                for="categoria"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="categoria" class="block text-sm font-medium text-gray-700 mb-2">
                 Categoría *
               </label>
               <select
@@ -59,6 +58,14 @@
                 <option value="ILUMINACION">Iluminación</option>
                 <option value="ACCESORIOS">Accesorios</option>
                 <option value="OTROS">Otros</option>
+                <!-- Alias solicitados -->
+                <option value="AUDIO_PA">Micrófonos</option>
+                <option value="ACCESORIOS">Fundas</option>
+                <option value="PERCUSION">Platillos</option>
+                <option value="GUITARRAS">Bajos</option>
+                <option value="GRABACION">Home Studio</option>
+                <option value="VIENTOS">Vientos</option>
+                <option value="CUERDAS">Cuerdas</option>
               </select>
             </div>
           </div>
@@ -66,10 +73,7 @@
           <!-- Información del instrumento -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label
-                for="marca"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="marca" class="block text-sm font-medium text-gray-700 mb-2">
                 Marca
               </label>
               <input
@@ -82,10 +86,7 @@
             </div>
 
             <div>
-              <label
-                for="modelo"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="modelo" class="block text-sm font-medium text-gray-700 mb-2">
                 Modelo
               </label>
               <input
@@ -98,10 +99,7 @@
             </div>
 
             <div>
-              <label
-                for="anio"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="anio" class="block text-sm font-medium text-gray-700 mb-2">
                 Año de fabricación
               </label>
               <input
@@ -118,10 +116,7 @@
 
           <!-- Descripción -->
           <div>
-            <label
-              for="descripcion"
-              class="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-2">
               Descripción *
             </label>
             <textarea
@@ -137,17 +132,11 @@
           <!-- Precio y ubicación -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label
-                for="precio"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="precio" class="block text-sm font-medium text-gray-700 mb-2">
                 Precio por día $ *
               </label>
               <div class="flex">
-                <span
-                  class="inline-flex items-center px-3 border border-gray-300 bg-gray-50 text-gray-700 rounded-l-md"
-                  >$</span
-                >
+                <span class="inline-flex items-center px-3 border border-gray-300 bg-gray-50 text-gray-700 rounded-l-md">$</span>
                 <input
                   id="precio"
                   v-model="formulario.precio"
@@ -162,10 +151,7 @@
             </div>
 
             <div>
-              <label
-                for="ciudad"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="ciudad" class="block text-sm font-medium text-gray-700 mb-2">
                 Ciudad *
               </label>
               <input
@@ -179,10 +165,7 @@
             </div>
 
             <div>
-              <label
-                for="departamento"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label for="departamento" class="block text-sm font-medium text-gray-700 mb-2">
                 Departamento *
               </label>
               <input
@@ -242,9 +225,7 @@
           </div>
 
           <!-- Botones -->
-          <div
-            class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200"
-          >
+          <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
             <button
               type="button"
               @click="cancelar"
@@ -257,67 +238,63 @@
               :disabled="enviando"
               class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
-              {{ enviando ? "Creando..." : "Crear Publicación" }}
+              {{ enviando ? 'Creando...' : 'Crear Publicación' }}
             </button>
           </div>
         </form>
+
+        
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import {
-  publicacionesService,
-  type CrearPublicacionRequest,
-} from "../services/api";
+import { ref, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
+import { publicacionesService, type CrearPublicacionRequest } from '../services/api'
+import ImagenesUploader from '../components/ImagenesUploader.vue'
 
-const router = useRouter();
+const router = useRouter()
 
 // Estado del formulario
-const enviando = ref(false);
+const enviando = ref(false)
+const publicacionCreadaId = ref<string | null>(null)
+const uploaderRef = ref<InstanceType<typeof ImagenesUploader> | null>(null)
 const formulario = ref({
-  titulo: "",
-  categoria: "",
-  descripcion: "",
-  precio: "",
-  ciudad: "",
-  departamento: "",
-  estadoInstrumento: "",
-  marca: "",
-  modelo: "",
-  anio: "",
-});
+  titulo: '',
+  categoria: '',
+  descripcion: '',
+  precio: '',
+  ciudad: '',
+  departamento: '',
+  estadoInstrumento: '',
+  marca: '',
+  modelo: '',
+  anio: ''
+})
 
 // Variables eliminadas: imagenes, progresoSubida, errorImagenes
 
 // Método para crear la publicación
 const crearPublicacion = async () => {
   // Validar campos requeridos
-  if (
-    !formulario.value.titulo ||
-    !formulario.value.categoria ||
-    !formulario.value.descripcion ||
-    !formulario.value.precio ||
-    !formulario.value.ciudad ||
-    !formulario.value.departamento ||
-    !formulario.value.estadoInstrumento
-  ) {
-    alert("Por favor, completa todos los campos requeridos.");
-    return;
+  if (!formulario.value.titulo || !formulario.value.categoria || !formulario.value.descripcion || 
+      !formulario.value.precio || !formulario.value.ciudad || !formulario.value.departamento || 
+      !formulario.value.estadoInstrumento) {
+    alert('Por favor, completa todos los campos requeridos.')
+    return
   }
 
   // Validar que el precio sea un número válido
-  const precio = parseFloat(formulario.value.precio);
+  const precio = parseFloat(formulario.value.precio)
   if (isNaN(precio) || precio <= 0) {
-    alert("El precio por día debe ser un número válido mayor a 0.");
-    return;
+    alert('El precio por día debe ser un número válido mayor a 0.')
+    return
   }
 
-  enviando.value = true;
-
+  enviando.value = true
+  
   try {
     // Preparar datos para enviar al backend
     const datosPublicacion: CrearPublicacionRequest = {
@@ -326,9 +303,7 @@ const crearPublicacion = async () => {
       categoria: formulario.value.categoria,
       marca: formulario.value.marca || undefined,
       modelo: formulario.value.modelo || undefined,
-      anioFabricacion: formulario.value.anio
-        ? parseInt(formulario.value.anio)
-        : undefined,
+      anioFabricacion: formulario.value.anio ? parseInt(formulario.value.anio) : undefined,
       precioPorDia: precio,
       ciudad: formulario.value.ciudad,
       departamento: formulario.value.departamento,
@@ -336,38 +311,38 @@ const crearPublicacion = async () => {
       estadoEquipo: formulario.value.estadoInstrumento,
       entregaDomicilio: false,
       retiroLocal: true,
-      diasMinimoAlquiler: 1,
-    };
+      diasMinimoAlquiler: 1
+    }
 
-    console.log("Enviando datos al backend:", datosPublicacion);
-
+    console.log('Enviando datos al backend:', datosPublicacion)
+    
     // Llamar a la API para crear la publicación
-    const publicacionCreada =
-      await publicacionesService.crearPublicacion(datosPublicacion);
-
-    console.log("Publicación creada exitosamente:", publicacionCreada);
-
-    // Mostrar mensaje de éxito
-    alert("¡Publicación creada exitosamente!");
-
-    // Redirigir al catálogo
-    router.push("/catalogo");
+    const publicacionCreada = await publicacionesService.crearPublicacion(datosPublicacion)
+    publicacionCreadaId.value = publicacionCreada.id
+    console.log('Publicación creada exitosamente:', publicacionCreada)
+    await nextTick()
+    if (uploaderRef.value && (uploaderRef.value as any).hasPreviews && (uploaderRef.value as any).hasPreviews()) {
+      await (uploaderRef.value as any).subir()
+    }
+    router.push('/mis-publicaciones')
   } catch (error: any) {
-    console.error("Error al crear la publicación:", error);
-
+    console.error('Error al crear la publicación:', error)
+    
     // Mostrar mensaje de error más específico
     if (error.response?.data?.message) {
-      alert(`Error: ${error.response.data.message}`);
+      alert(`Error: ${error.response.data.message}`)
     } else {
-      alert("Error al crear la publicación. Por favor, intenta nuevamente.");
+      alert('Error al crear la publicación. Por favor, intenta nuevamente.')
     }
   } finally {
-    enviando.value = false;
+    enviando.value = false
   }
-};
+}
 
 // Método para cancelar
 const cancelar = () => {
-  router.push("/catalogo");
-};
+  router.push('/catalogo')
+}
+
+// Navegación automática a Mis publicaciones se realiza tras crear y subir imágenes
 </script>

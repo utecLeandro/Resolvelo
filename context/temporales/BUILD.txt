@@ -1,0 +1,200 @@
+2025-11-27T20:32:38.450Z [INFO]: # Build environment configured with Standard build compute type: 8GiB Memory, 4vCPUs, 128GB Disk Space
+2025-11-27T20:32:38.840Z [INFO]: # Cloning repository: git@github.com:utecLeandro/Resolvelo.git
+2025-11-27T20:32:39.433Z [INFO]: 
+2025-11-27T20:32:39.433Z [INFO]: Cloning into 'Resolvelo'...
+2025-11-27T20:32:39.434Z [INFO]: # Switching to commit: 0cadfd2af58e6bc2bd50b8245b5a8b668fd915ca
+2025-11-27T20:32:39.454Z [INFO]: Note: switching to '0cadfd2af58e6bc2bd50b8245b5a8b668fd915ca'.
+                                 You are in 'detached HEAD' state. You can look around, make experimental
+                                 changes and commit them, and you can discard any commits you make in this
+                                 state without impacting any branches by switching back to a branch.
+                                 If you want to create a new branch to retain commits you create, you may
+                                 do so (now or later) by using -c with the switch command. Example:
+                                 git switch -c <new-branch-name>
+                                 Or undo this operation with:
+                                 git switch -
+                                 Turn off this advice by setting config variable advice.detachedHead to false
+                                 HEAD is now at 0cadfd2 fix(amplify): move amplify.yml to root and add applications key for monorepo support
+2025-11-27T20:32:39.503Z [INFO]: Successfully cleaned up Git credentials
+2025-11-27T20:32:39.504Z [INFO]: # Checking for Git submodules at: /codebuild/output/src3960103046/src/Resolvelo/.gitmodules
+2025-11-27T20:32:39.512Z [INFO]: # Retrieving environment cache...
+2025-11-27T20:32:39.572Z [WARNING]: ! Unable to write cache: {"code":"ERR_BAD_REQUEST","message":"Request failed with status code 404"})}
+2025-11-27T20:32:39.572Z [INFO]: ---- Setting Up SSM Secrets ----
+2025-11-27T20:32:39.572Z [INFO]: SSM params {"Path":"/amplify/d2jhmkfagiypdq/develop/","WithDecryption":true}
+2025-11-27T20:32:39.619Z [WARNING]: !Failed to set up process.env.secrets
+2025-11-27T20:32:40.291Z [INFO]: # No package override configuration found.
+2025-11-27T20:32:40.296Z [INFO]: # Retrieving cache...
+2025-11-27T20:32:40.347Z [INFO]: # Retrieved cache
+2025-11-27T20:32:45.718Z [INFO]: ## Starting Backend Build
+                                 ## Checking for associated backend environment...
+                                 ## No backend environment association found, continuing...
+                                 ## Completed Backend Build
+2025-11-27T20:32:45.725Z [INFO]: ## Starting Frontend Build
+2025-11-27T20:32:45.726Z [INFO]: # Starting phase: preBuild
+                                 # Executing command: nvm install 22
+2025-11-27T20:32:45.986Z [INFO]: Downloading and installing node v22.21.1...
+2025-11-27T20:32:46.203Z [WARNING]: Downloading https://nodejs.org/dist/v22.21.1/node-v22.21.1-linux-x64.tar.gz...
+2025-11-27T20:32:46.326Z [WARNING]: ####
+2025-11-27T20:32:46.327Z [WARNING]: 6.2%
+2025-11-27T20:32:46.448Z [WARNING]: ##########                                                                15.2%
+2025-11-27T20:32:46.548Z [WARNING]: ###############
+2025-11-27T20:32:46.548Z [WARNING]: 21.4%
+2025-11-27T20:32:46.649Z [WARNING]: #####################
+2025-11-27T20:32:46.649Z [WARNING]: 29.6%
+2025-11-27T20:32:46.753Z [WARNING]: ###########################
+2025-11-27T20:32:46.754Z [WARNING]: 38.1%
+2025-11-27T20:32:46.854Z [WARNING]: #############################################                             63.3%
+2025-11-27T20:32:46.954Z [WARNING]: ####################################
+2025-11-27T20:32:46.954Z [WARNING]: ###############                       72.0%
+2025-11-27T20:32:47.057Z [WARNING]: ###########################################
+2025-11-27T20:32:47.058Z [WARNING]: ####################           88.6%
+2025-11-27T20:32:47.084Z [WARNING]: ##############################
+2025-11-27T20:32:47.084Z [WARNING]: ########################################## 100.0%
+2025-11-27T20:32:47.111Z [WARNING]: Computing checksum with sha256sum
+2025-11-27T20:32:47.373Z [WARNING]: Checksums matched!
+2025-11-27T20:32:49.915Z [INFO]: Now using node v22.21.1 (npm v10.9.4)
+2025-11-27T20:32:50.015Z [INFO]: Installing default global packages from /root/.nvm/default-packages...
+                                 npm install -g --quiet @aws-amplify/cli bower cypress grunt-cli hugo-extended vuepress yarn
+2025-11-27T20:33:24.053Z [WARNING]: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-11-27T20:33:24.129Z [WARNING]: npm warn deprecated stable@0.1.8: Modern JS already guarantees Array#sort() is a stable sort, so this library is deprecated. See the compatibility table on MDN: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#browser_compatibility
+2025-11-27T20:33:24.130Z [WARNING]: npm warn deprecated source-map-url@0.4.1: See https://github.com/lydell/source-map-url#deprecated
+2025-11-27T20:33:24.148Z [WARNING]: npm warn deprecated move-concurrently@1.0.1: This package is no longer supported.
+2025-11-27T20:33:24.157Z [WARNING]: npm warn deprecated @babel/plugin-proposal-class-properties@7.18.6: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-class-properties instead.
+2025-11-27T20:33:24.244Z [WARNING]: npm warn deprecated rimraf@2.7.1: Rimraf versions prior to v4 are no longer supported
+2025-11-27T20:33:24.245Z [WARNING]: npm warn deprecated figgy-pudding@3.5.2: This module is no longer supported.
+2025-11-27T20:33:24.298Z [WARNING]: npm warn deprecated har-validator@5.1.5: this library is no longer supported
+2025-11-27T20:33:24.298Z [WARNING]: npm warn deprecated urix@0.1.0: Please see https://github.com/lydell/urix#deprecated
+2025-11-27T20:33:24.365Z [WARNING]: npm warn deprecated lodash.template@4.5.0: This package is deprecated. Use https://socket.dev/npm/package/eta instead.
+2025-11-27T20:33:24.379Z [WARNING]: npm warn deprecated copy-concurrently@1.0.5: This package is no longer supported.
+2025-11-27T20:33:24.471Z [WARNING]: npm warn deprecated consolidate@0.15.1: Please upgrade to consolidate v1.0.0+ as it has been modernized with several long-awaited fixes implemented. Maintenance is supported by Forward Email at https://forwardemail.net ; follow/watch https://github.com/ladjs/consolidate for updates and release changelog
+2025-11-27T20:33:24.497Z [WARNING]: npm warn deprecated resolve-url@0.2.1: https://github.com/lydell/resolve-url#deprecated
+2025-11-27T20:33:24.553Z [WARNING]: npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-11-27T20:33:24.599Z [WARNING]: npm warn deprecated source-map-resolve@0.5.3: See https://github.com/lydell/source-map-resolve#deprecated
+2025-11-27T20:33:24.671Z [WARNING]: npm warn deprecated q@1.5.1: You or someone you depend on is using Q, the JavaScript Promise library that gave JavaScript developers strong feelings about promises. They can almost certainly migrate to the native JavaScript promise now. Thank you literally everyone for joining me in this bet against the odds. Be excellent to each other.
+                                    npm warn deprecated
+                                    npm warn deprecated (For a CapTP with native promises, see @endo/eventual-send and @endo/captp)
+2025-11-27T20:33:24.716Z [WARNING]: npm warn deprecated fs-write-stream-atomic@1.0.10: This package is no longer supported.
+2025-11-27T20:33:24.912Z [WARNING]: npm warn deprecated mkdirp@0.3.0: Legacy versions of mkdirp are no longer supported. Please update to mkdirp 1.x. (Note that the API surface has changed to use Promises in 1.x.)
+2025-11-27T20:33:24.955Z [WARNING]: npm warn deprecated uuid@3.4.0: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+2025-11-27T20:33:24.957Z [WARNING]: npm warn deprecated webpack-chain@4.12.1: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+2025-11-27T20:33:25.057Z [WARNING]: npm warn deprecated webpack-chain@6.5.1: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+2025-11-27T20:33:25.131Z [WARNING]: npm warn deprecated request@2.88.2: request has been deprecated, see https://github.com/request/request/issues/3142
+2025-11-27T20:33:25.704Z [WARNING]: npm warn deprecated svgo@1.3.2: This SVGO version is no longer supported. Upgrade to v2.x.x.
+2025-11-27T20:33:25.741Z [WARNING]: npm warn deprecated docsearch.js@2.6.3: This package has been deprecated and is no longer maintained. Please use @docsearch/js.
+2025-11-27T20:33:26.497Z [WARNING]: npm warn deprecated highlight.js@9.18.5: Support has ended for 9.x series. Upgrade to @latest
+2025-11-27T20:33:26.626Z [WARNING]: npm warn deprecated vue@2.7.16: Vue 2 has reached EOL and is no longer actively maintained. See https://v2.vuejs.org/eol/ for more details.
+2025-11-27T20:33:50.743Z [INFO]: added 1830 packages in 1m
+2025-11-27T20:33:50.747Z [INFO]: 198 packages are looking for funding
+                                 run `npm fund` for details
+2025-11-27T20:33:50.800Z [INFO]: # Executing command: nvm use 22
+2025-11-27T20:33:50.999Z [INFO]: Now using node v22.21.1 (npm v10.9.4)
+2025-11-27T20:33:51.001Z [INFO]: # Executing command: node -v
+2025-11-27T20:33:51.005Z [INFO]: v22.21.1
+2025-11-27T20:33:51.006Z [INFO]: # Executing command: npm ci
+2025-11-27T20:33:58.087Z [INFO]: added 116 packages, and audited 117 packages in 7s
+2025-11-27T20:33:58.093Z [INFO]: 26 packages are looking for funding
+                                 run `npm fund` for details
+                                 2 moderate severity vulnerabilities
+                                 To address all issues, run:
+                                 npm audit fix
+                                 Run `npm audit` for details.
+2025-11-27T20:33:58.108Z [INFO]: # Completed phase: preBuild
+                                 # Starting phase: build
+                                 # Executing command: npm run build
+2025-11-27T20:33:58.225Z [INFO]: > frontend@0.0.0 build
+                                 > vue-tsc -b && vite build
+2025-11-27T20:34:03.757Z [INFO]: src/components/FiltrosBusqueda.vue(644,12): error TS6133: 'y' is declared but its value is never read.
+2025-11-27T20:34:03.764Z [INFO]: src/components/ReservaCard.vue(136,42): error TS2339: Property 'direccion' does not exist on type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; ubicacion: string; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }'.
+                                 src/components/ReservaCard.vue(137,42): error TS2339: Property 'ciudad' does not exist on type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; ubicacion: string; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }'.
+                                 src/components/ReservaCard.vue(138,42): error TS2339: Property 'departamento' does not exist on type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; ubicacion: string; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }'.
+                                 src/components/ReservaCard.vue(369,7): error TS6133: 'props' is declared but its value is never read.
+                                 src/views/CatalogoPage.vue(348,12): error TS6133: 'y' is declared but its value is never read.
+                                 src/views/DebugPage.vue(121,54): error TS2307: Cannot find module '@/services/api' or its corresponding type declarations.
+                                 src/views/DetallePublicacion.vue(268,20): error TS2322: Type '(rango: [Date, Date] | null) => string' is not assignable to type 'string | ((date: Date) => string) | ((dates: Date[]) => string) | ((Prop<string | ((date: Date) => string) | ((dates: Date[]) => string) | undefined, string | ((date: Date) => string) | ((dates: Date[]) => string) | undefined> | null) & (string | ... 1 more ... | ((dates: Date[]) => string))) | undefined'.
+                                 Type '(rango: [Date, Date] | null) => string' is not assignable to type '(date: Date) => string'.
+                                 Types of parameters 'rango' and 'date' are incompatible.
+                                 Type 'Date' is not assignable to type '[Date, Date]'.
+                                 src/views/MisPublicacionesPage.vue(331,42): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(342,39): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(348,43): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(353,39): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(359,43): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(364,39): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(370,43): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(375,39): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(381,43): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(386,39): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(392,43): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(397,39): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(403,43): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(408,39): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(414,43): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(419,39): error TS2339: Property 'estadisticasReservas' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/MisPublicacionesPage.vue(636,56): error TS2339: Property 'fechaCreacion' does not exist on type '{ id: string; fechaInicio: string; fechaFin: string; precioTotal: number; telefonoContacto?: string | undefined; estado: string; publicacion: { titulo: string; descripcion: string; }; usuario: { ...; }; }'.
+                                 src/views/MisPublicacionesPage.vue(1318,14): error TS2322: Type 'string | null' is not assignable to type 'Booleanish | undefined'.
+                                 Type 'null' is not assignable to type 'Booleanish | undefined'.
+                                 src/views/MisPublicacionesPage.vue(1334,14): error TS2322: Type 'string | null' is not assignable to type 'Booleanish | undefined'.
+                                 Type 'null' is not assignable to type 'Booleanish | undefined'.
+                                 src/views/MisPublicacionesPage.vue(1560,7): error TS6133: 'contadorSolicitudes' is declared but its value is never read.
+                                 src/views/MisPublicacionesPage.vue(1648,5): error TS2352: Conversion of type '(event: CustomEvent) => Promise<void>' to type 'EventListener' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+                                 Types of parameters 'event' and 'evt' are incompatible.
+                                 Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent
+                                 src/views/MisPublicacionesPage.vue(1668,13): error TS6133: 'reservaId' is declared but its value is never read.
+                                 src/views/MisPublicacionesPage.vue(1692,5): error TS2352: Conversion of type '(event: CustomEvent) => Promise<void>' to type 'EventListener' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+                                 Types of parameters 'event' and 'evt' are incompatible.
+                                 Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent
+                                 src/views/MisPublicacionesPage.vue(1702,7): error TS6133: 'cambiarPestana' is declared but its value is never read.
+                                 src/views/MisPublicacionesPage.vue(1769,9): error TS2532: Object is possibly 'undefined'.
+                                 src/views/MisPublicacionesPage.vue(1836,9): error TS2532: Object is possibly 'undefined'.
+                                 src/views/MisPublicacionesPage.vue(1884,54): error TS2339: Property 'arrendatario' does not exist on type 'SolicitudReserva'.
+                                 src/views/MisPublicacionesPage.vue(1887,17): error TS2339: Property 'arrendatario' does not exist on type 'SolicitudReserva'.
+                                 src/views/MisPublicacionesPage.vue(1888,39): error TS2339: Property 'arrendatario' does not exist on type 'SolicitudReserva'.
+                                 src/views/MisPublicacionesPage.vue(1889,44): error TS2339: Property 'arrendatario' does not exist on type 'SolicitudReserva'.
+                                 src/views/MisPublicacionesPage.vue(1904,45): error TS2339: Property 'arrendatario' does not exist on type 'SolicitudReserva'.
+                                 src/views/MisReservasPage.vue(191,16): error TS2322: Type '{ id: string; fechaInicio: string; fechaFin: string; precioTotal: number; telefonoContacto?: string | undefined; estado: "PENDIENTE" | "ACTIVA" | "APROBADA" | "RECHAZADA" | "COMPLETADA" | "CANCELADA"; motivoRechazo?: string | undefined; fechaCreacion: string; publicacion: { ...; }; transaccion?: { ...; } | undefined...' is not assignable to type 'ReservaArrendatario'.
+                                 Types of property 'publicacion' are incompatible.
+                                 Property 'ubicacion' is missing in type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; direccion: string; ciudad: string; departamento: string; imagenes: string[]; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }' but required in type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; ubicacion: string; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }'.
+                                 src/views/MisReservasPage.vue(225,16): error TS2322: Type '{ id: string; fechaInicio: string; fechaFin: string; precioTotal: number; telefonoContacto?: string | undefined; estado: "PENDIENTE" | "ACTIVA" | "APROBADA" | "RECHAZADA" | "COMPLETADA" | "CANCELADA"; motivoRechazo?: string | undefined; fechaCreacion: string; publicacion: { ...; }; transaccion?: { ...; } | undefined...' is not assignable to type 'ReservaArrendatario'.
+                                 Types of property 'publicacion' are incompatible.
+                                 Property 'ubicacion' is missing in type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; direccion: string; ciudad: string; departamento: string; imagenes: string[]; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }' but required in type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; ubicacion: string; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }'.
+                                 src/views/MisReservasPage.vue(268,18): error TS2322: Type '{ id: string; fechaInicio: string; fechaFin: string; precioTotal: number; telefonoContacto?: string | undefined; estado: "PENDIENTE" | "ACTIVA" | "APROBADA" | "RECHAZADA" | "COMPLETADA" | "CANCELADA"; motivoRechazo?: string | undefined; fechaCreacion: string; publicacion: { ...; }; transaccion?: { ...; } | undefined...' is not assignable to type 'ReservaArrendatario'.
+                                 Types of property 'publicacion' are incompatible.
+                                 Property 'ubicacion' is missing in type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; direccion: string; ciudad: string; departamento: string; imagenes: string[]; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }' but required in type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; ubicacion: string; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }'.
+                                 src/views/MisReservasPage.vue(270,18): error TS2322: Type '(reserva: ReservaArrendatario) => void' is not assignable to type '(reserva: ReservaArrendatario) => any'.
+                                 Types of parameters 'reserva' and 'reserva' are incompatible.
+                                 Type 'ReservaArrendatario' is not assignable to type 'ReservaArrendatario'. Two different types with this name exist, but they are unrelated.
+                                 Types of property 'publicacion' are incompatible.
+                                 Type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; ubicacion: string; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }' is missing the following properties from type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; direccion: string; ciudad: string; departamento: string; imagenes: string[]; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }': direccion, ciudad, departamento, imagenes
+                                 src/views/MisReservasPage.vue(306,16): error TS2322: Type '{ id: string; fechaInicio: string; fechaFin: string; precioTotal: number; telefonoContacto?: string | undefined; estado: "PENDIENTE" | "ACTIVA" | "APROBADA" | "RECHAZADA" | "COMPLETADA" | "CANCELADA"; motivoRechazo?: string | undefined; fechaCreacion: string; publicacion: { ...; }; transaccion?: { ...; } | undefined...' is not assignable to type 'ReservaArrendatario'.
+                                 Types of property 'publicacion' are incompatible.
+                                 Property 'ubicacion' is missing in type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; direccion: string; ciudad: string; departamento: string; imagenes: string[]; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }' but required in type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; ubicacion: string; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }'.
+                                 src/views/MisReservasPage.vue(340,16): error TS2322: Type '{ id: string; fechaInicio: string; fechaFin: string; precioTotal: number; telefonoContacto?: string | undefined; estado: "PENDIENTE" | "ACTIVA" | "APROBADA" | "RECHAZADA" | "COMPLETADA" | "CANCELADA"; motivoRechazo?: string | undefined; fechaCreacion: string; publicacion: { ...; }; transaccion?: { ...; } | undefined...' is not assignable to type 'ReservaArrendatario'.
+                                 Types of property 'publicacion' are incompatible.
+                                 Property 'ubicacion' is missing in type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; direccion: string; ciudad: string; departamento: string; imagenes: string[]; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }' but required in type '{ id: string; titulo: string; descripcion: string; precioPorDia: number; categoria: string; ubicacion: string; propietario: { nombre: string; apellido: string; email: string; telefono?: string | undefined; }; }'.
+                                 src/views/MisReservasPage.vue(417,40): error TS2367: This comparison appears to be unintentional because the types '"PENDIENTE" | "ACTIVA" | "APROBADA" | "RECHAZADA" | "COMPLETADA" | "CANCELADA"' and '"CONFIRMADA"' have no overlap.
+                                 src/views/MisReservasPage.vue(422,37): error TS2367: This comparison appears to be unintentional because the types '"PENDIENTE" | "APROBADA" | "RECHAZADA" | "COMPLETADA" | "CANCELADA"' and '"EN_CURSO"' have no overlap.
+                                 src/views/MisReservasPage.vue(435,17): error TS2503: Cannot find namespace 'NodeJS'.
+                                 src/views/PagoExitoso.vue(131,8): error TS2307: Cannot find module '@/services/transacciones.service' or its corresponding type declarations.
+                                 src/views/PagoPage.vue(169,33): error TS2307: Cannot find module '@/services/api' or its corresponding type declarations.
+                                 src/views/PagoPage.vue(173,8): error TS2307: Cannot find module '@/services/transacciones.service' or its corresponding type declarations.
+                                 src/views/PagoPage.vue(174,25): error TS2307: Cannot find module '@/composables/useAuth' or its corresponding type declarations.
+                                 src/views/PagoPage.vue(183,7): error TS6133: 'procesandoPago' is declared but its value is never read.
+                                 src/views/PagoPage.vue(191,5): error TS6133: 'pollingInicio' is declared but its value is never read.
+                                 src/views/PagoPage.vue(323,22): error TS6133: 'selectedPaymentMethod' is declared but its value is never read.
+                                 src/views/PagoPage.vue(331,28): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+                                 src/views/PagoPage.vue(350,23): error TS7006: Parameter 'err' implicitly has an 'any' type.
+                                 src/views/PagoPage.vue(428,7): error TS6133: 'ensureHttpsUrl' is declared but its value is never read.
+                                 src/views/PagoPage.vue(440,7): error TS6133: 'setupWebSocket' is declared but its value is never read.
+                                 src/views/PerfilPage.vue(316,33): error TS2339: Property 'precio' does not exist on type '{ id: string; titulo: string; descripcion: string; categoria: string; marca?: string | undefined; modelo?: string | undefined; anioFabricacion?: number | undefined; precioPorDia: number; ... 32 more ...; _count?: { ...; } | undefined; }'.
+                                 src/views/RecuperarContrasenaPage.vue(6,7): error TS6133: 'router' is declared but its value is never read.
+                                 src/views/RegisterPage.vue(9,18): error TS2305: Module '"@headlessui/vue"' has no exported member 'Transition'.
+                                 src/views/RegisterPage.vue(9,18): error TS6133: 'Transition' is declared but its value is never read.
+                                 src/views/TestApiPage.vue(42,33): error TS2307: Cannot find module '@/services/api' or its corresponding type declarations.
+                                 src/views/TestApiPage.vue(44,17): error TS2307: Cannot find module '@/services/api' or its corresponding type declarations.
+                                 src/views/TestApiPage.vue(81,5): error TS2322: Type '{ source: string; data: any; }' is not assignable to type 'null'.
+                                 src/views/TestApiPage.vue(115,5): error TS2322: Type '{ status: number; data: any; headers: AxiosResponseHeaders | Partial<RawAxiosHeaders & { "Content-Length": AxiosHeaderValue; "Content-Encoding": AxiosHeaderValue; "Content-Type": AxiosHeaderValue; Server: AxiosHeaderValue; "Cache-Control": AxiosHeaderValue; } & { ...; }>; fullResponse: AxiosResponse<...>; }' is not assignable to type 'null'.
+                                 src/views/TestApiPage.vue(148,5): error TS2322: Type '{ status: any; data: any; headers: any; fullResponse: any; }' is not assignable to type 'null'.
+2025-11-27T20:34:04.415Z [ERROR]: !!! Build failed
+2025-11-27T20:34:04.415Z [ERROR]: !!! Error: Command failed with exit code 2
+2025-11-27T20:34:04.415Z [INFO]: # Starting environment caching...
+2025-11-27T20:34:04.416Z [INFO]: # Environment caching completed
+

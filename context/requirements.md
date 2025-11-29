@@ -1,3 +1,21 @@
+
+# **Requisitos de la Plataforma "ReSolVelo"**
+
+Este documento describe las características principales de la plataforma "ReSolVelo" utilizando el formato Gherkin. El objetivo es servir como insumo para la generación de tickets y el desarrollo guiado por el comportamiento (BDD) para un agente de IA.
+
+--- 
+
+## **Épicas y Requisitos Funcionales (MVP)**
+
+Basado en la sección "METODOLOGÍA Y RESULTADOS" del documento del proyecto, se han identificado las siguientes épicas y sus requisitos funcionales clave para el Producto Mínimo Viable (MVP), traducidos a escenarios Gherkin.
+
+### **1. Gestión de Usuarios y Perfiles**
+
+**Descripción:** Permite a los usuarios registrarse, autenticarse, gestionar sus perfiles y recuperar contraseñas de forma segura.
+
+```gherkin
+# language: es
+
 Feature: Gestión de Usuarios y Perfiles
   Como usuario de la plataforma,
   necesito poder registrarme, iniciar sesión y gestionar mi perfil
@@ -54,6 +72,14 @@ Feature: Gestión de Usuarios y Perfiles
     And recibo un enlace de recuperación de contraseña en mi correo electrónico.
     Then al hacer clic en el enlace, debería poder establecer una nueva contraseña segura.
     And la nueva contraseña debería ser almacenada de forma segura.
+```
+
+### **2. Publicación y Gestión de Equipos**
+
+**Descripción:** Permite a los propietarios crear, editar y eliminar publicaciones de equipos musicales con fotos, precio y disponibilidad.
+
+```gherkin
+# language: es
 
 Feature: Publicación y Gestión de Equipos
   Como propietario de equipos,
@@ -94,6 +120,15 @@ Feature: Publicación y Gestión de Equipos
     And confirmo la eliminación.
     Then la publicación debería ser eliminada de mi lista de equipos.
     And la publicación ya no debería ser visible en el catálogo de la plataforma.
+```
+
+
+### **3. Búsqueda y Descubrimiento de Equipos**
+
+**Descripción:** Permite a los músicos o arrendatarios buscar y filtrar equipos por criterios básicos, incluso sin estar autenticados.
+
+```gherkin
+# language: es
 
 Feature: Búsqueda y Descubrimiento de Equipos
   Como músico o arrendatario,
@@ -135,6 +170,55 @@ Feature: Búsqueda y Descubrimiento de Equipos
     And hago clic en "Buscar".
     Then debería ver un mensaje indicando que no se encontraron resultados.
     And se me deberían sugerir opciones para ampliar la búsqueda o crear una alerta.
+```
+
+### **4. Reservas y Alquileres**
+
+**Descripción:** Permite a los músicos o arrendatarios buscar y filtrar equipos por criterios básicos.
+
+```gherkin
+# language: es
+
+Feature: Búsqueda y Descubrimiento de Equipos
+  Como músico o arrendatario,
+  necesito poder buscar y filtrar equipos
+  para encontrar lo que necesito de forma rápida y eficiente.
+
+  Background:
+    Given que estoy en la página principal de "ReSolVelo".
+
+  @busqueda
+  Scenario: Búsqueda de equipos por tipo y ubicación
+    Given que existen publicaciones de "Guitarras eléctricas" en "Montevideo".
+    When ingreso "Guitarra eléctrica" en la barra de búsqueda.
+    And selecciono "Montevideo" en el filtro de ubicación.
+    And hago clic en "Buscar".
+    Then debería ver una lista de resultados que contenga únicamente publicaciones de guitarras eléctricas disponibles en Montevideo.
+    And los resultados deberían mostrar información relevante como el nombre del equipo, precio y una imagen.
+
+  @busqueda
+  Scenario: Filtrado de equipos por disponibilidad de fechas
+    Given que existen publicaciones de equipos con disponibilidad variada.
+    When selecciono un rango de fechas específico en el filtro de disponibilidad.
+    And hago clic en "Aplicar Filtros".
+    Then debería ver solo los equipos que están disponibles para alquiler en el rango de fechas seleccionado.
+
+  @busqueda
+  Scenario: Búsqueda sin resultados
+    Given que no existen publicaciones de "Baterías" en "Salto".
+    When ingreso "Batería" en la barra de búsqueda.
+    And selecciono "Salto" en el filtro de ubicación.
+    And hago clic en "Buscar".
+    Then debería ver un mensaje indicando que no se encontraron resultados.
+    And se me deberían sugerir opciones para ampliar la búsqueda o crear una alerta.
+```
+
+### **4. Reservas y Alquileres**
+
+**Descripción:** Implementa el flujo de solicitud, aprobación/rechazo, notificaciones de estado y cancelación de reservas.
+
+```gherkin
+# language: es
 
 Feature: Gestión de Reservas y Alquileres
   Como usuario,
@@ -179,6 +263,14 @@ Feature: Gestión de Reservas y Alquileres
     And confirmo la cancelación.
     Then el estado de la reserva cambia a "Cancelada por Arrendatario".
     And el propietario recibe una notificación de la cancelación.
+```
+
+### **5. Pagos y Transacciones**
+
+**Descripción:** Integración con pasarela de pagos (simulada), cálculo de costos y registro de transacciones.
+
+```gherkin
+# language: es
 
 Feature: Pagos y Transacciones
   Como usuario,
@@ -205,6 +297,14 @@ Feature: Pagos y Transacciones
     And he seleccionado un período de alquiler de 3 días.
     When visualizo el resumen de la reserva.
     Then el costo total del alquiler debería ser $1500.
+```
+
+### **6. Comunicación y Notificaciones**
+
+**Descripción:** Sistema de mensajería interna y notificaciones por correo electrónico.
+
+```gherkin
+# language: es
 
 Feature: Comunicación y Notificaciones
   Como usuario,
@@ -229,6 +329,14 @@ Feature: Comunicación y Notificaciones
     When el propietario aprueba mi solicitud de reserva.
     Then recibo una notificación por correo electrónico confirmando la aprobación.
     And el estado de la reserva se actualiza en mi panel de usuario.
+```
+
+### **7. Administración y Seguridad**
+
+**Descripción:** Panel básico para gestión de usuarios y publicaciones, y cumplimiento de estándares de seguridad.
+
+```gherkin
+# language: es
 
 Feature: Administración y Seguridad
   Como administrador de la plataforma,
@@ -262,6 +370,14 @@ Feature: Administración y Seguridad
     When se realiza una auditoría de seguridad.
     Then la plataforma debería demostrar resistencia a inyecciones SQL, XSS, CSRF y otras vulnerabilidades del OWASP Top 10.
     And los datos sensibles deberían estar cifrados en tránsito (TLS) y en reposo.
+```
+
+### **8. Experiencia de Usuario y Diseño**
+
+**Descripción:** Asegurar una interfaz intuitiva, accesible y responsive.
+
+```gherkin
+# language: es
 
 Feature: Experiencia de Usuario y Diseño
   Como usuario de la plataforma,
@@ -281,3 +397,57 @@ Feature: Experiencia de Usuario y Diseño
     When utilizo un lector de pantalla para navegar por la plataforma.
     Then todos los elementos de la interfaz deberían tener etiquetas y descripciones accesibles.
     And la navegación debería ser posible utilizando solo el teclado.
+```
+
+--- 
+
+## **Requerimientos No Funcionales (RNF) y Consideraciones Adicionales**
+
+Además de los requisitos funcionales, se han extraído los siguientes Requerimientos No Funcionales y consideraciones clave que deben ser tenidos en cuenta por el agente de IA para la generación de tickets y el desarrollo.
+
+### **Seguridad**
+
+*   **Cifrado TLS:** Todas las comunicaciones entre el cliente y el servidor deben utilizar cifrado TLS para proteger la confidencialidad e integridad de los datos.
+*   **Almacenamiento seguro de contraseñas:** Las contraseñas de los usuarios deben ser almacenadas utilizando algoritmos de hashing robustos y salting.
+*   **Protección contra ataques OWASP Top 10:** La plataforma debe ser diseñada y desarrollada siguiendo las mejores prácticas para mitigar las vulnerabilidades más críticas identificadas por OWASP, incluyendo inyección, autenticación rota, XSS, etc.
+*   **Cumplimiento de normativa uruguaya de protección de datos:** La gestión de datos personales debe adherirse a la legislación vigente en Uruguay.
+
+### **Usabilidad**
+
+*   **Interfaz intuitiva, accesible y responsive:** La plataforma debe ser fácil de usar, adaptable a diferentes dispositivos y accesible para usuarios con diversas capacidades, siguiendo pautas WCAG 2.1.
+
+### **Disponibilidad**
+
+*   **Uptime ≥ 95%:** El sistema debe estar disponible al menos el 95% del tiempo en las etapas de pruebas y despliegue.
+
+### **Escalabilidad**
+
+*   **Arquitectura modular:** El diseño debe permitir la expansión y el crecimiento futuro de la plataforma.
+
+### **Compatibilidad**
+
+*   **Soporte en navegadores principales:** La plataforma debe funcionar correctamente en los navegadores web más utilizados (Chrome, Firefox, Edge, Safari).
+
+### **Tecnología (Stack Propuesto)**
+
+*   **Frontend:** Vue.js, TypeScript, Vuex, Tailwind CSS.
+*   **Backend:** Node.js, NestJS, TypeScript, RESTful API, JWT para autenticación, Prisma (ORM).
+*   **Base de Datos:** PostgreSQL.
+*   **Infraestructura:** AWS (Amplify, App Runner, RDS, S3), Docker, GitHub Actions/AWS CodePipeline.
+*   **Servicios Adicionales:** Mercado Pago (simulado), Firebase y SES (notificaciones), Amazon CloudWatch (monitoreo).
+
+--- 
+
+## **Consideraciones para el Agente de IA**
+
+*   **Validación de Identidad (`gub.uy`):** Para el MVP, la validación de identidad con `gub.uy` debe ser **simulada como exitosa**. Los escenarios de Gherkin no deben requerir la integración real con el servicio externo en esta fase.
+*   **Pagos con MercadoPago:** La integración con MercadoPago debe ser **simulada como exitosa**. Los escenarios de Gherkin deben reflejar que el pago se procesa correctamente sin necesidad de una integración real con la pasarela en esta fase.
+*   **Priorización:** El agente debe considerar la "Matriz de Priorización de Requerimientos Funcionales" del documento para entender la importancia relativa de cada funcionalidad.
+*   **OWASP Top 10:** Se espera que el agente genere tickets que incluyan tareas específicas para mitigar las vulnerabilidades del OWASP Top 10 en las funcionalidades relevantes (ej. protección contra inyección SQL, XSS, manejo seguro de autenticación).
+*   **Trazabilidad:** Cada ticket generado debe poder ser trazado a los escenarios Gherkin correspondientes en este documento.
+
+--- 
+
+**Autor:** Manus AI
+**Fecha de Generación:** 10 de Octubre de 2025
+
