@@ -64,6 +64,12 @@ async function bootstrap() {
   }
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // Logger middleware manual para depurar requests en AWS
+  app.use((req: Request, _res: Response, next: Function) => {
+    console.log(`[Request] ${req.method} ${req.url} - Origin: ${req.headers.origin || 'N/A'}`);
+    next();
+  });
+
   // Configurar servicio de archivos estáticos para imágenes
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
