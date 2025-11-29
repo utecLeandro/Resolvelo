@@ -9,7 +9,11 @@ import axios from 'axios'
 
 // URL base del API desde variables de entorno
 // En desarrollo, usamos el proxy de Vite (/api) para evitar problemas de CORS
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+const envUrl = import.meta.env.VITE_API_BASE_URL
+// Asegurar que la URL termine en /api si viene definida, sino usar /api por defecto
+const API_BASE_URL = envUrl 
+  ? (envUrl.endsWith('/api') ? envUrl : `${envUrl.replace(/\/$/, '')}/api`) 
+  : '/api'
 
 // Configuración base de Axios
 const api = axios.create({
