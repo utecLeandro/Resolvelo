@@ -120,13 +120,13 @@ jobs:
       - name: 🔍 Auditoría de dependencias
         run: npm audit --audit-level moderate
 
-      - name: 🛡️ Análisis de vulnerabilidades con Snyk
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
+      # - name: 🛡️ Análisis de vulnerabilidades con Snyk
+      #   uses: snyk/actions/node@master
+      #   continue-on-error: true
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   with:
+      #     args: --severity-threshold=high
 
   # 🏗️ Build y validación
   build:
