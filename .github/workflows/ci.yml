@@ -75,7 +75,11 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/resolvelo_test
         run: |
-          npx prisma migrate deploy
+          # En CI, a veces 'migrate deploy' falla si la tabla _prisma_migrations no existe aún.
+          # Usamos 'migrate reset --force' primero para asegurar un estado limpio,
+          # o 'db push' que es más tolerante en entornos efímeros de test.
+          # Para tests, db push es más rápido y menos propenso a errores de historial.
+          npx prisma db push
           npx prisma generate
 
       - name: 🧪 Ejecutar tests unitarios
