@@ -340,7 +340,8 @@ export class TransaccionesService {
     const preference = new Preference(client);
 
     const rawFrontendBase = process.env.FRONTEND_URL;
-    const frontendBase = rawFrontendBase?.trim() || 'http://127.0.0.1:5174';
+    const originFromCors = process.env.CORS_ORIGIN?.split(',')[0]?.trim();
+    const frontendBase = (rawFrontendBase?.trim() || originFromCors || 'https://develop.d2jhmkfagiypdq.amplifyapp.com').replace(/\/$/, '');
     const ensureUrl = (raw: string | undefined, fallbackPath: string) => {
       const t = (raw ?? '').trim();
       let candidate = t || `${frontendBase}${fallbackPath}`;

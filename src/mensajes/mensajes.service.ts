@@ -194,7 +194,8 @@ export class MensajesService {
         where: { id: BigInt(reservaId) },
         include: { publicacion: { select: { titulo: true } } },
       });
-      const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5174';
+      const originFromCors = process.env.CORS_ORIGIN?.split(',')[0]?.trim();
+      const frontendBase = (process.env.FRONTEND_URL || originFromCors || 'https://develop.d2jhmkfagiypdq.amplifyapp.com').replace(/\/$/, '');
       const link = `${frontendBase}/mensajes/reserva/${encodeURIComponent(reservaId)}?m=${encodeURIComponent(mensajeId)}`;
       const asunto = `Nuevo mensaje sobre "${reserva?.publicacion?.titulo || 'tu reserva'}"`;
       const html = `<p>Tienes nuevos mensajes sin leer.</p><p><a href="${link}">Abrir chat</a></p>`;
