@@ -208,6 +208,7 @@ const eliminar = async (imagenId: string) => {
 defineExpose({
   subir,
   hasPreviews: () => previews.value.length > 0,
+  mensajeError
 })
 </script>
 
