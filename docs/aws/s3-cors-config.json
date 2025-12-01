@@ -1,0 +1,27 @@
+[
+    {
+        "AllowedHeaders": [
+            "*"
+        ],
+        "AllowedMethods": [
+            "GET",
+            "PUT",
+            "POST",
+            "HEAD",
+            "DELETE"
+        ],
+        "AllowedOrigins": [
+            "https://develop.d2jhmkfagiypdq.amplifyapp.com",
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://localhost:3000"
+        ],
+        "ExposeHeaders": [
+            "ETag",
+            "x-amz-server-side-encryption",
+            "x-amz-request-id",
+            "x-amz-id-2"
+        ],
+        "MaxAgeSeconds": 3000
+    }
+]
