@@ -25,6 +25,7 @@ env:
   # Mercado Pago
   MP_ACCESS_TOKEN_ARN: ${{ secrets.MP_ACCESS_TOKEN_ARN }}
   MP_PUBLIC_KEY: ${{ secrets.MP_PUBLIC_KEY }}
+  AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
 
 jobs:
   deploy:
@@ -71,6 +72,7 @@ jobs:
           check JWT_SECRET_ARN
           check MP_ACCESS_TOKEN_ARN
           check MP_PUBLIC_KEY
+          check AWS_S3_BUCKET_NAME
 
           if [ "$missing" -ne 0 ]; then
             echo "🚫 Configuración incompleta. Revisa Secrets/Vars del repositorio."
@@ -99,7 +101,7 @@ jobs:
           set -euo pipefail
           IMAGE_URI="$ECR_REGISTRY/${ECR_REPOSITORY}:$IMAGE_TAG"
           echo "Building $IMAGE_URI"
-          docker build -t "$IMAGE_URI" -f Dockerfile .
+          docker build --no-cache --pull -t "$IMAGE_URI" -f Dockerfile .
           docker push "$IMAGE_URI"
           echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
 
@@ -123,7 +125,9 @@ jobs:
                   "NODE_ENV": "production",
                   "PORT": "3000",
                   "PRISMA_MIGRATE_DEPLOY": "1",
-                  "MP_PUBLIC_KEY": "%s"
+                  "MP_PUBLIC_KEY": "%s",
+                  "AWS_REGION": "%s",
+                  "AWS_S3_BUCKET_NAME": "%s"
                 },
                 "RuntimeEnvironmentSecrets": {
                   "DATABASE_URL": "%s",
@@ -135,7 +139,7 @@ jobs:
             "AuthenticationConfiguration": {
               "AccessRoleArn": "%s"
             }
-          }' "$IMAGE_URI" "${MP_PUBLIC_KEY}" "${DB_SECRET_ARN}" "${JWT_SECRET_ARN}" "${MP_ACCESS_TOKEN_ARN}" "${APP_RUNNER_ECR_ACCESS_ROLE_ARN}" > source-config.json
+          }' "$IMAGE_URI" "${MP_PUBLIC_KEY}" "${AWS_REGION}" "${AWS_S3_BUCKET_NAME}" "${DB_SECRET_ARN}" "${JWT_SECRET_ARN}" "${MP_ACCESS_TOKEN_ARN}" "${APP_RUNNER_ECR_ACCESS_ROLE_ARN}" > source-config.json
 
           printf '{
             "InstanceRoleArn": "%s"
