@@ -29,7 +29,7 @@ FROM base AS dependencies
 
 # Instalar todas las dependencias (prod + dev). Usamos `npm install` para evitar
 # errores de sincronización cuando el package-lock.json está desactualizado.
-RUN npm install --silent
+RUN npm ci --silent
 
 # ============================================================================
 # ETAPA DE CONSTRUCCIÓN
