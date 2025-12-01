@@ -123,18 +123,18 @@ const removePreview = (idx: number) => {
   if (principalIndex.value === idx) principalIndex.value = null
 }
 
-const subir = async () => {
+const subir = async (): Promise<boolean> => {
   try {
     subiendo.value = true
     mensajeError.value = ''
     mensajeOk.value = ''
     if (previews.value.length === 0) {
       mensajeError.value = 'Selecciona al menos una imagen'
-      return
+      return false
     }
     if (!props.publicacionId) {
       mensajeError.value = 'La publicación aún no fue creada'
-      return
+      return false
     }
 
     const filesPayload = previews.value.map((p) => ({
@@ -176,8 +176,10 @@ const subir = async () => {
     principalIndex.value = null
     imagenes.value = await imagenesService.listar(props.publicacionId)
     mensajeOk.value = 'Imágenes subidas correctamente'
+    return true
   } catch (e: any) {
     mensajeError.value = e?.response?.data?.message || 'Falló la subida'
+    return false
   } finally {
     subiendo.value = false
   }
