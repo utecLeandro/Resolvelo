@@ -333,7 +333,7 @@ const crearPublicacion = async () => {
       const exito = await (uploaderRef.value as any).subir()
       if (!exito) {
         const errorMsg = (uploaderRef.value as any).mensajeError || 'Error desconocido'
-        alert(`La publicación se creó, pero hubo un error al subir las imágenes: ${errorMsg}. Verifica tu conexión o inténtalo más tarde desde "Mis Publicaciones".`)
+        alert(`⚠️ La publicación fue creada, pero falló la subida de imágenes. Detalle del error: "${errorMsg}". Por favor verifica tu conexión o inténtalo más tarde desde "Mis Publicaciones".`)
         // No redirigimos para que el usuario pueda ver el error en el componente uploader
         return
       }
