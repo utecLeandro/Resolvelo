@@ -1,41 +1,49 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotImplementedException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import {
   PresignRequestDto,
   PresignResponse,
   PresignUploadUrl,
 } from './dto/presign.dto';
 import { randomUUID } from 'node:crypto';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class ImagenesService {
   async generarPresignUrls(
     payload: PresignRequestDto,
   ): Promise<PresignResponse> {
-    const s3Enabled =
-      String(process.env.S3_ENABLED || '').toLowerCase() === 'true';
-    if (!s3Enabled) {
-      throw new NotImplementedException('S3 no configurado');
-    }
-
-    const bucket = process.env.S3_BUCKET || '';
-    const region = process.env.S3_REGION || '';
+    const bucket =
+      process.env.AWS_S3_BUCKET_NAME || process.env.S3_BUCKET || '';
+    const region = process.env.AWS_REGION || process.env.S3_REGION || '';
     if (!bucket || !region) {
       throw new BadRequestException(
-        'Variables S3_BUCKET y S3_REGION requeridas',
+        'Variables AWS_S3_BUCKET_NAME y AWS_REGION requeridas',
       );
     }
-
-    const uploads: PresignUploadUrl[] = payload.files.map((f) => {
+    const s3 = new S3Client({ region });
+    const expiresInSec = 15 * 60;
+    const uploads: PresignUploadUrl[] = [];
+    for (const f of payload.files) {
       const ext = this.extensionFromContentType(f.contentType);
       const key = `publicaciones/${payload.publicacionId}/${randomUUID()}.${ext}`;
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-      const url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
-      return { key, url, method: 'PUT', expiresAt, contentType: f.contentType };
-    });
+      const expiresAt = new Date(
+        Date.now() + expiresInSec * 1000,
+      ).toISOString();
+      const command = new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        ContentType: f.contentType,
+      });
+      const url = await getSignedUrl(s3, command, { expiresIn: expiresInSec });
+      uploads.push({
+        key,
+        url,
+        method: 'PUT',
+        expiresAt,
+        contentType: f.contentType,
+      });
+    }
 
     return { uploads };
   }
