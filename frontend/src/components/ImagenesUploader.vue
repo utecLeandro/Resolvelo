@@ -58,6 +58,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import axios from 'axios'
 import { imagenesService, type ImagenPublicacion } from '../services/api'
 
 const props = withDefaults(defineProps<{ publicacionId?: string | null; defer?: boolean }>(), { defer: false })
@@ -131,26 +132,49 @@ const subir = async () => {
       mensajeError.value = 'Selecciona al menos una imagen'
       return
     }
-    const resultados: ImagenPublicacion[] = []
+    if (!props.publicacionId) {
+      mensajeError.value = 'La publicación aún no fue creada'
+      return
+    }
+
+    const filesPayload = previews.value.map((p) => ({
+      fileName: p.file.name,
+      contentType: p.file.type,
+      size: p.file.size,
+    }))
+    const presign = await imagenesService.presign(props.publicacionId, filesPayload)
+
+    const publicUrls: Array<{ url: string; esPrincipal?: boolean }> = []
     for (let i = 0; i < previews.value.length; i++) {
       const item = previews.value[i]
-      if (!item) continue
-      const esPrincipal = principalIndex.value === i
-      if (!props.publicacionId) {
-        mensajeError.value = 'La publicación aún no fue creada'
-        break
-      }
-      const res = await imagenesService.uploadLocal(props.publicacionId, item.file, { esPrincipal }, (p) => {
-        item.progress = p
+      const up = presign.uploads[i]
+      if (!item || !up) continue
+
+      await axios.put(up.url, item.file, {
+        headers: { 'Content-Type': item.file.type },
+        onUploadProgress: (evt) => {
+          if (evt.total) {
+            item.progress = Math.round((evt.loaded / evt.total) * 100)
+          }
+        },
       })
-      resultados.push(...res)
+
+      const upUrl: string = up.url as string
+      const parts = upUrl.split('?')
+      const publicUrl: string = parts[0] || upUrl
+      const esPrincipal = principalIndex.value === i
+      publicUrls.push({ url: publicUrl, esPrincipal })
     }
+
+    await imagenesService.finalizar(
+      props.publicacionId,
+      publicUrls,
+    )
+
     previews.value.forEach((p) => URL.revokeObjectURL(p.previewUrl))
     previews.value = []
     principalIndex.value = null
-    if (props.publicacionId) {
-      imagenes.value = await imagenesService.listar(props.publicacionId)
-    }
+    imagenes.value = await imagenesService.listar(props.publicacionId)
     mensajeOk.value = 'Imágenes subidas correctamente'
   } catch (e: any) {
     mensajeError.value = e?.response?.data?.message || 'Falló la subida'
