@@ -23,9 +23,38 @@ const isLoading = ref(false)
 const formError = ref('')
 const fieldErrors = ref<Record<string, string>>({})
 
-// Validaciones
 const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
-const isValidDocumento = (val: string) => /^(\d\.\d{3}\.\d{3}-\d|\d{7,8})$/.test(val) // formato uruguayo o sólo dígitos
+const normalizeCi = (val: string) => String(val || '').replace(/\D+/g, '')
+const formatearCIMask = (val: string) => {
+  const d = normalizeCi(val).slice(0, 8)
+  const s1 = d.slice(0, 1)
+  const s2 = d.slice(1, 4)
+  const s3 = d.slice(4, 7)
+  const s4 = d.slice(7, 8)
+  let out = s1
+  if (s2) out += '.' + s2
+  if (s3) out += '.' + s3
+  if (s4) out += '-' + s4
+  return out
+}
+const aplicarMascaraCI = (ev: Event) => {
+  const input = ev.target as HTMLInputElement
+  const masked = formatearCIMask(input.value)
+  documentoIdentidad.value = masked
+}
+const isValidDocumento = (val: string) => {
+  const digits = normalizeCi(val)
+  if (!/^\d{8}$/.test(digits)) return false
+  const base = digits
+    .slice(0, 7)
+    .split('')
+    .map((d) => parseInt(d, 10)) as [number, number, number, number, number, number, number]
+  const check = Number(digits.charAt(7))
+  const [d1, d2, d3, d4, d5, d6, d7] = base
+  const sum = d1*2 + d2*9 + d3*8 + d4*7 + d5*6 + d6*3 + d7*4
+  const dv = (10 - (sum % 10)) % 10
+  return dv === check
+}
 const passwordStrength = computed(() => {
   const val = password.value
   let score = 0
@@ -75,7 +104,7 @@ const onSubmit = async () => {
       email: email.value,
       password: password.value,
       telefono: telefono.value || undefined,
-      documentoIdentidad: documentoIdentidad.value,
+      documentoIdentidad: normalizeCi(documentoIdentidad.value),
     })
     localStorage.setItem('access_token', response.access_token)
 
@@ -183,9 +212,12 @@ const registroRapido = () => {
             type="text"
             required
             placeholder="1.234.567-8"
+            inputmode="numeric"
+            maxlength="13"
             :aria-invalid="!!fieldErrors.documentoIdentidad"
             :aria-describedby="fieldErrors.documentoIdentidad ? 'doc-error' : undefined"
             class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            @input="aplicarMascaraCI"
             @blur="validateFields"
           />
           <p v-if="fieldErrors.documentoIdentidad" id="doc-error" class="mt-1 text-sm text-red-600">{{ fieldErrors.documentoIdentidad }}</p>

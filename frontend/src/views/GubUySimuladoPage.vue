@@ -13,10 +13,41 @@ const password = ref('')
 const isLoading = ref(false)
 const error = ref('')
 
+const normalizeCi = (val: string) => String(val || '').replace(/\D+/g, '')
+const formatearCIMask = (val: string) => {
+  const d = normalizeCi(val).slice(0, 8)
+  const s1 = d.slice(0, 1)
+  const s2 = d.slice(1, 4)
+  const s3 = d.slice(4, 7)
+  const s4 = d.slice(7, 8)
+  let out = s1
+  if (s2) out += '.' + s2
+  if (s3) out += '.' + s3
+  if (s4) out += '-' + s4
+  return out
+}
+const aplicarMascaraCI = (ev: Event) => {
+  const input = ev.target as HTMLInputElement
+  const masked = formatearCIMask(input.value)
+  documentoIdentidad.value = masked
+}
+const isValidCi = (val: string) => {
+  const digits = normalizeCi(val)
+  if (!/^\d{8}$/.test(digits)) return false
+  const base = digits
+    .slice(0, 7)
+    .split('')
+    .map((d) => parseInt(d, 10)) as [number, number, number, number, number, number, number]
+  const check = Number(digits.charAt(7))
+  const [d1, d2, d3, d4, d5, d6, d7] = base
+  const sum = d1*2 + d2*9 + d3*8 + d4*7 + d5*6 + d6*3 + d7*4
+  const dv = (10 - (sum % 10)) % 10
+  return dv === check
+}
 const canSubmit = computed(() => {
   return nombre.value.trim().length > 0 &&
     apellido.value.trim().length > 0 &&
-    documentoIdentidad.value.trim().length > 0 &&
+    isValidCi(documentoIdentidad.value) &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value) &&
     password.value.length >= 6 && !isLoading.value
 })
@@ -29,7 +60,7 @@ const onSubmit = async () => {
     const res = await authService.loginConGubUySimulado({
       nombre: nombre.value,
       apellido: apellido.value,
-      documentoIdentidad: documentoIdentidad.value,
+      documentoIdentidad: normalizeCi(documentoIdentidad.value),
       email: email.value,
       password: password.value,
     })
@@ -79,7 +110,7 @@ const onSubmit = async () => {
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-800">Documento de identidad</label>
-          <input v-model.trim="documentoIdentidad" type="text" class="mt-1 w-full h-12 rounded-xl border border-gray-300 px-4" />
+          <input v-model.trim="documentoIdentidad" type="text" inputmode="numeric" maxlength="13" @input="aplicarMascaraCI" class="mt-1 w-full h-12 rounded-xl border border-gray-300 px-4" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-800">Correo electrónico</label>

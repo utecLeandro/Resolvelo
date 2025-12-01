@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick, onUnmounted } from 'vue'
+import { ref, onMounted, nextTick, onUnmounted, computed } from 'vue'
 import { usuarioService, authService, publicacionesService } from '../services/api'
 import type { Publicacion } from '../services/api'
 import { useAuth } from '../composables/useAuth'
@@ -50,6 +50,21 @@ const pestanaActiva = ref<'perfil' | 'publicaciones'>('perfil')
 
 // Composable para manejar estado global del usuario
 const { actualizarDatosUsuario, datosUsuario } = useAuth()
+
+const normalizeCi = (val: string) => String(val || '').replace(/\D+/g, '')
+const formatearCIMask = (val: string) => {
+  const d = normalizeCi(val).slice(0, 8)
+  const s1 = d.slice(0, 1)
+  const s2 = d.slice(1, 4)
+  const s3 = d.slice(4, 7)
+  const s4 = d.slice(7, 8)
+  let out = s1
+  if (s2) out += '.' + s2
+  if (s3) out += '.' + s3
+  if (s4) out += '-' + s4
+  return out
+}
+const formattedDocumentoIdentidad = computed(() => formatearCIMask(documentoIdentidad.value))
 
 onMounted(async () => {
   const token = localStorage.getItem('access_token')
@@ -395,10 +410,10 @@ const obtenerImagenPrincipalUrl = (imagenes: any): string => {
           <label for="documentoIdentidad" class="block text-sm font-medium text-gray-800">Documento de identidad</label>
           <input
             id="documentoIdentidad"
-            v-model.trim="documentoIdentidad"
+            :value="formattedDocumentoIdentidad"
             type="text"
-            maxlength="20"
-            placeholder="Tu número de documento"
+            maxlength="13"
+            placeholder="1.234.567-8"
             class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             readonly
             disabled

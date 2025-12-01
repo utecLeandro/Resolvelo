@@ -20,6 +20,7 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import * as nodemailer from 'nodemailer';
+import { normalizeCiUy } from './validators/ci-uy.validator';
 
 interface GubuyCodeData {
   redirectUri: string;
@@ -486,12 +487,18 @@ export class AuthService {
     if (data.redirectUri !== redirectUri)
       throw new UnauthorizedException('redirect_uri no coincide');
     const claims = data.claims;
+    const claimsDocNorm = normalizeCiUy(claims.documentoIdentidad);
     let usuario = await this.prisma.usuario.findFirst({
-      where: { documentoIdentidad: claims.documentoIdentidad },
+      where: { documentoIdentidad: claimsDocNorm },
     });
     if (!usuario && claims.email) {
       usuario = await this.prisma.usuario.findUnique({
         where: { email: claims.email },
+      });
+    }
+    if (!usuario) {
+      usuario = await this.prisma.usuario.findFirst({
+        where: { documentoIdentidad: claims.documentoIdentidad },
       });
     }
     if (!usuario) {
@@ -540,12 +547,16 @@ export class AuthService {
   }
 
   async gubuyValidate(data: GubuyValidateDto) {
+    const docNorm = normalizeCiUy(data.documentoIdentidad);
     const usuarioByDoc = await this.prisma.usuario.findFirst({
-      where: { documentoIdentidad: data.documentoIdentidad },
+      where: { documentoIdentidad: docNorm },
     });
     const usuario =
       usuarioByDoc ||
-      (await this.prisma.usuario.findUnique({ where: { email: data.email } }));
+      (await this.prisma.usuario.findUnique({ where: { email: data.email } })) ||
+      (await this.prisma.usuario.findFirst({
+        where: { documentoIdentidad: data.documentoIdentidad },
+      }));
     if (!usuario) {
       throw new UnauthorizedException('Usuario no registrado');
     }
@@ -558,8 +569,8 @@ export class AuthService {
       (usuario.email || '').trim().toLowerCase() ===
       data.email.trim().toLowerCase();
     const docOk =
-      (usuario.documentoIdentidad || '').trim() ===
-      data.documentoIdentidad.trim();
+      normalizeCiUy(usuario.documentoIdentidad || '').trim() ===
+      docNorm.trim();
     if (!nombreOk || !apellidoOk || !emailOk || !docOk) {
       throw new UnauthorizedException('Datos no coinciden');
     }

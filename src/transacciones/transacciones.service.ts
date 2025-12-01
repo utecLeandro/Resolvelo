@@ -11,6 +11,7 @@ import { MP_DEFAULT_ACCESS_TOKEN } from '../config/mercadopago.config';
 import axios from 'axios';
 import { ProcesarPagoBrickDto } from './dto/payment-brick.dto';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { normalizeCiUy } from '../auth/validators/ci-uy.validator';
 import { Transaccion, Reserva, Publicacion, Usuario } from '@prisma/client';
 
 export interface RespuestaPreferenciaMpDto {
@@ -1045,7 +1046,7 @@ export class TransaccionesService {
       if (!payerBase.identification && txFull?.usuario?.documentoIdentidad) {
         payerBase.identification = {
           type: 'CI',
-          number: String(txFull.usuario.documentoIdentidad),
+          number: normalizeCiUy(String(txFull.usuario.documentoIdentidad)),
         };
       }
 

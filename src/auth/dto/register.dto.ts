@@ -10,7 +10,12 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { EsContrasenaSegura } from '../validators/password.validator';
+import {
+  IsCedulaUruguaya,
+  normalizeCiUy,
+} from '../validators/ci-uy.validator';
 
 export class RegisterDto {
   @IsNotEmpty({ message: 'El nombre es requerido' })
@@ -37,5 +42,7 @@ export class RegisterDto {
   telefono?: string;
 
   @IsNotEmpty({ message: 'El documento de identidad es requerido' })
+  @Transform(({ value }) => (typeof value === 'string' ? normalizeCiUy(value) : value))
+  @IsCedulaUruguaya({ message: 'La cédula de identidad no es válida' })
   documentoIdentidad!: string;
 }

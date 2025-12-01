@@ -1,4 +1,6 @@
 import { IsString, IsEmail, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsCedulaUruguaya, normalizeCiUy } from '../validators/ci-uy.validator';
 
 export class GubuyValidateDto {
   @IsString()
@@ -11,6 +13,8 @@ export class GubuyValidateDto {
 
   @IsString()
   @MinLength(3)
+  @Transform(({ value }) => (typeof value === 'string' ? normalizeCiUy(value) : value))
+  @IsCedulaUruguaya({ message: 'La cédula de identidad no es válida' })
   documentoIdentidad!: string;
 
   @IsEmail()
