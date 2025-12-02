@@ -10,6 +10,7 @@ const apellido = ref('')
 const documentoIdentidad = ref('')
 const email = ref('')
 const password = ref('')
+const showPassword = ref(false)
 const isLoading = ref(false)
 const error = ref('')
 
@@ -97,7 +98,7 @@ const onSubmit = async () => {
 <template>
   <div class="min-h-[calc(100vh-4rem)] w-full flex items-center justify-center bg-gray-50 px-4 py-12">
     <div class="w-full max-w-lg mx-auto bg-white shadow rounded-2xl border border-gray-200 p-8">
-      <h1 class="text-2xl font-semibold text-gray-900 mb-2">Login gub.uy (simulado)</h1>
+      <h1 class="text-2xl font-semibold text-gray-900 mb-2">Login gub.uy</h1>
       <p class="text-gray-600 mb-6">Ingresa tus datos para validar contra tu cuenta existente</p>
       <form @submit.prevent="onSubmit" class="space-y-4" :aria-busy="isLoading">
         <div>
@@ -118,7 +119,20 @@ const onSubmit = async () => {
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-800">Contraseña</label>
-          <input v-model="password" type="password" class="mt-1 w-full h-12 rounded-xl border border-gray-300 px-4" />
+          <div class="mt-1 relative">
+            <input
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              class="w-full h-12 rounded-xl border border-gray-300 px-4 pr-20"
+            />
+            <button
+              type="button"
+              class="absolute inset-y-0 right-3 my-auto text-sm text-gray-600 hover:text-gray-800"
+              @click="showPassword = !showPassword"
+            >
+              {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
         </div>
         <button type="submit" class="w-full h-12 px-4 rounded-2xl bg-blue-600 text-white" :disabled="!canSubmit">
           {{ isLoading ? 'Validando…' : 'Validar y entrar' }}

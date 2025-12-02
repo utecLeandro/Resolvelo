@@ -16,6 +16,8 @@ const apellido = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
 const telefono = ref('')
 const documentoIdentidad = ref('')
 const aceptaTerminos = ref(false)
@@ -65,6 +67,17 @@ const passwordStrength = computed(() => {
   if (/[@$!%*?&]/.test(val)) score++
   return score // 0-5
 })
+const isPasswordValidStrict = computed(() => {
+  const val = password.value
+  return (
+    val.length >= 8 &&
+    val.length <= 20 &&
+    /[a-z]/.test(val) &&
+    /[A-Z]/.test(val) &&
+    /\d/.test(val) &&
+    /[@$!%*?&]/.test(val)
+  )
+})
 const passwordsMatch = computed(() => password.value && password.value === confirmPassword.value)
 const canSubmit = computed(() => {
   return (
@@ -72,7 +85,7 @@ const canSubmit = computed(() => {
     apellido.value &&
     isValidEmail(email.value) &&
     isValidDocumento(documentoIdentidad.value) &&
-    passwordStrength.value >= 4 &&
+    isPasswordValidStrict.value &&
     passwordsMatch.value &&
     aceptaTerminos.value &&
     !isLoading.value
@@ -85,7 +98,13 @@ const validateFields = () => {
   if (!apellido.value) fieldErrors.value.apellido = 'El apellido es requerido.'
   if (!isValidEmail(email.value)) fieldErrors.value.email = 'Ingresa un email válido.'
   if (!isValidDocumento(documentoIdentidad.value)) fieldErrors.value.documentoIdentidad = 'Formato de documento inválido.'
-  if (passwordStrength.value < 4) fieldErrors.value.password = 'La contraseña debe incluir mayúsculas, minúsculas, número y caracter especial.'
+  if (!isPasswordValidStrict.value) {
+    if (password.value.length > 20) {
+      fieldErrors.value.password = 'La contraseña no puede tener más de 20 caracteres.'
+    } else {
+      fieldErrors.value.password = 'La contraseña debe tener entre 8 y 20 caracteres, incluir mayúsculas, minúsculas, números y un caracter especial (@$!%*?&).'
+    }
+  }
   if (!passwordsMatch.value) fieldErrors.value.confirmPassword = 'Las contraseñas no coinciden.'
   if (!aceptaTerminos.value) fieldErrors.value.aceptaTerminos = 'Debes aceptar los términos y condiciones.'
 }
@@ -128,19 +147,7 @@ const onSubmit = async () => {
   }
 }
 
-// Registro rápido para pruebas
-const registroRapido = () => {
-  const timestamp = Date.now()
-  nombre.value = 'Juan'
-  apellido.value = 'Pérez'
-  email.value = `juan.perez.${timestamp}@test.com`
-  documentoIdentidad.value = '1.234.567-8'
-  telefono.value = '099123456'
-  password.value = 'Password123!'
-  confirmPassword.value = 'Password123!'
-  aceptaTerminos.value = true
-  alert('✅ Datos de prueba cargados. Ahora puedes hacer clic en "Registrarme"')
-}
+
 </script>
 
 <template>
@@ -238,19 +245,29 @@ const registroRapido = () => {
 
         <div>
           <label for="password" class="block text-sm font-medium text-gray-800">Contraseña *</label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            required
-            autocomplete="new-password"
-            placeholder="Mínimo 8 caracteres"
-            :aria-invalid="!!fieldErrors.password"
-            :aria-describedby="fieldErrors.password ? 'password-error' : 'password-help'"
-            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-            @input="validateFields"
-          />
-          <p id="password-help" class="mt-1 text-xs text-gray-500">Debe incluir mayúsculas, minúsculas, números y un caracter especial (@$!%*?&).</p>
+          <div class="mt-1 relative">
+            <input
+              id="password"
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              required
+              autocomplete="new-password"
+              placeholder="Entre 8 y 20 caracteres"
+              :aria-invalid="!!fieldErrors.password"
+              :aria-describedby="fieldErrors.password ? 'password-error' : 'password-help'"
+              class="w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 pr-20 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              @input="validateFields"
+            />
+            <button
+              type="button"
+              class="absolute inset-y-0 right-3 my-auto text-sm text-gray-600 hover:text-gray-800"
+              aria-label="Mostrar u ocultar contraseña"
+              @click="showPassword = !showPassword"
+            >
+              {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+          <p id="password-help" class="mt-1 text-xs text-gray-500">Debe tener entre 8 y 20 caracteres e incluir mayúsculas, minúsculas, números y un caracter especial (@$!%*?&).</p>
           <p v-if="fieldErrors.password" id="password-error" class="mt-1 text-sm text-red-600">{{ fieldErrors.password }}</p>
 
           <!-- Indicador de fortaleza -->
@@ -270,18 +287,28 @@ const registroRapido = () => {
 
         <div>
           <label for="confirmPassword" class="block text-sm font-medium text-gray-800">Confirmar contraseña *</label>
-          <input
-            id="confirmPassword"
-            v-model="confirmPassword"
-            type="password"
-            required
-            autocomplete="new-password"
-            placeholder="Repite tu contraseña"
-            :aria-invalid="!!fieldErrors.confirmPassword"
-            :aria-describedby="fieldErrors.confirmPassword ? 'confirm-error' : undefined"
-            class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-            @input="validateFields"
-          />
+          <div class="mt-1 relative">
+            <input
+              id="confirmPassword"
+              v-model="confirmPassword"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              required
+              autocomplete="new-password"
+              placeholder="Repite tu contraseña"
+              :aria-invalid="!!fieldErrors.confirmPassword"
+              :aria-describedby="fieldErrors.confirmPassword ? 'confirm-error' : undefined"
+              class="w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 pr-20 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              @input="validateFields"
+            />
+            <button
+              type="button"
+              class="absolute inset-y-0 right-3 my-auto text-sm text-gray-600 hover:text-gray-800"
+              aria-label="Mostrar u ocultar contraseña"
+              @click="showConfirmPassword = !showConfirmPassword"
+            >
+              {{ showConfirmPassword ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
           <p v-if="fieldErrors.confirmPassword" id="confirm-error" class="mt-1 text-sm text-red-600">{{ fieldErrors.confirmPassword }}</p>
         </div>
 
@@ -309,16 +336,7 @@ const registroRapido = () => {
 
         <p v-if="formError" id="form-error" class="text-red-600 text-sm" aria-live="polite">{{ formError }}</p>
 
-        <!-- Botón de registro rápido para pruebas -->
-        <div class="mt-6 pt-6 border-t border-gray-200">
-          <button
-            @click="registroRapido"
-            type="button"
-            class="w-full text-sm text-gray-600 hover:text-gray-800 underline"
-          >
-            🚀 Registro rápido (datos de prueba)
-          </button>
-        </div>
+
       </form>
     </div>
   </div>

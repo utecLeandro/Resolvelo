@@ -9,8 +9,8 @@
 
       <!-- Pestañas -->
       <div class="mb-8">
-        <div class="border-b border-gray-200">
-          <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+        <div class="border-b border-gray-200 overflow-x-auto">
+          <nav class="-mb-px flex space-x-8 min-w-full sm:min-w-0" aria-label="Tabs">
             <button
               @click="pestanaActiva = 'pendientes'"
               :class="[

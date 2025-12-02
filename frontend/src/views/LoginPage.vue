@@ -76,6 +76,8 @@ const onSubmit = async () => {
       if (msg && msg.toLowerCase().includes('primer login')) {
         formError.value = 'Debes iniciar por “Entrar con gub.uy” en tu primer acceso.'
         router.push('/gubuy/simulado')
+      } else if (msg && msg.toLowerCase().includes('desactivada')) {
+        formError.value = msg
       } else {
         formError.value = 'Credenciales incorrectas. Verifica tu email y contraseña.'
       }
@@ -95,39 +97,7 @@ const onSubmit = async () => {
   }
 }
 
-// Foco y ayuda: acción opcional para probar salud del backend
-const probarConexion = async () => {
-  try {
-    // Usar siempre el proxy '/api' por defecto en desarrollo para evitar puertos hardcodeados
-    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
-    const response = await fetch(`${baseUrl}/health`)
 
-    // Si la respuesta no es OK, intentar extraer un mensaje de error legible
-    if (!response.ok) {
-      let mensaje = `HTTP ${response.status} ${response.statusText}`
-      try {
-        const errJson = await response.json()
-        if (errJson?.message) mensaje = errJson.message
-      } catch (_) {
-        // Ignorar error de parseo (p.ej. HTML o cuerpo vacío)
-      }
-      alert(`❌ Error de conexión: ${mensaje}`)
-      return
-    }
-
-    // Detectar tipo de contenido para evitar "Unexpected end of JSON input"
-    const contentType = response.headers.get('content-type') || ''
-    if (contentType.includes('application/json')) {
-      const data = await response.json()
-      alert(`✅ Conexión exitosa: ${JSON.stringify(data)}`)
-    } else {
-      const text = await response.text()
-      alert(`✅ Conexión exitosa (texto): ${text}`)
-    }
-  } catch (err: any) {
-    alert(`❌ Error de conexión: ${err?.message || err}`)
-  }
-}
 
 const iniciarLoginGubUy = () => {
   router.push('/gubuy/simulado')
@@ -227,15 +197,7 @@ const iniciarLoginGubUy = () => {
         <p v-if="formError" id="form-error" class="text-red-600 text-sm" aria-live="polite">{{ formError }}</p>
         <p v-if="successMessage" class="text-green-600 text-sm" aria-live="polite">{{ successMessage }}</p>
 
-        <div class="mt-10 pt-6 border-t border-gray-200">
-          <button
-            @click="probarConexion"
-            type="button"
-            class="w-full text-sm text-gray-600 hover:text-gray-800 underline"
-          >
-            🔧 Probar conexión con backend
-          </button>
-        </div>
+
       </form>
     </div>
   </div>

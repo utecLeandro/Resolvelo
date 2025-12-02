@@ -248,28 +248,11 @@ export class ReservasService {
           estado: {
             in: ['PENDIENTE', 'CONFIRMADA', 'EN_CURSO'],
           },
-          OR: [
-            {
-              // La nueva reserva empieza durante una reserva existente
-              AND: [
-                { fechaInicio: { lte: fechaInicio } },
-                { fechaFin: { gt: fechaInicio } },
-              ],
-            },
-            {
-              // La nueva reserva termina durante una reserva existente
-              AND: [
-                { fechaInicio: { lt: fechaFin } },
-                { fechaFin: { gte: fechaFin } },
-              ],
-            },
-            {
-              // La nueva reserva engloba completamente una reserva existente
-              AND: [
-                { fechaInicio: { gte: fechaInicio } },
-                { fechaFin: { lte: fechaFin } },
-              ],
-            },
+          // Verificar superposición simple y robusta para intervalos inclusivos
+          // La condición de superposición es: (StartA <= EndB) AND (EndA >= StartB)
+          AND: [
+            { fechaInicio: { lte: fechaFin } },
+            { fechaFin: { gte: fechaInicio } },
           ],
         },
       });

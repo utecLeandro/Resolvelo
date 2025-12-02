@@ -106,8 +106,13 @@ export class AuthService {
       };
     } catch (error: any) {
       // Manejar error de email duplicado
-      if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
-        throw new ConflictException('El email ya está registrado');
+      if (error.code === 'P2002') {
+        if (error.meta?.target?.includes('email')) {
+          throw new ConflictException('El email ya está registrado');
+        }
+        if (error.meta?.target?.includes('documentoIdentidad')) {
+          throw new ConflictException('Ya existe un usuario con esa cédula');
+        }
       }
       // BD no disponible (Prisma no puede conectar)
       if (
@@ -135,19 +140,7 @@ export class AuthService {
       });
 
       if (!usuario) {
-        throw new NotFoundException('Usuario no encontrado');
-      }
-
-      // Verificar que el usuario esté activo
-      if (!usuario.activo) {
-        throw new UnauthorizedException('Cuenta desactivada');
-      }
-
-      // Política: primer login debe ser con gub.uy (usa bandera en schema)
-      if (usuario.primerLoginPendiente === true) {
-        throw new UnauthorizedException(
-          'Primer login: debes iniciar por “Entrar con gub.uy”',
-        );
+        throw new UnauthorizedException('Credenciales incorrectas'); // Evitar enumeración de usuarios
       }
 
       // Verificar contraseña usando bcrypt
@@ -158,6 +151,18 @@ export class AuthService {
 
       if (!passwordValida) {
         throw new UnauthorizedException('Credenciales incorrectas');
+      }
+
+      // Verificar que el usuario esté activo
+      if (!usuario.activo) {
+        throw new UnauthorizedException('Cuenta desactivada. Contacta al administrador.');
+      }
+
+      // Política: primer login debe ser con gub.uy (usa bandera en schema)
+      if (usuario.primerLoginPendiente === true) {
+        throw new UnauthorizedException(
+          'Primer login: debes iniciar por “Entrar con gub.uy”',
+        );
       }
 
       if (usuario.estadoVerificacion !== 'VERIFICADA') {
@@ -507,7 +512,7 @@ export class AuthService {
       );
     }
     if (!usuario.activo) {
-      throw new UnauthorizedException('Cuenta desactivada');
+      throw new UnauthorizedException('Cuenta desactivada. Contacta al administrador.');
     }
     if (usuario.estadoVerificacion !== 'VERIFICADA') {
       throw new ForbiddenException(
@@ -557,12 +562,11 @@ export class AuthService {
       (await this.prisma.usuario.findFirst({
         where: { documentoIdentidad: data.documentoIdentidad },
       }));
+
     if (!usuario) {
-      throw new UnauthorizedException('Usuario no registrado');
+      throw new UnauthorizedException('Usuario no encontrado en el sistema. Verifica el documento o email.');
     }
-    if (!usuario.activo) {
-      throw new UnauthorizedException('Cuenta desactivada');
-    }
+
     const nombreOk = (usuario.nombre || '').trim() === data.nombre.trim();
     const apellidoOk = (usuario.apellido || '').trim() === data.apellido.trim();
     const emailOk =
@@ -571,9 +575,11 @@ export class AuthService {
     const docOk =
       normalizeCiUy(usuario.documentoIdentidad || '').trim() ===
       docNorm.trim();
+
     if (!nombreOk || !apellidoOk || !emailOk || !docOk) {
-      throw new UnauthorizedException('Datos no coinciden');
+      throw new UnauthorizedException('Los datos ingresados (Nombre, Apellido, Email o Documento) no coinciden con el usuario registrado.');
     }
+
     // Tolerar usuarios sin passwordHash en flujo gub.uy (importados), si existe comparar
     if (usuario.passwordHash) {
       const passwordValida = await bcrypt.compare(
@@ -581,8 +587,12 @@ export class AuthService {
         usuario.passwordHash,
       );
       if (!passwordValida) {
-        throw new UnauthorizedException('Credenciales incorrectas');
+        throw new UnauthorizedException('Contraseña incorrecta para el usuario local asociado.');
       }
+    }
+
+    if (!usuario.activo) {
+      throw new UnauthorizedException('Cuenta desactivada. Contacta al administrador.');
     }
     if (usuario.estadoVerificacion !== 'VERIFICADA') {
       throw new ForbiddenException(
