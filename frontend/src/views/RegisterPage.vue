@@ -321,6 +321,16 @@ const onSubmit = async () => {
         </div>
         <p v-if="fieldErrors.aceptaTerminos" class="text-sm text-red-600">{{ fieldErrors.aceptaTerminos }}</p>
 
+        <!-- Mensaje de error general del formulario -->
+        <div v-if="formError" class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm mb-4" role="alert">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+            <span>{{ formError }}</span>
+          </div>
+        </div>
+
         <button
           type="submit"
           class="w-full h-12 px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -333,9 +343,6 @@ const onSubmit = async () => {
           ¿Ya tienes cuenta?
           <router-link to="/login" class="text-blue-600 hover:text-blue-700">Inicia sesión</router-link>
         </p>
-
-        <p v-if="formError" id="form-error" class="text-red-600 text-sm" aria-live="polite">{{ formError }}</p>
-
 
       </form>
     </div>

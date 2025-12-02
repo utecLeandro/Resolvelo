@@ -57,6 +57,21 @@ export class AuthService {
    * Inicialmente en estado pendiente de verificación.
    */
   async register(data: RegisterDto) {
+    // Validar existencia previa para mensajes de error claros
+    const existingDoc = await this.prisma.usuario.findFirst({
+      where: { documentoIdentidad: data.documentoIdentidad },
+    });
+    if (existingDoc) {
+      throw new ConflictException('Ya existe un usuario registrado en el sistema con esa cédula');
+    }
+
+    const existingEmail = await this.prisma.usuario.findUnique({
+      where: { email: data.email },
+    });
+    if (existingEmail) {
+      throw new ConflictException('El email ya está registrado');
+    }
+
     try {
       // Generar salt único por usuario
       const salt = await bcrypt.genSalt(
