@@ -151,8 +151,18 @@ export const authService = {
   async registro(datos: RegistroRequest): Promise<AuthResponse> {
     try {
       const response = await api.post('/auth/register', datos)
+      if (response.status >= 400) {
+        const mensaje = (response.data && (response.data.message || response.data.error)) || 'Error en registro'
+        const err: any = new Error(mensaje)
+        err.response = response
+        throw err
+      }
       return response.data
     } catch (error: any) {
+      // Si es un error de validación (400-499), no reintentar con fetch
+      if (error.response && error.response.status >= 400 && error.response.status < 500) {
+        throw error
+      }
       console.warn('Axios failed, trying fetch fallback for registro:', error.message)
       return await fetchFallback('/auth/register', {
         method: 'POST',

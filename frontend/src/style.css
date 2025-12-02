@@ -1,2 +1,12 @@
 /* Tailwind v4: Import único que incluye base, components y utilities */
 @import "tailwindcss";
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

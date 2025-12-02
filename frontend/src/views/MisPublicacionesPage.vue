@@ -9,7 +9,7 @@
 
       <!-- Pestañas principales -->
       <div class="mb-8">
-        <div class="border-b border-gray-200 overflow-x-auto">
+        <div class="border-b border-gray-200 overflow-x-auto overflow-y-hidden scrollbar-hide">
           <nav class="-mb-px flex space-x-8 min-w-full sm:min-w-0" aria-label="Tabs">
             <button
               @click="pestanaActiva = 'publicaciones'"
@@ -67,7 +67,7 @@
 
       <!-- Subtabs para Mis Publicaciones -->
       <div v-if="pestanaActiva === 'publicaciones'" class="mb-6">
-        <div class="border-b border-gray-100 overflow-x-auto">
+        <div class="border-b border-gray-100 overflow-x-auto overflow-y-hidden scrollbar-hide">
           <nav class="-mb-px flex space-x-6 min-w-full sm:min-w-0" aria-label="Sub Tabs">
             <button
               @click="subPestanaPublicaciones = 'todas'"
@@ -119,7 +119,7 @@
 
       <!-- Subtabs para Solicitudes -->
       <div v-if="pestanaActiva === 'solicitudes'" class="mb-6">
-        <div class="border-b border-gray-100 overflow-x-auto">
+        <div class="border-b border-gray-100 overflow-x-auto overflow-y-hidden scrollbar-hide">
           <nav class="-mb-px flex space-x-6 min-w-full sm:min-w-0" aria-label="Sub Tabs">
             <button
               @click="subPestanaSolicitudes = 'pendientes'"

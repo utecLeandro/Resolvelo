@@ -139,6 +139,8 @@ const onSubmit = async () => {
       formError.value = Array.isArray(err.response.data.message)
         ? err.response.data.message.join(', ')
         : err.response.data.message
+    } else if (err.message) {
+      formError.value = err.message
     } else {
       formError.value = 'Ocurrió un error al registrar. Intenta nuevamente.'
     }
