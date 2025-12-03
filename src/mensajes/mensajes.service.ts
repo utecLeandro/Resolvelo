@@ -8,12 +8,15 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { EnviarMensajeDto } from './dto/enviar-mensaje.dto';
+import { EmailService } from '../email/email.service';
+import { emailTemplates } from '../email/email.templates';
 
 @Injectable()
 export class MensajesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificaciones: NotificacionesService,
+    private readonly emailService: EmailService,
   ) {}
 
   async listarPorReserva(reservaId: string, usuarioId: string) {
@@ -194,16 +197,39 @@ export class MensajesService {
         where: { id: BigInt(reservaId) },
         include: { publicacion: { select: { titulo: true } } },
       });
+      
+      const receptor = await this.prisma.usuario.findUnique({
+        where: { id: BigInt(receptorId) },
+        select: { id: true, nombre: true, email: true },
+      });
+
+      const mensaje = await this.prisma.mensaje.findUnique({
+        where: { id: BigInt(mensajeId) },
+        include: { emisor: { select: { nombre: true, apellido: true } } }
+      });
+
+      if (!reserva || !receptor || !mensaje) return;
+
       const originFromCors = process.env.CORS_ORIGIN?.split(',')[0]?.trim();
       const frontendBase = (
         process.env.FRONTEND_URL ||
         originFromCors ||
         'https://develop.d2jhmkfagiypdq.amplifyapp.com'
       ).replace(/\/$/, '');
-      const link = `${frontendBase}/mensajes/reserva/${encodeURIComponent(reservaId)}?m=${encodeURIComponent(mensajeId)}`;
-      const asunto = `Nuevo mensaje sobre "${reserva?.publicacion?.titulo || 'tu reserva'}"`;
-      const html = `<p>Tienes nuevos mensajes sin leer.</p><p><a href="${link}">Abrir chat</a></p>`;
-      await this.notificaciones.enviarEmail(receptorId, asunto, html);
+      const link = `${frontendBase}/mensajes/reserva/${encodeURIComponent(reservaId)}`;
+      
+      const nombreEmisor = `${mensaje.emisor.nombre} ${mensaje.emisor.apellido}`;
+
+      await this.emailService.sendMail(
+        receptor.email,
+        `Nuevo mensaje de ${nombreEmisor}`,
+        emailTemplates.nuevoMensaje(
+          receptor.nombre,
+          nombreEmisor,
+          mensaje.contenido,
+          link
+        )
+      );
     } catch (e) {
       console.warn(
         'Fallo al enviar email de notificación:',

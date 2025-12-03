@@ -15,11 +15,13 @@ import { CalificacionesModule } from './calificaciones/calificaciones.module';
 import { NotificacionesModule } from './notificaciones/notificaciones.module';
 import { ImagenesModule } from './imagenes/imagenes.module';
 import { ReservasModule } from './reservas/reservas.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
     PrismaModule,
     AuthModule,
+    EmailModule,
     PublicacionesModule,
     UsuariosModule,
     AdminModule,

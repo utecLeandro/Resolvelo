@@ -9,6 +9,8 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CrearReservaDto } from './dto/crear-reserva.dto';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { EmailService } from '../email/email.service';
+import { emailTemplates } from '../email/email.templates';
 
 export interface UpdateReservaDto {
   estado?:
@@ -33,6 +35,7 @@ export class ReservasService {
   constructor(
     private prisma: PrismaService,
     @Optional() private notificaciones?: NotificacionesService,
+    private readonly emailService?: EmailService,
   ) {}
 
   async obtenerSolicitudesPendientes(propietarioId: string) {
@@ -321,6 +324,24 @@ export class ReservasService {
           reserva,
         );
       }
+
+      // Enviar correo al propietario
+      if (this.emailService) {
+        const linkGestion = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reservas-recibidas`;
+        await this.emailService.sendMail(
+          reserva.propietario.email,
+          `Nueva solicitud de reserva: ${reserva.publicacion.titulo}`,
+          emailTemplates.reservaCreadaPropietario(
+            reserva.propietario.nombre,
+            reserva.usuario.nombre,
+            reserva.publicacion.titulo,
+            reserva.fechaInicio.toLocaleDateString(),
+            reserva.fechaFin.toLocaleDateString(),
+            linkGestion
+          )
+        );
+      }
+
       return {
         success: true,
         data: reserva,
@@ -549,11 +570,29 @@ export class ReservasService {
         const anterior = (reservaExistente as any).estado || null;
         const actual = (reserva as any).estado;
         if (actual && anterior !== actual) {
-          await this.notificaciones.emitirCambioEstado(
-            reserva,
-            anterior,
-            actual,
-          );
+          if (this.notificaciones) {
+            await this.notificaciones.emitirCambioEstado(
+              reserva,
+              anterior,
+              actual,
+            );
+          }
+
+          // Enviar notificación por correo si el estado cambió
+          if (this.emailService) {
+            // Notificar al arrendatario sobre el cambio de estado
+            const linkDetalle = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/mis-reservas`;
+            await this.emailService.sendMail(
+              reserva.usuario.email,
+              `Actualización de reserva: ${reserva.publicacion.titulo}`,
+              emailTemplates.estadoReservaArrendatario(
+                reserva.usuario.nombre,
+                actual,
+                reserva.publicacion.titulo,
+                linkDetalle
+              )
+            );
+          }
         }
       } catch {}
 

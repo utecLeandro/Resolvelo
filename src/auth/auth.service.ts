@@ -13,13 +13,13 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
+import { emailTemplates } from '../email/email.templates';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { GubuyValidateDto } from './dto/gubuy-validate.dto';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-import * as nodemailer from 'nodemailer';
 import { normalizeCiUy } from './validators/ci-uy.validator';
 
 interface GubuyCodeData {
@@ -41,6 +41,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   private gubuyCodes = new Map<string, GubuyCodeData>();
@@ -100,6 +101,16 @@ export class AuthService {
         },
       });
 
+      // Iniciar verificación de email en AWS SES (modo Sandbox)
+      await this.emailService.verificarIdentidadEmail(usuario.email);
+
+      // Enviar email de bienvenida (opcional)
+      // Como el email aun no está verificado en SES, este envío podría fallar si se hace inmediatamente
+      // y AWS no ha procesado la verificación. Sin embargo, en un flujo real,
+      // el link de verificación iría en este correo.
+      // Dado que usamos el flujo nativo de SES para verificar, el usuario recibirá el mail de AWS.
+      // Una vez verificado, podríamos enviarle la bienvenida.
+      
       // Simular servicio externo de verificación (por ahora responde OK)
       const verificationOk = true; // mock
 
@@ -355,66 +366,18 @@ export class AuthService {
     const resetLink = `${frontendUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
     try {
-      const from = (process.env.EMAIL_FROM || 'noreply@resolvelo.com').trim();
-      const region = (process.env.AWS_REGION || 'us-east-1').trim();
-      try {
-        const ses = new SESClient({ region });
-        const command = new SendEmailCommand({
-          Source: from,
-          Destination: { ToAddresses: [email] },
-          Message: {
-            Subject: {
-              Data: 'Recuperación de contraseña - ReSolVelo',
-              Charset: 'UTF-8',
-            },
-            Body: {
-              Html: {
-                Data: `
+      // Usar el servicio de email centralizado
+      await this.emailService.sendMail(
+        email,
+        'Recuperación de contraseña - ReSolVelo',
+        `
           <p>Hola,</p>
           <p>Recibimos una solicitud para restablecer tu contraseña. Si fuiste tú, haz clic en el siguiente enlace:</p>
           <p><a href="${resetLink}">${resetLink}</a></p>
           <p>Este enlace expira en 1 hora. Si no solicitaste esto, ignora este mensaje.</p>
           <p>Equipo ReSolVelo</p>
         `,
-                Charset: 'UTF-8',
-              },
-            },
-          },
-        });
-        await ses.send(command);
-      } catch (_e1) {
-        try {
-          const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST || 'localhost',
-            port: parseInt(process.env.SMTP_PORT || '1025', 10),
-            secure: process.env.SMTP_SECURE === 'true',
-            auth:
-              process.env.SMTP_USER || process.env.SMTP_PASS
-                ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-                : undefined,
-            connectionTimeout: 2000,
-            greetingTimeout: 2000,
-            socketTimeout: 3000,
-          });
-          await transporter.sendMail({
-            from: from,
-            to: email,
-            subject: 'Recuperación de contraseña - ReSolVelo',
-            html: `
-          <p>Hola,</p>
-          <p>Recibimos una solicitud para restablecer tu contraseña. Si fuiste tú, haz clic en el siguiente enlace:</p>
-          <p><a href="${resetLink}">${resetLink}</a></p>
-          <p>Este enlace expira en 1 hora. Si no solicitaste esto, ignora este mensaje.</p>
-          <p>Equipo ReSolVelo</p>
-        `,
-          });
-        } catch (e2) {
-          console.warn(
-            'No se pudo enviar email de recuperación (SMTP):',
-            (e2 as any)?.message,
-          );
-        }
-      }
+      );
     } catch (e) {
       console.warn(
         'No se pudo enviar email de recuperación:',

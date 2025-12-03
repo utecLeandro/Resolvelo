@@ -9,10 +9,12 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PasswordStrengthService } from './services/password-strength.service';
 import { JwtStrategy } from './jwt.strategy';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
     PassportModule,
+    EmailModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '24h' },

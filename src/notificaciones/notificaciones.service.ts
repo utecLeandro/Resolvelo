@@ -1,12 +1,14 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import { Subject } from 'rxjs';
-import * as nodemailer from 'nodemailer';
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 
 @Injectable()
 export class NotificacionesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   private sse = new Subject<{ usuarioId: string; data: any }>();
 
@@ -243,45 +245,8 @@ export class NotificacionesService {
         select: { email: true, nombre: true, notificacionesEmail: true },
       });
       if (!usuario?.email || usuario?.notificacionesEmail === false) return;
-      const from = (process.env.EMAIL_FROM || 'noreply@resolvelo.com').trim();
-      const region = (process.env.AWS_REGION || 'us-east-1').trim();
-      try {
-        const ses = new SESClient({ region });
-        const command = new SendEmailCommand({
-          Source: from,
-          Destination: { ToAddresses: [usuario.email] },
-          Message: {
-            Subject: { Data: asunto, Charset: 'UTF-8' },
-            Body: { Html: { Data: html, Charset: 'UTF-8' } },
-          },
-        });
-        await ses.send(command);
-      } catch (_e1) {
-        try {
-          const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST || '127.0.0.1',
-            port: Number(process.env.SMTP_PORT || 1025),
-            secure: false,
-            auth:
-              process.env.SMTP_USER && process.env.SMTP_PASS
-                ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-                : undefined,
-            connectionTimeout: 2000,
-            greetingTimeout: 2000,
-            socketTimeout: 3000,
-          });
-          await transporter.sendMail({
-            from,
-            to: usuario.email,
-            subject: asunto,
-            html,
-          });
-        } catch (e2) {
-          try {
-            console.warn('[Notificaciones] fallo email', (e2 as any)?.message);
-          } catch {}
-        }
-      }
+
+      await this.emailService.sendMail(usuario.email, asunto, html);
     } catch (e) {
       try {
         console.warn('[Notificaciones] fallo email', (e as any)?.message);
