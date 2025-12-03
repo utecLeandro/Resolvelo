@@ -27,26 +27,11 @@ import {
 import { Prisma } from '@prisma/client';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import {
+  BigIntSerializerInterceptor,
+  serializeBigInt,
+} from './common/interceptors/bigint-serializer.interceptor';
 
-@Injectable()
-class BigIntSerializerInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    return next.handle().pipe(map((data: any) => serializeBigInt(data)));
-  }
-}
-
-function serializeBigInt(v: any): any {
-  if (typeof v === 'bigint') return v.toString();
-  if (v instanceof Date) return v.toISOString();
-  if (v instanceof (Prisma as any).Decimal) return v.toString();
-  if (Array.isArray(v)) return v.map(serializeBigInt);
-  if (v && typeof v === 'object') {
-    const out: any = {};
-    for (const k of Object.keys(v)) out[k] = serializeBigInt((v as any)[k]);
-    return out;
-  }
-  return v;
-}
 async function bootstrap() {
   console.log(
     '[Main] Import debug -> typeof TransaccionesModule =',
