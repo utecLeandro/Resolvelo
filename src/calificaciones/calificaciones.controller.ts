@@ -13,6 +13,7 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CalificacionesService } from './calificaciones.service';
 import { CrearCalificacionDto } from './dto/crear-calificacion.dto';
+import { serializeBigInt } from '../common/interceptors/bigint-serializer.interceptor';
 
 @Controller('calificaciones')
 export class CalificacionesController {
@@ -26,8 +27,18 @@ export class CalificacionesController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async crear(@Body() dto: CrearCalificacionDto, @Request() req: any) {
+    console.log('📝 [CONTROLLER] Creando calificación:', {
+      usuarioId: req.user.id,
+      reservaId: dto.reservaId,
+    });
     const resultado = await this.calificacionesService.crear(req.user.id, dto);
-    return { ...resultado, timestamp: new Date().toISOString() };
+    // Serializamos manualmente para asegurar que no haya problemas de BigInt
+    const response = serializeBigInt({
+      ...resultado,
+      timestamp: new Date().toISOString(),
+    });
+    console.log('✅ [CONTROLLER] Calificación creada exitosamente');
+    return response;
   }
 
   @Get('publicaciones/:id')
