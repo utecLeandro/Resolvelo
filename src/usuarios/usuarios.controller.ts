@@ -21,10 +21,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { UsuariosService } from './usuarios.service';
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto';
-import {
-  ReservasService,
-  UpdateReservaDto,
-} from '../reservas/reservas.service';
+import { ReservasService } from '../reservas/reservas.service';
+import { UpdateReservaDto } from '../reservas/dto/update-reserva.dto';
 import { CrearReservaDto } from '../reservas/dto/crear-reserva.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -159,7 +157,15 @@ export class UsuariosController {
     @Body() data: UpdateReservaDto,
     @Request() _req: any,
   ) {
-    const resultado = await this.reservasService.actualizarReserva(id, data);
+    const dataConverted = {
+      ...data,
+      fechaInicio: data.fechaInicio ? new Date(data.fechaInicio) : undefined,
+      fechaFin: data.fechaFin ? new Date(data.fechaFin) : undefined,
+    };
+    const resultado = await this.reservasService.actualizarReserva(
+      id,
+      dataConverted,
+    );
     return {
       ...resultado,
       timestamp: new Date().toISOString(),
@@ -189,7 +195,7 @@ export class UsuariosController {
   @Patch('reservas/:id/aceptar')
   @UseGuards(JwtAuthGuard)
   async aceptarReserva(@Param('id') id: string, @Request() _req: any) {
-    const resultado = await this.reservasService.aceptarReserva(id);
+    const resultado = await this.reservasService.confirmarReserva(id);
     return {
       ...resultado,
       timestamp: new Date().toISOString(),

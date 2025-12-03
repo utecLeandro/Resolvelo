@@ -360,7 +360,107 @@ export class ReservasService {
     return this.actualizarReserva(id, { estado: EstadoReserva.CANCELADA });
   }
 
-  private async actualizarReserva(
+  async finalizarReserva(id: string) {
+    return this.actualizarReserva(id, { estado: EstadoReserva.COMPLETADA });
+  }
+
+  async obtenerReservasActivasPropietario(
+    propietarioId: string | number | bigint,
+  ) {
+    try {
+      const reservas = await this.prisma.reserva.findMany({
+        where: {
+          propietarioId: BigInt(propietarioId),
+          estado: {
+            in: [EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO],
+          },
+        },
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              email: true,
+              telefono: true,
+              avatarUrl: true,
+            },
+          },
+          publicacion: {
+            select: {
+              id: true,
+              titulo: true,
+              precioPorDia: true,
+              imagenes: true,
+            },
+          },
+        },
+        orderBy: { fechaInicio: 'asc' },
+      });
+
+      return {
+        success: true,
+        data: reservas,
+        count: reservas.length,
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        `Error al obtener reservas activas: ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+
+  async obtenerHistorialReservasPropietario(
+    propietarioId: string | number | bigint,
+  ) {
+    try {
+      const reservas = await this.prisma.reserva.findMany({
+        where: {
+          propietarioId: BigInt(propietarioId),
+          estado: {
+            in: [
+              EstadoReserva.COMPLETADA,
+              EstadoReserva.CANCELADA,
+              EstadoReserva.RECHAZADA,
+            ],
+          },
+        },
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              email: true,
+              telefono: true,
+              avatarUrl: true,
+            },
+          },
+          publicacion: {
+            select: {
+              id: true,
+              titulo: true,
+              precioPorDia: true,
+              imagenes: true,
+            },
+          },
+        },
+        orderBy: { fechaFin: 'desc' },
+      });
+
+      return {
+        success: true,
+        data: reservas,
+        count: reservas.length,
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        `Error al obtener historial: ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+
+  async actualizarReserva(
     id: string,
     data: {
       estado?: EstadoReserva;
