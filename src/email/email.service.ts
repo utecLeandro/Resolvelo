@@ -1,17 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { SESClient, SendRawEmailCommand, VerifyEmailIdentityCommand } from '@aws-sdk/client-ses';
+import {
+  SESv2Client,
+  SendEmailCommand,
+  CreateEmailIdentityCommand,
+} from '@aws-sdk/client-sesv2';
 
 @Injectable()
 export class EmailService {
   private transporter: nodemailer.Transporter;
-  private sesClient: SESClient;
+  private sesClient: SESv2Client;
   private readonly logger = new Logger(EmailService.name);
-  private readonly fromEmail = process.env.EMAIL_FROM || 'no-reply@resolvelo.com';
+  private readonly fromEmail =
+    process.env.EMAIL_FROM || 'no-reply@resolvelo.com';
 
   constructor() {
-    // Configuración AWS SES
-    this.sesClient = new SESClient({
+    // Configuración AWS SES v2
+    this.sesClient = new SESv2Client({
       region: process.env.AWS_REGION || 'us-east-1',
       // En producción (App Runner) usa credenciales del rol IAM automáticamente.
       // En local (develop), usa AWS_ACCESS_KEY_ID y AWS_SECRET_ACCESS_KEY del .env
@@ -24,12 +29,13 @@ export class EmailService {
           : undefined,
     });
 
-    // Crear transporte usando SES
+    // Crear transporte usando SES y el SDK v3 (client-sesv2)
+    // Nodemailer v7 requiere pasar sesClient y SendEmailCommand explícitamente
     this.transporter = nodemailer.createTransport({
-      SES: { ses: this.sesClient, aws: { SendRawEmailCommand } },
+      SES: { sesClient: this.sesClient, SendEmailCommand },
     });
 
-    this.logger.log('📧 EmailService inicializado con AWS SES');
+    this.logger.log('📧 EmailService inicializado con AWS SES v2');
   }
 
   /**
@@ -40,20 +46,21 @@ export class EmailService {
    */
   async sendMail(to: string, subject: string, html: string) {
     try {
-      // En desarrollo, si no estamos seguros de que el email está verificado, podríamos tener problemas en Sandbox.
-      // Sin embargo, la responsabilidad de verificar emails recae en el flujo de registro.
       const info = await this.transporter.sendMail({
         from: this.fromEmail,
         to,
         subject,
         html,
       });
-      this.logger.log(`✅ Email enviado a ${to} (MessageId: ${info.messageId})`);
+      this.logger.log(
+        `✅ Email enviado a ${to} (MessageId: ${info.messageId})`,
+      );
       return info;
     } catch (error: any) {
-      this.logger.error(`❌ Error enviando email a ${to}: ${error.message}`, error.stack);
-      // No lanzamos el error para no romper el flujo principal (ej: creación de reserva)
-      // pero lo logueamos para monitoreo.
+      this.logger.error(
+        `❌ Error enviando email a ${to}: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
@@ -63,12 +70,15 @@ export class EmailService {
    */
   async verificarIdentidadEmail(email: string) {
     try {
-      const command = new VerifyEmailIdentityCommand({ EmailAddress: email });
+      // En SESv2 se usa CreateEmailIdentityCommand
+      const command = new CreateEmailIdentityCommand({ EmailIdentity: email });
       await this.sesClient.send(command);
       this.logger.log(`✅ Solicitud de verificación enviada a ${email}`);
     } catch (error: any) {
-      this.logger.warn(`⚠️ Error al solicitar verificación para ${email}: ${error.message}`);
-      // No lanzamos error para no interrumpir el flujo principal (registro)
+      // Si ya existe, AWS devuelve un error, lo ignoramos o logueamos como warning
+      this.logger.warn(
+        `⚠️ Error al solicitar verificación para ${email}: ${error.message}`,
+      );
     }
   }
 }
