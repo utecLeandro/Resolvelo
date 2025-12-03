@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+﻿﻿import { Module } from '@nestjs/common';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -14,6 +14,7 @@ import { TransaccionesService } from './transacciones/transacciones.service';
 import { CalificacionesModule } from './calificaciones/calificaciones.module';
 import { NotificacionesModule } from './notificaciones/notificaciones.module';
 import { ImagenesModule } from './imagenes/imagenes.module';
+import { ReservasModule } from './reservas/reservas.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ImagenesModule } from './imagenes/imagenes.module';
     CalificacionesModule,
     NotificacionesModule,
     ImagenesModule,
+    ReservasModule,
   ],
   controllers: [
     HealthController,
