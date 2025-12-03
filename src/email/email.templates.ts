@@ -19,7 +19,14 @@ export const emailTemplates = {
     </div>
   `,
 
-  reservaCreadaPropietario: (nombrePropietario: string, nombreArrendatario: string, tituloPublicacion: string, fechaInicio: string, fechaFin: string, linkGestion: string) => `
+  reservaCreadaPropietario: (
+    nombrePropietario: string,
+    nombreArrendatario: string,
+    tituloPublicacion: string,
+    fechaInicio: string,
+    fechaFin: string,
+    linkGestion: string,
+  ) => `
     <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
       <div style="background-color: #FF5A5F; padding: 20px; text-align: center;">
         <h2 style="color: white; margin: 0;">Nueva Solicitud de Reserva</h2>
@@ -39,10 +46,51 @@ export const emailTemplates = {
     </div>
   `,
 
-  estadoReservaArrendatario: (nombreArrendatario: string, estado: string, tituloPublicacion: string, linkDetalle: string) => {
-    const colorEstado = estado === 'CONFIRMADA' ? '#00A699' : estado === 'RECHAZADA' ? '#FC642D' : '#484848';
-    const textoEstado = estado === 'CONFIRMADA' ? 'Aceptada' : estado === 'RECHAZADA' ? 'Rechazada' : estado;
-    
+  reservaCreadaArrendatario: (
+    nombreArrendatario: string,
+    tituloPublicacion: string,
+    fechaInicio: string,
+    fechaFin: string,
+    linkDetalle: string,
+  ) => `
+    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #FF5A5F; padding: 20px; text-align: center;">
+        <h2 style="color: white; margin: 0;">¡Solicitud Enviada!</h2>
+      </div>
+      <div style="padding: 20px;">
+        <p>Hola <strong>${nombreArrendatario}</strong>,</p>
+        <p>Hemos enviado tu solicitud de reserva para <strong>${tituloPublicacion}</strong> al propietario.</p>
+        <div style="background-color: #f0f0f0; padding: 15px; border-radius: 4px; margin: 15px 0;">
+          <p style="margin: 5px 0;"><strong>Fechas:</strong> Del ${fechaInicio} al ${fechaFin}</p>
+          <p style="margin: 5px 0;"><strong>Estado:</strong> Pendiente de confirmación</p>
+        </div>
+        <p>Te notificaremos por correo electrónico en cuanto el propietario responda.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${linkDetalle}" style="background-color: #FF5A5F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Ver mi Solicitud</a>
+        </div>
+      </div>
+    </div>
+  `,
+
+  estadoReservaArrendatario: (
+    nombreArrendatario: string,
+    estado: string,
+    tituloPublicacion: string,
+    linkDetalle: string,
+  ) => {
+    const colorEstado =
+      estado === 'CONFIRMADA'
+        ? '#00A699'
+        : estado === 'RECHAZADA'
+          ? '#FC642D'
+          : '#484848';
+    const textoEstado =
+      estado === 'CONFIRMADA'
+        ? 'Aceptada'
+        : estado === 'RECHAZADA'
+          ? 'Rechazada'
+          : estado;
+
     return `
     <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
       <div style="background-color: ${colorEstado}; padding: 20px; text-align: center;">
@@ -56,9 +104,15 @@ export const emailTemplates = {
         </div>
       </div>
     </div>
-  `},
+  `;
+  },
 
-  nuevoMensaje: (nombreReceptor: string, nombreEmisor: string, contenidoMensaje: string, linkMensajes: string) => `
+  nuevoMensaje: (
+    nombreReceptor: string,
+    nombreEmisor: string,
+    contenidoMensaje: string,
+    linkMensajes: string,
+  ) => `
     <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
       <div style="background-color: #FF5A5F; padding: 20px; text-align: center;">
         <h2 style="color: white; margin: 0;">Nuevo Mensaje</h2>

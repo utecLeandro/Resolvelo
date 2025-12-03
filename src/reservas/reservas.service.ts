@@ -2,417 +2,176 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
-  HttpException,
-  HttpStatus,
+  Inject,
   Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CrearReservaDto } from './dto/crear-reserva.dto';
-import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { EmailService } from '../email/email.service';
+import { CrearReservaDto } from './dto/crear-reserva.dto';
 import { emailTemplates } from '../email/email.templates';
-
-export interface UpdateReservaDto {
-  estado?:
-    | 'PENDIENTE'
-    | 'CONFIRMADA'
-    | 'EN_CURSO'
-    | 'CANCELADA'
-    | 'COMPLETADA'
-    | 'RECHAZADA';
-  fechaInicio?: string;
-  fechaFin?: string;
-  precioTotal?: number;
-  tipoEntrega?: string;
-  direccionEntrega?: string;
-  telefonoContacto?: string;
-  notasUsuario?: string;
-  notasPropietario?: string;
-}
+import { EstadoReserva } from '@prisma/client';
 
 @Injectable()
 export class ReservasService {
   constructor(
-    private prisma: PrismaService,
-    @Optional() private notificaciones?: NotificacionesService,
-    private readonly emailService?: EmailService,
+    private readonly prisma: PrismaService,
+    @Optional() private readonly emailService: EmailService,
   ) {}
 
-  async obtenerSolicitudesPendientes(propietarioId: string) {
-    try {
-      console.log(
-        '🔍 [SERVICE] obtenerSolicitudesPendientes - Buscando solicitudes para propietarioId:',
-        propietarioId,
-      );
-      const solicitudes = await this.prisma.reserva.findMany({
-        where: {
-          propietarioId: BigInt(propietarioId),
-          estado: 'PENDIENTE',
-        },
-        include: {
-          usuario: {
-            select: {
-              id: true,
-              nombre: true,
-              apellido: true,
-              email: true,
-              telefono: true,
-              calificacionPromedio: true,
-              fechaCreacion: true,
-            },
-          },
-          publicacion: {
-            select: {
-              id: true,
-              titulo: true,
-              descripcion: true,
-              categoria: true,
-              precioPorDia: true,
-              marca: true,
-              modelo: true,
-              imagenes: { select: { id: true, url: true, esPrincipal: true } },
-            },
-          },
-        },
-        orderBy: {
-          fechaCreacion: 'desc',
-        },
-      });
+  async crearReserva(crearReservaDto: CrearReservaDto) {
+    const {
+      usuarioId,
+      publicacionId,
+      propietarioId,
+      fechaInicio,
+      fechaFin,
+      precioTotal,
+      comisionPlataforma,
+      tipoEntrega,
+      direccionEntrega,
+      telefonoContacto,
+      notasUsuario,
+    } = crearReservaDto;
 
-      console.log('📋 [SERVICE] obtenerSolicitudesPendientes - Resultados:', {
-        propietarioId,
-        cantidadEncontradas: solicitudes.length,
-        solicitudes: solicitudes.map((s) => ({
-          id: s.id,
-          usuarioId: s.usuarioId,
-          propietarioId: s.propietarioId,
-          publicacionTitulo: s.publicacion?.titulo,
-        })),
-      });
+    // Verificar que la publicación existe
+    const publicacion = await this.prisma.publicacion.findUnique({
+      where: { id: BigInt(publicacionId) },
+      include: { propietario: true },
+    });
 
-      return {
-        success: true,
-        message: 'Solicitudes pendientes obtenidas exitosamente',
-        data: solicitudes,
-        total: solicitudes.length,
-      };
-    } catch (error) {
-      console.error('Error al obtener solicitudes pendientes:', error);
-      throw new HttpException(
-        'Error interno del servidor al obtener solicitudes pendientes',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+    if (!publicacion) {
+      throw new NotFoundException('Publicación no encontrada');
+    }
+
+    // Verificar que el usuario existe
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(usuarioId) },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    // Verificar que el propietario existe
+    const propietario = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(propietarioId) },
+    });
+
+    if (!propietario) {
+      throw new NotFoundException('Propietario no encontrado');
+    }
+
+    // Validar que el propietario de la publicación sea el mismo que el indicado
+    if (publicacion.propietarioId !== BigInt(propietarioId)) {
+      throw new BadRequestException(
+        'El propietario especificado no coincide con el propietario de la publicación',
       );
     }
-  }
 
-  async obtenerTodasLasSolicitudes(propietarioId: string) {
-    try {
-      console.log(
-        '🔍 [SERVICE] obtenerTodasLasSolicitudes - Buscando todas las solicitudes para propietarioId:',
-        propietarioId,
-      );
-      const solicitudes = await this.prisma.reserva.findMany({
-        where: {
-          propietarioId: BigInt(propietarioId),
-        },
-        include: {
-          usuario: {
-            select: {
-              id: true,
-              nombre: true,
-              apellido: true,
-              email: true,
-              telefono: true,
-              calificacionPromedio: true,
-              fechaCreacion: true,
-            },
-          },
-          publicacion: {
-            select: {
-              id: true,
-              titulo: true,
-              descripcion: true,
-              categoria: true,
-              precioPorDia: true,
-              marca: true,
-              modelo: true,
-              imagenes: { select: { id: true, url: true, esPrincipal: true } },
-            },
-          },
-        },
-        orderBy: {
-          fechaCreacion: 'desc',
-        },
-      });
+    // Validar fechas
+    const inicio = new Date(fechaInicio);
+    const fin = new Date(fechaFin);
+    const ahora = new Date();
 
-      console.log('📋 [SERVICE] obtenerTodasLasSolicitudes - Resultados:', {
-        propietarioId,
-        cantidadEncontradas: solicitudes.length,
-        solicitudes: solicitudes.map((s) => ({
-          id: s.id,
-          estado: s.estado,
-          usuarioId: s.usuarioId,
-          propietarioId: s.propietarioId,
-          publicacionTitulo: s.publicacion?.titulo,
-        })),
-      });
+    if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
+      throw new BadRequestException('Las fechas proporcionadas no son válidas');
+    }
 
-      return {
-        success: true,
-        message: 'Todas las solicitudes obtenidas exitosamente',
-        data: solicitudes,
-        total: solicitudes.length,
-      };
-    } catch (error) {
-      console.error('Error al obtener todas las solicitudes:', error);
-      throw new HttpException(
-        'Error interno del servidor al obtener todas las solicitudes',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+    if (inicio <= ahora) {
+      throw new BadRequestException('La fecha de inicio debe ser en el futuro');
+    }
+
+    if (fin <= inicio) {
+      throw new BadRequestException(
+        'La fecha de fin debe ser posterior a la fecha de inicio',
       );
     }
-  }
 
-  async crearReserva(createReservaDto: CrearReservaDto) {
-    try {
-      // 1. Validar que la publicación existe y está disponible
-      const publicacion = await this.prisma.publicacion.findUnique({
-        where: { id: BigInt(createReservaDto.publicacionId) },
-        select: {
-          id: true,
-          titulo: true,
-          precioPorDia: true,
-          estado: true,
-          propietarioId: true,
-        },
-      });
-
-      if (!publicacion) {
-        throw new NotFoundException('La publicación especificada no existe');
-      }
-
-      if (publicacion.estado !== 'ACTIVA') {
-        throw new BadRequestException(
-          'La publicación no está disponible para reservas',
-        );
-      }
-
-      // 2. Validar que el usuario existe
-      const usuario = await this.prisma.usuario.findUnique({
-        where: { id: BigInt(createReservaDto.usuarioId) },
-        select: { id: true, nombre: true, email: true },
-      });
-
-      if (!usuario) {
-        throw new NotFoundException('El usuario especificado no existe');
-      }
-
-      // 3. Validar que el propietario existe y coincide con la publicación
-      if (
-        publicacion.propietarioId !== BigInt(createReservaDto.propietarioId)
-      ) {
-        throw new BadRequestException(
-          'El propietario especificado no coincide con el propietario de la publicación',
-        );
-      }
-
-      // 4. Validar fechas adicionales (las validaciones básicas ya están en el DTO)
-      const fechaInicio = new Date(createReservaDto.fechaInicio);
-      const fechaFin = new Date(createReservaDto.fechaFin);
-      const ahora = new Date();
-      const hoyInicio = new Date(ahora);
-      hoyInicio.setHours(0, 0, 0, 0);
-      const inicioReservaDia = new Date(fechaInicio);
-      inicioReservaDia.setHours(0, 0, 0, 0);
-
-      // Verificar que las fechas sean válidas
-      if (isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
-        throw new BadRequestException(
-          'Las fechas proporcionadas no son válidas',
-        );
-      }
-
-      if (inicioReservaDia < hoyInicio) {
-        throw new BadRequestException(
-          'La fecha de inicio debe ser hoy o futura',
-        );
-      }
-
-      // Verificar que la fecha de fin no sea anterior a la fecha de inicio (permitir mismo día)
-      if (fechaFin < fechaInicio) {
-        throw new BadRequestException(
-          'La fecha de fin no puede ser anterior a la fecha de inicio',
-        );
-      }
-
-      // 5. Verificar que no existan reservas conflictivas (solapamiento de fechas)
-      const reservasConflictivas = await this.prisma.reserva.findMany({
-        where: {
-          publicacionId: BigInt(createReservaDto.publicacionId),
-          estado: {
-            in: ['PENDIENTE', 'CONFIRMADA', 'EN_CURSO'],
-          },
-          // Verificar superposición simple y robusta para intervalos inclusivos
-          // La condición de superposición es: (StartA <= EndB) AND (EndA >= StartB)
-          AND: [
-            { fechaInicio: { lte: fechaFin } },
-            { fechaFin: { gte: fechaInicio } },
+    // Verificar solapamiento de fechas (reservas activas)
+    const reservasConflictivas = await this.prisma.reserva.findMany({
+      where: {
+        publicacionId: BigInt(publicacionId),
+        estado: {
+          in: [
+            EstadoReserva.PENDIENTE,
+            EstadoReserva.CONFIRMADA,
+            EstadoReserva.EN_CURSO,
           ],
         },
-      });
-
-      if (reservasConflictivas.length > 0) {
-        throw new BadRequestException(
-          'Ya existe una reserva para estas fechas. Por favor, selecciona otras fechas.',
-        );
-      }
-
-      // 6. Verificar que el usuario no esté intentando reservar su propia publicación
-      if (createReservaDto.usuarioId === createReservaDto.propietarioId) {
-        throw new BadRequestException(
-          'No puedes reservar tu propia publicación',
-        );
-      }
-
-      // 7. Crear la reserva
-      const reserva = await this.prisma.reserva.create({
-        data: {
-          usuarioId: BigInt(createReservaDto.usuarioId),
-          publicacionId: BigInt(createReservaDto.publicacionId),
-          propietarioId: BigInt(createReservaDto.propietarioId),
-          fechaInicio: fechaInicio,
-          fechaFin: fechaFin,
-          precioTotal: createReservaDto.precioTotal,
-          comisionPlataforma: createReservaDto.comisionPlataforma,
-          tipoEntrega: createReservaDto.tipoEntrega,
-          direccionEntrega: createReservaDto.direccionEntrega,
-          telefonoContacto: createReservaDto.telefonoContacto,
-          notasUsuario: createReservaDto.notasUsuario,
-          estado: 'PENDIENTE',
-          fechaCreacion: new Date(),
-        },
-        include: {
-          usuario: {
-            select: {
-              id: true,
-              nombre: true,
-              email: true,
-            },
+        OR: [
+          {
+            fechaInicio: { lte: fin },
+            fechaFin: { gte: inicio },
           },
-          publicacion: {
-            select: {
-              id: true,
-              titulo: true,
-              precioPorDia: true,
-              categoria: true,
-              marca: true,
-              modelo: true,
-            },
-          },
-          propietario: {
-            select: {
-              id: true,
-              nombre: true,
-              email: true,
-            },
-          },
-        },
-      });
+        ],
+      },
+    });
 
-      if (this.notificaciones) {
-        await this.notificaciones.emitirReservaNueva(
-          String(reserva.propietarioId),
-          reserva,
-        );
-      }
-
-      // Enviar correo al propietario
-      if (this.emailService) {
-        const linkGestion = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reservas-recibidas`;
-        await this.emailService.sendMail(
-          reserva.propietario.email,
-          `Nueva solicitud de reserva: ${reserva.publicacion.titulo}`,
-          emailTemplates.reservaCreadaPropietario(
-            reserva.propietario.nombre,
-            reserva.usuario.nombre,
-            reserva.publicacion.titulo,
-            reserva.fechaInicio.toLocaleDateString(),
-            reserva.fechaFin.toLocaleDateString(),
-            linkGestion
-          )
-        );
-      }
-
-      return {
-        success: true,
-        data: reserva,
-        message: 'Reserva creada exitosamente',
-      };
-    } catch (error: any) {
-      // Si es una excepción conocida, la relanzamos
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException
-      ) {
-        throw error;
-      }
-
-      // Para otros errores, devolvemos una respuesta genérica
+    if (reservasConflictivas.length > 0) {
       throw new BadRequestException(
-        `Error al crear la reserva: ${error.message}`,
+        'Ya existe una reserva para las fechas seleccionadas',
       );
     }
-  }
 
-  async obtenerReservas(usuarioId?: string) {
-    try {
-      const where = usuarioId ? { usuarioId: BigInt(usuarioId) } : {};
+    // Crear la reserva
+    const reserva = await this.prisma.reserva.create({
+      data: {
+        fechaInicio: inicio,
+        fechaFin: fin,
+        precioTotal: precioTotal,
+        comisionPlataforma: comisionPlataforma,
+        tipoEntrega: tipoEntrega,
+        direccionEntrega: direccionEntrega,
+        telefonoContacto: telefonoContacto,
+        notasUsuario: notasUsuario,
+        usuario: { connect: { id: BigInt(usuarioId) } },
+        publicacion: { connect: { id: BigInt(publicacionId) } },
+        propietario: { connect: { id: BigInt(propietarioId) } },
+        estado: EstadoReserva.PENDIENTE,
+      },
+      include: {
+        usuario: true,
+        publicacion: true,
+        propietario: true,
+      },
+    });
 
-      const reservas = await this.prisma.reserva.findMany({
-        where,
-        include: {
-          usuario: {
-            select: {
-              id: true,
-              nombre: true,
-              email: true,
-            },
-          },
-          publicacion: {
-            select: {
-              id: true,
-              titulo: true,
-              precioPorDia: true,
-            },
-          },
-        },
-        orderBy: {
-          fechaCreacion: 'desc',
-        },
-      });
+    // Enviar correo al propietario
+    if (this.emailService) {
+      const linkGestion = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reservas-recibidas`;
+      await this.emailService.sendMail(
+        reserva.propietario.email,
+        `Nueva solicitud de reserva: ${reserva.publicacion.titulo}`,
+        emailTemplates.reservaCreadaPropietario(
+          reserva.propietario.nombre,
+          reserva.usuario.nombre,
+          reserva.publicacion.titulo,
+          reserva.fechaInicio.toLocaleDateString(),
+          reserva.fechaFin.toLocaleDateString(),
+          linkGestion,
+        ),
+      );
 
-      console.log('📋 [SERVICE] obtenerReservasArrendatario - Resultados:', {
-        usuarioId,
-        cantidadEncontradas: reservas.length,
-        reservas: reservas.map((r) => ({
-          id: r.id,
-          usuarioId: r.usuarioId,
-          propietarioId: r.propietarioId,
-          publicacionTitulo: (r as any).publicacion?.titulo,
-        })),
-      });
-
-      return {
-        success: true,
-        data: reservas,
-        count: reservas.length,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message,
-        message: 'Error al obtener las reservas',
-      };
+      // Enviar correo de confirmación al arrendatario
+      const linkDetalle = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/mis-reservas`;
+      await this.emailService.sendMail(
+        reserva.usuario.email,
+        `Solicitud enviada: ${reserva.publicacion.titulo}`,
+        emailTemplates.reservaCreadaArrendatario(
+          reserva.usuario.nombre,
+          reserva.publicacion.titulo,
+          reserva.fechaInicio.toLocaleDateString(),
+          reserva.fechaFin.toLocaleDateString(),
+          linkDetalle,
+        ),
+      );
     }
+
+    return {
+      success: true,
+      data: reserva,
+      message: 'Reserva creada exitosamente',
+    };
   }
 
   async obtenerReservaPorId(id: string) {
@@ -424,69 +183,135 @@ export class ReservasService {
             select: {
               id: true,
               nombre: true,
+              apellido: true,
               email: true,
+              telefono: true,
+              avatarUrl: true,
+            },
+          },
+          propietario: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              email: true,
+              telefono: true,
+              avatarUrl: true,
             },
           },
           publicacion: {
-            select: {
-              id: true,
-              titulo: true,
-              precioPorDia: true,
-              descripcion: true,
-              imagenes: {
-                select: {
-                  id: true,
-                  url: true,
-                  descripcion: true,
-                  orden: true,
-                  esPrincipal: true,
-                },
-              },
+            include: {
+              imagenes: true,
             },
           },
+          transacciones: true,
         },
       });
 
       if (!reserva) {
-        throw new NotFoundException('Reserva no encontrada');
+        return { success: false, message: 'Reserva no encontrada' };
       }
 
-      return {
-        success: true,
-        data: reserva,
-      };
-    } catch (error: any) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-
+      return { success: true, data: reserva };
+    } catch (error) {
       throw new BadRequestException(
-        `Error al obtener la reserva: ${error.message}`,
+        `Error al obtener reserva: ${error instanceof Error ? error.message : error}`,
       );
     }
   }
 
-  async obtenerReservasArrendatario(usuarioId: string) {
+  async obtenerSolicitudesPendientes(propietarioId: string | number | bigint) {
     try {
-      console.log(
-        '🔍 [SERVICE] obtenerReservasArrendatario - Buscando reservas para usuarioId:',
-        usuarioId,
-      );
       const reservas = await this.prisma.reserva.findMany({
         where: {
-          usuarioId: BigInt(usuarioId),
+          propietarioId: BigInt(propietarioId),
+          estado: EstadoReserva.PENDIENTE,
         },
         include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              email: true,
+              telefono: true,
+              avatarUrl: true,
+            },
+          },
           publicacion: {
             select: {
               id: true,
               titulo: true,
-              descripcion: true,
               precioPorDia: true,
-              direccion: true,
-              ciudad: true,
-              departamento: true,
               imagenes: true,
+            },
+          },
+        },
+        orderBy: { fechaCreacion: 'desc' },
+      });
+
+      return {
+        success: true,
+        data: reservas,
+        count: reservas.length,
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        `Error al obtener solicitudes pendientes: ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+
+  async obtenerTodasLasSolicitudes(propietarioId: string | number | bigint) {
+    try {
+      const reservas = await this.prisma.reserva.findMany({
+        where: {
+          propietarioId: BigInt(propietarioId),
+        },
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              email: true,
+              telefono: true,
+              avatarUrl: true,
+            },
+          },
+          publicacion: {
+            select: {
+              id: true,
+              titulo: true,
+              precioPorDia: true,
+              imagenes: true,
+            },
+          },
+        },
+        orderBy: { fechaCreacion: 'desc' },
+      });
+
+      return {
+        success: true,
+        data: reservas,
+        count: reservas.length,
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        `Error al obtener todas las solicitudes: ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+
+  async obtenerReservasArrendatario(arrendatarioId: string | number | bigint) {
+    try {
+      const reservas = await this.prisma.reserva.findMany({
+        where: {
+          usuarioId: BigInt(arrendatarioId),
+        },
+        include: {
+          publicacion: {
+            include: {
               propietario: {
                 select: {
                   id: true,
@@ -496,24 +321,12 @@ export class ReservasService {
                   telefono: true,
                 },
               },
+              imagenes: true,
             },
           },
-          transacciones: {
-            select: {
-              id: true,
-              monto: true,
-              estado: true,
-              fechaCreacion: true,
-              metodoPago: true,
-            },
-            orderBy: {
-              fechaCreacion: 'desc',
-            },
-          },
+          transacciones: true,
         },
-        orderBy: {
-          fechaCreacion: 'desc',
-        },
+        orderBy: { fechaCreacion: 'desc' },
       });
 
       return {
@@ -521,34 +334,57 @@ export class ReservasService {
         data: reservas,
         count: reservas.length,
       };
-    } catch (error: any) {
+    } catch (error) {
       throw new BadRequestException(
-        `Error al obtener las reservas del arrendatario: ${error.message}`,
+        `Error al obtener reservas del arrendatario: ${error instanceof Error ? error.message : error}`,
       );
     }
   }
 
-  async actualizarReserva(id: string, data: UpdateReservaDto) {
+  async confirmarReserva(id: string) {
+    return this.actualizarReserva(id, { estado: EstadoReserva.CONFIRMADA });
+  }
+
+  async rechazarReserva(id: string) {
+    return this.actualizarReserva(id, { estado: EstadoReserva.RECHAZADA });
+  }
+
+  async activarReserva(id: string) {
+    // En el schema actual no existe EN_CURSO, así que usamos CONFIRMADA o vemos si se actualizó el schema.
+    // El enum en schema.prisma muestra: PENDIENTE, CONFIRMADA, EN_CURSO, COMPLETADA, CANCELADA, RECHAZADA.
+    // Así que SÍ existe EN_CURSO.
+    return this.actualizarReserva(id, { estado: EstadoReserva.EN_CURSO });
+  }
+
+  async cancelarReserva(id: string) {
+    return this.actualizarReserva(id, { estado: EstadoReserva.CANCELADA });
+  }
+
+  private async actualizarReserva(
+    id: string,
+    data: {
+      estado?: EstadoReserva;
+      fechaInicio?: Date;
+      fechaFin?: Date;
+      precioTotal?: number;
+    },
+  ) {
     try {
-      // Verificar que la reserva existe
       const reservaExistente = await this.prisma.reserva.findUnique({
         where: { id: BigInt(id) },
+        select: { estado: true, usuario: true, publicacion: true },
       });
 
       if (!reservaExistente) {
         throw new NotFoundException('Reserva no encontrada');
       }
 
-      const updateData: any = {};
-
-      if (data.estado) updateData.estado = data.estado;
-      if (data.fechaInicio) updateData.fechaInicio = new Date(data.fechaInicio);
-      if (data.fechaFin) updateData.fechaFin = new Date(data.fechaFin);
-      if (data.precioTotal) updateData.precioTotal = data.precioTotal;
+      const anterior = reservaExistente.estado;
+      const actual = data.estado;
 
       const reserva = await this.prisma.reserva.update({
         where: { id: BigInt(id) },
-        data: updateData,
+        data: data,
         include: {
           usuario: {
             select: {
@@ -566,261 +402,35 @@ export class ReservasService {
           },
         },
       });
-      try {
-        const anterior = (reservaExistente as any).estado || null;
-        const actual = (reserva as any).estado;
-        if (actual && anterior !== actual) {
-          if (this.notificaciones) {
-            await this.notificaciones.emitirCambioEstado(
-              reserva,
-              anterior,
-              actual,
-            );
-          }
 
-          // Enviar notificación por correo si el estado cambió
-          if (this.emailService) {
-            // Notificar al arrendatario sobre el cambio de estado
-            const linkDetalle = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/mis-reservas`;
-            await this.emailService.sendMail(
-              reserva.usuario.email,
-              `Actualización de reserva: ${reserva.publicacion.titulo}`,
-              emailTemplates.estadoReservaArrendatario(
-                reserva.usuario.nombre,
-                actual,
-                reserva.publicacion.titulo,
-                linkDetalle
-              )
-            );
-          }
+      // Enviar notificaciones por cambio de estado
+      if (actual && anterior !== actual) {
+        if (this.emailService) {
+          const linkDetalle = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/mis-reservas`;
+          await this.emailService.sendMail(
+            reserva.usuario.email,
+            `Actualización de reserva: ${reserva.publicacion.titulo}`,
+            emailTemplates.estadoReservaArrendatario(
+              reserva.usuario.nombre,
+              actual,
+              reserva.publicacion.titulo,
+              linkDetalle,
+            ),
+          );
         }
-      } catch {}
+      }
 
       return {
         success: true,
         data: reserva,
         message: 'Reserva actualizada exitosamente',
       };
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-
       throw new BadRequestException(
-        `Error al actualizar la reserva: ${error.message}`,
-      );
-    }
-  }
-
-  async cancelarReserva(id: string) {
-    return this.actualizarReserva(id, { estado: 'CANCELADA' });
-  }
-
-  async confirmarReserva(id: string) {
-    return this.actualizarReserva(id, { estado: 'CONFIRMADA' });
-  }
-
-  async aceptarReserva(id: string) {
-    return this.actualizarReserva(id, { estado: 'CONFIRMADA' });
-  }
-
-  async rechazarReserva(id: string) {
-    return this.actualizarReserva(id, { estado: 'RECHAZADA' });
-  }
-
-  async activarReserva(id: string) {
-    // Activar la reserva marcándola como EN_CURSO, alineado con el flujo de pago confirmado
-    // y los endpoints de Mercado Pago que establecen EN_CURSO al aprobarse.
-    return this.actualizarReserva(id, { estado: 'EN_CURSO' });
-  }
-
-  async finalizarReserva(id: string) {
-    console.log(`🔄 [SERVICE] Ejecutando finalizarReserva para ID: ${id}`);
-    const resultado = await this.actualizarReserva(id, {
-      estado: 'COMPLETADA',
-    });
-    console.log(`✅ [SERVICE] Resultado update finalizarReserva:`, {
-      id: resultado.data.id,
-      nuevoEstado: resultado.data.estado,
-    });
-    return resultado;
-  }
-
-  /**
-   * Obtener reservas activas del propietario (CONFIRMADA, EN_CURSO)
-   */
-  async obtenerReservasActivasPropietario(propietarioId: string) {
-    try {
-      console.log(
-        '🔍 [SERVICE] obtenerReservasActivasPropietario - Buscando reservas para propietarioId:',
-        propietarioId,
-      );
-
-      const reservas = await this.prisma.reserva.findMany({
-        where: {
-          propietarioId: BigInt(propietarioId),
-          estado: 'EN_CURSO',
-          transacciones: {
-            some: {
-              tipo: 'PAGO_RESERVA',
-              estado: 'COMPLETADA',
-            },
-          },
-        },
-        include: {
-          usuario: {
-            select: {
-              id: true,
-              nombre: true,
-              apellido: true,
-              email: true,
-              telefono: true,
-            },
-          },
-          publicacion: {
-            select: {
-              id: true,
-              titulo: true,
-              descripcion: true,
-              precioPorDia: true,
-              direccion: true,
-              ciudad: true,
-              departamento: true,
-              imagenes: true,
-            },
-          },
-          transacciones: {
-            select: {
-              id: true,
-              monto: true,
-              estado: true,
-              fechaCreacion: true,
-              metodoPago: true,
-            },
-            orderBy: {
-              fechaCreacion: 'desc',
-            },
-          },
-        },
-        orderBy: {
-          fechaInicio: 'asc',
-        },
-      });
-
-      console.log(
-        '📋 [SERVICE] obtenerReservasActivasPropietario - Resultados:',
-        {
-          propietarioId,
-          cantidadEncontradas: reservas.length,
-          reservas: reservas.map((r) => ({
-            id: r.id,
-            estado: r.estado,
-            fechaInicio: r.fechaInicio,
-            fechaFin: r.fechaFin,
-            publicacionTitulo: r.publicacion?.titulo,
-          })),
-        },
-      );
-
-      return {
-        success: true,
-        data: reservas,
-        count: reservas.length,
-      };
-    } catch (error: any) {
-      console.error(
-        '❌ [SERVICE] Error en obtenerReservasActivasPropietario:',
-        error,
-      );
-      throw new BadRequestException(
-        `Error al obtener las reservas activas del propietario: ${error.message}`,
-      );
-    }
-  }
-
-  /**
-   * Obtener historial de reservas del propietario (COMPLETADA, CANCELADA, RECHAZADA)
-   */
-  async obtenerHistorialReservasPropietario(propietarioId: string) {
-    try {
-      console.log(
-        '🔍 [SERVICE] obtenerHistorialReservasPropietario - Buscando historial para propietarioId:',
-        propietarioId,
-      );
-
-      const reservas = await this.prisma.reserva.findMany({
-        where: {
-          propietarioId: BigInt(propietarioId),
-          // Unificamos estados de cancelación en 'CANCELADA' según el esquema actual
-          estado: { in: ['COMPLETADA', 'CANCELADA', 'RECHAZADA'] },
-        },
-        include: {
-          usuario: {
-            select: {
-              id: true,
-              nombre: true,
-              apellido: true,
-              email: true,
-              telefono: true,
-            },
-          },
-          publicacion: {
-            select: {
-              id: true,
-              titulo: true,
-              descripcion: true,
-              precioPorDia: true,
-              direccion: true,
-              ciudad: true,
-              departamento: true,
-              imagenes: true,
-            },
-          },
-          transacciones: {
-            select: {
-              id: true,
-              monto: true,
-              estado: true,
-              fechaCreacion: true,
-              metodoPago: true,
-            },
-            orderBy: {
-              fechaCreacion: 'desc',
-            },
-          },
-        },
-        orderBy: {
-          fechaCreacion: 'desc',
-        },
-      });
-
-      console.log(
-        '📋 [SERVICE] obtenerHistorialReservasPropietario - Resultados:',
-        {
-          propietarioId,
-          cantidadEncontradas: reservas.length,
-          reservas: reservas.map((r) => ({
-            id: r.id,
-            estado: r.estado,
-            fechaInicio: r.fechaInicio,
-            fechaFin: r.fechaFin,
-            publicacionTitulo: r.publicacion?.titulo,
-          })),
-        },
-      );
-
-      return {
-        success: true,
-        data: reservas,
-        count: reservas.length,
-      };
-    } catch (error: any) {
-      console.error(
-        '❌ [SERVICE] Error en obtenerHistorialReservasPropietario:',
-        error,
-      );
-      throw new BadRequestException(
-        `Error al obtener el historial de reservas del propietario: ${error.message}`,
+        `Error al actualizar la reserva: ${error instanceof Error ? error.message : error}`,
       );
     }
   }
