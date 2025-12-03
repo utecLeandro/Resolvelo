@@ -13,6 +13,7 @@ import { CalificacionesService } from './calificaciones/calificaciones.service';
 import { JwtService } from '@nestjs/jwt';
 import { MensajesService } from './mensajes/mensajes.service';
 import { PrismaService } from './prisma/prisma.service';
+import { EmailService } from './email/email.service';
 import * as bodyParser from 'body-parser';
 import type { Request, Response } from 'express';
 import { join } from 'path';
@@ -164,9 +165,11 @@ async function bootstrap() {
       return sub;
     };
     const notificacionesService = app.get(NotificacionesService);
+    const emailService = app.get(EmailService);
     const mensajesService = new MensajesService(
       prismaService,
       notificacionesService,
+      emailService,
     );
     app.useGlobalInterceptors(new BigIntSerializerInterceptor());
 
