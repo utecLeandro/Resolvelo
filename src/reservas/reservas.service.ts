@@ -595,6 +595,10 @@ export class ReservasService {
     return this.actualizarReserva(id, { estado: 'EN_CURSO' });
   }
 
+  async finalizarReserva(id: string) {
+    return this.actualizarReserva(id, { estado: 'COMPLETADA' });
+  }
+
   /**
    * Obtener reservas activas del propietario (CONFIRMADA, EN_CURSO)
    */

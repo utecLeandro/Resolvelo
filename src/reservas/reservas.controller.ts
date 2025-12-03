@@ -207,6 +207,50 @@ export class ReservasController {
     return this.activarReserva(reservaId, req);
   }
 
+  @Post(':id/finalizar')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async finalizarReserva(@Param('id') reservaId: string, @Request() req: any) {
+    try {
+      // Verificar que la reserva existe
+      const reserva = await this.reservasService.obtenerReservaPorId(reservaId);
+
+      if (!reserva.success || !reserva.data) {
+        throw new NotFoundException('Reserva no encontrada');
+      }
+
+      // Verificar que el usuario autenticado es el propietario
+      if (reserva.data.propietarioId !== req.user.id) {
+        throw new BadRequestException(
+          'No tienes permisos para finalizar esta reserva',
+        );
+      }
+
+      // Verificar que la reserva está en estado EN_CURSO
+      if (reserva.data.estado !== 'EN_CURSO') {
+        throw new BadRequestException(
+          'Solo se pueden finalizar reservas en curso',
+        );
+      }
+
+      const resultado = await this.reservasService.finalizarReserva(reservaId);
+
+      return {
+        success: true,
+        message: 'Reserva finalizada exitosamente',
+        data: resultado.data,
+      };
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException('Error al finalizar la reserva');
+    }
+  }
+
   @Get('mis-reservas-activas')
   @UseGuards(JwtAuthGuard)
   async obtenerMisReservasActivas(@Request() req: any) {

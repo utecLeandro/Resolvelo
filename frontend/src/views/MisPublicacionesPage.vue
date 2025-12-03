@@ -639,6 +639,13 @@
                           Contactar
                         </button>
                         <button
+                          v-if="reserva.estado === 'EN_CURSO'"
+                          @click="finalizarReserva(reserva.id)"
+                          class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700 transition-colors duration-200"
+                        >
+                          Finalizar
+                        </button>
+                        <button
                           @click="verDetalleReserva(reserva.id)"
                           class="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
                         >
@@ -1436,6 +1443,25 @@ const cargarHistorialReservas = async () => {
 }
 
 // Métodos - Acciones de Reservas
+
+const finalizarReserva = async (reservaId: string) => {
+  if (!confirm('¿Confirmas que el instrumento ha sido devuelto y deseas finalizar la reserva?')) {
+    return
+  }
+  
+  try {
+    cargandoReservasActivas.value = true
+    await reservasService.finalizarReserva(reservaId)
+    mostrarNotificacion('Reserva finalizada exitosamente', 'success')
+    
+    // Recargar reservas activas
+    await cargarReservasActivas()
+  } catch (err: any) {
+    console.error('Error al finalizar reserva:', err)
+    mostrarNotificacion(err.response?.data?.message || 'Error al finalizar la reserva', 'error')
+    cargandoReservasActivas.value = false
+  }
+}
 
 const verDetalleReserva = (reservaId: string) => {
   console.log('Ver detalle de reserva:', reservaId)

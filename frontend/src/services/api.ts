@@ -809,6 +809,12 @@ export const reservasService = {
     return response.data
   },
 
+  // Finalizar una reserva (propietario) - Cambio manual de EN_CURSO a COMPLETADA
+  async finalizarReserva(reservaId: string): Promise<any> {
+    const response = await api.post(`/reservas/${reservaId}/finalizar`)
+    return response.data
+  },
+
   // Cancelar una reserva (arrendatario)
   async cancelarReserva(reservaId: string): Promise<any> {
     const response = await api.patch(`/usuarios/reservas/${reservaId}/cancelar`)
