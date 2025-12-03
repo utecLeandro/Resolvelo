@@ -66,7 +66,9 @@ async function bootstrap() {
 
   // Logger middleware manual para depurar requests en AWS
   app.use((req: Request, _res: Response, next: () => void) => {
-    console.log(`[Request] ${req.method} ${req.url} - Origin: ${req.headers.origin || 'N/A'}`);
+    console.log(
+      `[Request] ${req.method} ${req.url} - Origin: ${req.headers.origin || 'N/A'}`,
+    );
     next();
   });
 

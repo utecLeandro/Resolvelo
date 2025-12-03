@@ -13,7 +13,9 @@ export class GubuyValidateDto {
 
   @IsString()
   @MinLength(3)
-  @Transform(({ value }) => (typeof value === 'string' ? normalizeCiUy(value) : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? normalizeCiUy(value) : value,
+  )
   @IsCedulaUruguaya({ message: 'La cédula de identidad no es válida' })
   documentoIdentidad!: string;
 

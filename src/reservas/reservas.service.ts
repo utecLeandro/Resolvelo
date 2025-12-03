@@ -596,7 +596,15 @@ export class ReservasService {
   }
 
   async finalizarReserva(id: string) {
-    return this.actualizarReserva(id, { estado: 'COMPLETADA' });
+    console.log(`🔄 [SERVICE] Ejecutando finalizarReserva para ID: ${id}`);
+    const resultado = await this.actualizarReserva(id, {
+      estado: 'COMPLETADA',
+    });
+    console.log(`✅ [SERVICE] Resultado update finalizarReserva:`, {
+      id: resultado.data.id,
+      nuevoEstado: resultado.data.estado,
+    });
+    return resultado;
   }
 
   /**

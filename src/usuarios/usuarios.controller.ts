@@ -80,6 +80,11 @@ export class UsuariosController {
     console.log('📋 [MIS-RESERVAS] Resultado:', {
       arrendatarioId,
       cantidadReservas: resultado.data?.length || 0,
+      estados: resultado.data?.map((r) => ({
+        id: r.id,
+        estado: r.estado,
+        titulo: r.publicacion?.titulo,
+      })),
     });
     return {
       ...resultado,

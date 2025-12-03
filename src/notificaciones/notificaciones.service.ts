@@ -304,7 +304,9 @@ export class NotificacionesService {
     this.emitir(propietarioId, { tipo: 'PUSH', item });
     const originFromCors = process.env.CORS_ORIGIN?.split(',')[0]?.trim();
     const frontendBase = (
-      process.env.FRONTEND_URL || originFromCors || 'https://develop.d2jhmkfagiypdq.amplifyapp.com'
+      process.env.FRONTEND_URL ||
+      originFromCors ||
+      'https://develop.d2jhmkfagiypdq.amplifyapp.com'
     ).replace(/\/$/, '');
     const link = `${frontendBase}/mis-publicaciones?pub=${encodeURIComponent(String(reserva.publicacion?.id))}`;
     const html = `
@@ -339,7 +341,9 @@ export class NotificacionesService {
     this.emitir(reserva.usuarioId, { tipo: 'PUSH', item });
     const originFromCors = process.env.CORS_ORIGIN?.split(',')[0]?.trim();
     const frontendBase = (
-      process.env.FRONTEND_URL || originFromCors || 'https://develop.d2jhmkfagiypdq.amplifyapp.com'
+      process.env.FRONTEND_URL ||
+      originFromCors ||
+      'https://develop.d2jhmkfagiypdq.amplifyapp.com'
     ).replace(/\/$/, '');
     const linkArrendatario = `${frontendBase}/mis-reservas`;
     const linkPropietario = `${frontendBase}/mis-publicaciones?pub=${encodeURIComponent(String(reserva.publicacion?.id))}`;
@@ -377,7 +381,9 @@ export class NotificacionesService {
     this.emitir(reserva.propietarioId, { tipo: 'PUSH', item });
     const originFromCors = process.env.CORS_ORIGIN?.split(',')[0]?.trim();
     const frontendBase = (
-      process.env.FRONTEND_URL || originFromCors || 'https://develop.d2jhmkfagiypdq.amplifyapp.com'
+      process.env.FRONTEND_URL ||
+      originFromCors ||
+      'https://develop.d2jhmkfagiypdq.amplifyapp.com'
     ).replace(/\/$/, '');
     const link = `${frontendBase}/mis-publicaciones?pub=${encodeURIComponent(String(reserva.publicacion?.id))}`;
     const html = `

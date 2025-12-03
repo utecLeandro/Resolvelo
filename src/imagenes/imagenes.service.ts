@@ -36,7 +36,9 @@ export class ImagenesService {
           Key: key,
           ContentType: f.contentType,
         });
-        const url = await getSignedUrl(s3, command, { expiresIn: expiresInSec });
+        const url = await getSignedUrl(s3, command, {
+          expiresIn: expiresInSec,
+        });
         uploads.push({
           key,
           url,
@@ -47,7 +49,9 @@ export class ImagenesService {
       }
     } catch (error: any) {
       console.error('Error generando presigned URLs S3:', error);
-      throw new BadRequestException('Error generando URLs de subida: ' + (error.message || error));
+      throw new BadRequestException(
+        'Error generando URLs de subida: ' + (error.message || error),
+      );
     }
 
     return { uploads };

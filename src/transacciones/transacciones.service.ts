@@ -341,7 +341,11 @@ export class TransaccionesService {
 
     const rawFrontendBase = process.env.FRONTEND_URL;
     const originFromCors = process.env.CORS_ORIGIN?.split(',')[0]?.trim();
-    const frontendBase = (rawFrontendBase?.trim() || originFromCors || 'https://develop.d2jhmkfagiypdq.amplifyapp.com').replace(/\/$/, '');
+    const frontendBase = (
+      rawFrontendBase?.trim() ||
+      originFromCors ||
+      'https://develop.d2jhmkfagiypdq.amplifyapp.com'
+    ).replace(/\/$/, '');
     const ensureUrl = (raw: string | undefined, fallbackPath: string) => {
       const t = (raw ?? '').trim();
       let candidate = t || `${frontendBase}${fallbackPath}`;

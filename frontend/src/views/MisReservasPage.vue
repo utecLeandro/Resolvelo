@@ -448,6 +448,14 @@ const cargarMisReservas = async () => {
     // Manejar la respuesta del backend
     if (response.success) {
       reservas.value = Array.isArray(response.data) ? response.data : []
+      
+      // DEBUG: Imprimir estados de reservas recibidas
+      console.group('🔍 [DEBUG] Reservas recibidas del backend')
+      reservas.value.forEach(r => {
+        console.log(`Reserva ${r.id} - ${r.publicacion?.titulo} - Estado: ${r.estado}`)
+      })
+      console.groupEnd()
+      
     } else {
       throw new Error(response.message || 'Error al obtener las reservas')
     }

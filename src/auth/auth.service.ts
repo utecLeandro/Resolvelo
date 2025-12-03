@@ -62,7 +62,9 @@ export class AuthService {
       where: { documentoIdentidad: data.documentoIdentidad },
     });
     if (existingDoc) {
-      throw new ConflictException('Ya existe un usuario registrado en el sistema con esa cédula');
+      throw new ConflictException(
+        'Ya existe un usuario registrado en el sistema con esa cédula',
+      );
     }
 
     const existingEmail = await this.prisma.usuario.findUnique({
@@ -170,7 +172,9 @@ export class AuthService {
 
       // Verificar que el usuario esté activo
       if (!usuario.activo) {
-        throw new UnauthorizedException('Cuenta desactivada. Contacta al administrador.');
+        throw new UnauthorizedException(
+          'Cuenta desactivada. Contacta al administrador.',
+        );
       }
 
       // Política: primer login debe ser con gub.uy (usa bandera en schema)
@@ -527,7 +531,9 @@ export class AuthService {
       );
     }
     if (!usuario.activo) {
-      throw new UnauthorizedException('Cuenta desactivada. Contacta al administrador.');
+      throw new UnauthorizedException(
+        'Cuenta desactivada. Contacta al administrador.',
+      );
     }
     if (usuario.estadoVerificacion !== 'VERIFICADA') {
       throw new ForbiddenException(
@@ -573,13 +579,17 @@ export class AuthService {
     });
     const usuario =
       usuarioByDoc ||
-      (await this.prisma.usuario.findUnique({ where: { email: data.email } })) ||
+      (await this.prisma.usuario.findUnique({
+        where: { email: data.email },
+      })) ||
       (await this.prisma.usuario.findFirst({
         where: { documentoIdentidad: data.documentoIdentidad },
       }));
 
     if (!usuario) {
-      throw new UnauthorizedException('Usuario no encontrado en el sistema. Verifica el documento o email.');
+      throw new UnauthorizedException(
+        'Usuario no encontrado en el sistema. Verifica el documento o email.',
+      );
     }
 
     const nombreOk = (usuario.nombre || '').trim() === data.nombre.trim();
@@ -588,11 +598,12 @@ export class AuthService {
       (usuario.email || '').trim().toLowerCase() ===
       data.email.trim().toLowerCase();
     const docOk =
-      normalizeCiUy(usuario.documentoIdentidad || '').trim() ===
-      docNorm.trim();
+      normalizeCiUy(usuario.documentoIdentidad || '').trim() === docNorm.trim();
 
     if (!nombreOk || !apellidoOk || !emailOk || !docOk) {
-      throw new UnauthorizedException('Los datos ingresados (Nombre, Apellido, Email o Documento) no coinciden con el usuario registrado.');
+      throw new UnauthorizedException(
+        'Los datos ingresados (Nombre, Apellido, Email o Documento) no coinciden con el usuario registrado.',
+      );
     }
 
     // Tolerar usuarios sin passwordHash en flujo gub.uy (importados), si existe comparar
@@ -602,12 +613,16 @@ export class AuthService {
         usuario.passwordHash,
       );
       if (!passwordValida) {
-        throw new UnauthorizedException('Contraseña incorrecta para el usuario local asociado.');
+        throw new UnauthorizedException(
+          'Contraseña incorrecta para el usuario local asociado.',
+        );
       }
     }
 
     if (!usuario.activo) {
-      throw new UnauthorizedException('Cuenta desactivada. Contacta al administrador.');
+      throw new UnauthorizedException(
+        'Cuenta desactivada. Contacta al administrador.',
+      );
     }
     if (usuario.estadoVerificacion !== 'VERIFICADA') {
       throw new ForbiddenException(
