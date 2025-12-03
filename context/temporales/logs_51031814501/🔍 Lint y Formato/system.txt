@@ -1,5 +1,0 @@
-2025-11-29T02:30:33.4730000Z Job is about to start running on the hosted runner: GitHub Actions 1000000357
-2025-11-29T02:30:33.4700000Z Requested labels: ubuntu-latest
-2025-11-29T02:30:33.4700000Z Job defined at: utecLeandro/Resolvelo/.github/workflows/ci.yml@refs/heads/develop
-2025-11-29T02:30:33.4700000Z Waiting for a runner to pick up this job...
-2025-11-29T02:30:33.4780000Z Job is waiting for a hosted runner to come online.

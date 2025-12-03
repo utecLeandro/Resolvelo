@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
@@ -13,6 +14,8 @@ import { emailTemplates } from '../email/email.templates';
 
 @Injectable()
 export class MensajesService {
+  private readonly logger = new Logger(MensajesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificaciones: NotificacionesService,
@@ -230,10 +233,11 @@ export class MensajesService {
           link
         )
       );
+      this.logger.log(`Notificación de nuevo mensaje enviada a ${receptor.email}`);
     } catch (e) {
-      console.warn(
-        'Fallo al enviar email de notificación:',
-        (e as any)?.message,
+      this.logger.error(
+        'Fallo al enviar email de notificación de mensaje',
+        e instanceof Error ? e.stack : e,
       );
     }
   }

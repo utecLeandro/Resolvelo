@@ -3,7 +3,7 @@ import {
   BadRequestException,
   NotFoundException,
   Inject,
-  Optional,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
@@ -13,9 +13,11 @@ import { EstadoReserva } from '@prisma/client';
 
 @Injectable()
 export class ReservasService {
+  private readonly logger = new Logger(ReservasService.name);
+
   constructor(
     private readonly prisma: PrismaService,
-    @Optional() private readonly emailService: EmailService,
+    private readonly emailService: EmailService,
   ) {}
 
   async crearReserva(crearReservaDto: CrearReservaDto) {
@@ -137,7 +139,7 @@ export class ReservasService {
     });
 
     // Enviar correo al propietario
-    if (this.emailService) {
+    try {
       const linkGestion = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reservas-recibidas`;
       await this.emailService.sendMail(
         reserva.propietario.email,
@@ -164,6 +166,11 @@ export class ReservasService {
           reserva.fechaFin.toLocaleDateString(),
           linkDetalle,
         ),
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error al enviar correos de nueva reserva (ID: ${reserva.id})`,
+        error instanceof Error ? error.stack : error,
       );
     }
 
@@ -505,7 +512,7 @@ export class ReservasService {
 
       // Enviar notificaciones por cambio de estado
       if (actual && anterior !== actual) {
-        if (this.emailService) {
+        try {
           const linkDetalle = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/mis-reservas`;
           await this.emailService.sendMail(
             reserva.usuario.email,
@@ -516,6 +523,14 @@ export class ReservasService {
               reserva.publicacion.titulo,
               linkDetalle,
             ),
+          );
+          this.logger.log(
+            `Notificación de cambio de estado enviada para reserva ${id} a ${reserva.usuario.email}`,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Error al enviar notificación de cambio de estado (Reserva: ${id})`,
+            error instanceof Error ? error.stack : error,
           );
         }
       }
