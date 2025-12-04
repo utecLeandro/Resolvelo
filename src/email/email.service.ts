@@ -12,7 +12,7 @@ export class EmailService {
   private sesClient: SESv2Client;
   private readonly logger = new Logger(EmailService.name);
   private readonly fromEmail =
-    process.env.EMAIL_FROM || 'no-reply@resolvelo.com';
+    process.env.EMAIL_FROM || 'plataformaresolvelo@gmail.com';
 
   constructor() {
     // Configuración AWS SES v2
