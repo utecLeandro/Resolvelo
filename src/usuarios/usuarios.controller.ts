@@ -194,7 +194,10 @@ export class UsuariosController {
 
   @Patch('reservas/:id/aceptar')
   @UseGuards(JwtAuthGuard)
-  async aceptarReserva(@Param('id') id: string, @Request() _req: any) {
+  async aceptarReserva(@Param('id') id: string, @Request() req: any) {
+    console.log(
+      `🎯 [USUARIOS-CONTROLLER] Aceptar reserva ${id} por usuario ${req.user.id}`,
+    );
     const resultado = await this.reservasService.confirmarReserva(id);
     return {
       ...resultado,

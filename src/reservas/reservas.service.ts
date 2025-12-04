@@ -512,6 +512,9 @@ export class ReservasService {
 
       // Enviar notificaciones por cambio de estado
       if (actual && anterior !== actual) {
+        this.logger.log(
+          `📧 Intentando enviar notificación. Cambio de estado: ${anterior} -> ${actual} (Reserva: ${id})`,
+        );
         try {
           const linkDetalle = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/mis-reservas`;
           await this.emailService.sendMail(
@@ -533,6 +536,10 @@ export class ReservasService {
             error instanceof Error ? error.stack : error,
           );
         }
+      } else {
+        this.logger.log(
+          `ℹ️ No se envía notificación. Actual: ${actual}, Anterior: ${anterior}, Igual: ${actual === anterior} (Reserva: ${id})`,
+        );
       }
 
       return {

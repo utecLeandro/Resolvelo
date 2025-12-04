@@ -61,6 +61,7 @@ export class EmailService {
         `❌ Error enviando email a ${to}: ${error.message}`,
         error.stack,
       );
+      throw error;
     }
   }
 
