@@ -34,23 +34,25 @@ import {
 } from './common/interceptors/bigint-serializer.interceptor';
 
 async function bootstrap() {
-  console.log(
-    '[Main] Import debug -> typeof TransaccionesModule =',
-    typeof TransaccionesModule,
-  );
-  console.log('[Main] Bootstrap iniciando...');
   try {
+    console.log(
+      '[Main] Import debug -> typeof TransaccionesModule =',
+      typeof TransaccionesModule,
+    );
+    console.log('[Main] Bootstrap iniciando...');
+    
     // Mostrar desde qué archivo se está resolviendo app.module y el marcador actual
-    // Esto ayuda a detectar si el runtime está usando una ubicación inesperada (p. ej., carpeta con distinto casing)
-    const resolvedAppModule = require.resolve('./app.module');
-    console.log('[Main] require.resolve(./app.module) ->', resolvedAppModule);
-    console.log('[Main] __APP_MODULE_MARKER__ ->', __APP_MODULE_MARKER__);
-  } catch (e) {
-    console.warn('[Main] No se pudo resolver ruta de app.module', e);
-  }
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+    try {
+      const resolvedAppModule = require.resolve('./app.module');
+      console.log('[Main] require.resolve(./app.module) ->', resolvedAppModule);
+      console.log('[Main] __APP_MODULE_MARKER__ ->', __APP_MODULE_MARKER__);
+    } catch (e) {
+      console.warn('[Main] No se pudo resolver ruta de app.module', e);
+    }
 
-  // Logger middleware manual para depurar requests en AWS
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+    // Logger middleware manual para depurar requests en AWS
   app.use((req: Request, _res: Response, next: () => void) => {
     console.log(
       `[Request] ${req.method} ${req.url} - Origin: ${req.headers.origin || 'N/A'}`,
@@ -490,13 +492,17 @@ async function bootstrap() {
   );
   const server = await app.listen(port, host);
   try {
-    const addr = (server as any).address?.();
-    console.log('[Main] address():', addr);
-    console.log(
-      `[Main] Escuchando en http://${host}:${port} (prefijo global: /api)`,
-    );
-  } catch (e) {
-    console.log('[Main] No se pudo obtener address()', e);
+      const addr = (server as any).address?.();
+      console.log('[Main] address():', addr);
+      console.log(
+        `[Main] Escuchando en http://${host}:${port} (prefijo global: /api)`,
+      );
+    } catch (e) {
+      console.log('[Main] No se pudo obtener address()', e);
+    }
+  } catch (error) {
+    console.error('❌ [Main] Error fatal durante bootstrap:', error);
+    process.exit(1);
   }
 }
 bootstrap();

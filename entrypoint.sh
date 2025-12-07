@@ -1,7 +1,9 @@
 #!/bin/sh
 set -eu
+set -x # Activar debug log para ver cada comando ejecutado
 
 echo "[Entrypoint] Iniciando script de arranque..."
+echo "[Entrypoint] Verificando entorno..."
 echo "[Entrypoint] NODE_ENV=${NODE_ENV:-no-definido}"
 echo "[Entrypoint] PORT=${PORT:-3000}"
 echo "[Entrypoint] Configuración de Base de Datos:"
