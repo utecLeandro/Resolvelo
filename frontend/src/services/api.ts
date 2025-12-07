@@ -182,6 +182,20 @@ export const authService = {
     }
   },
 
+  // Reenviar email de verificación
+  async reenviarVerificacion(email: string): Promise<{ message: string }> {
+    try {
+      const response = await api.post('/auth/resend-verification', { email })
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for reenviarVerificacion:', error.message)
+      return await fetchFallback('/auth/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      })
+    }
+  },
+
   // Solicitar recuperación de contraseña
   async forgotPassword(email: string): Promise<{ message: string }> {
     try {

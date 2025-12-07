@@ -2,17 +2,38 @@
 // Pantalla de Verificación pendiente
 // - Informa estado de cuenta "PENDIENTE" tras registro/login
 // - Buenas prácticas de UX y accesibilidad
+import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { authService } from "../services/api";
 
 const route = useRoute();
 const router = useRouter();
 const email = (route.query.email as string) || "";
 
-const reenviarVerificacion = () => {
-  // Mock: En una implementación real, aquí se llamaría a un endpoint para reenviar el correo
-  alert(
-    `Se ha reenviado el correo de verificación a ${email || "tu email registrado"}. (mock)`,
-  ); // mensaje accesible por ser modal del navegador
+const cargando = ref(false);
+const mensaje = ref("");
+const error = ref("");
+
+const reenviarVerificacion = async () => {
+  if (cargando.value) return;
+  
+  cargando.value = true;
+  mensaje.value = "";
+  error.value = "";
+
+  try {
+    const emailToSend = email;
+    if (!emailToSend) {
+      throw new Error("No se encontró el email para reenviar.");
+    }
+    
+    const res = await authService.reenviarVerificacion(emailToSend);
+    mensaje.value = res.message || "Correo de verificación reenviado exitosamente.";
+  } catch (e: any) {
+    error.value = e.message || "Error al reenviar el correo. Intenta nuevamente.";
+  } finally {
+    cargando.value = false;
+  }
 };
 
 const irALogin = () => {
@@ -66,6 +87,14 @@ const irALogin = () => {
             }}</span
             >. Sigue las instrucciones para activar tu cuenta.
           </p>
+          
+          <!-- Mensajes de éxito/error -->
+          <div v-if="mensaje" class="mt-3 p-3 bg-green-50 text-green-700 rounded-md text-sm">
+            {{ mensaje }}
+          </div>
+          <div v-if="error" class="mt-3 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+            {{ error }}
+          </div>
         </div>
       </div>
 
@@ -73,9 +102,11 @@ const irALogin = () => {
         <button
           @click="reenviarVerificacion"
           type="button"
-          class="inline-flex justify-center items-center gap-2 py-2.5 px-4 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          :disabled="cargando"
+          class="inline-flex justify-center items-center gap-2 py-2.5 px-4 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg
+            v-if="!cargando"
             class="w-5 h-5"
             fill="none"
             stroke="currentColor"
@@ -89,7 +120,28 @@ const irALogin = () => {
               d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-16 0m16 8a8 8 0 01-16 0"
             />
           </svg>
-          Reenviar verificación (mock)
+          <svg
+            v-else
+            class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          {{ cargando ? "Enviando..." : "Reenviar verificación" }}
         </button>
         <button
           @click="irALogin"

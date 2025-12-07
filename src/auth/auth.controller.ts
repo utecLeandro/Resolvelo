@@ -52,6 +52,16 @@ export class AuthController {
   }
 
   /**
+   * Endpoint para reenviar correo de verificación.
+   */
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  async resendVerification(@Body() body: { email: string }) {
+    if (!body.email) throw new BadRequestException('Email requerido');
+    return this.authService.reenviarVerificacion(body.email);
+  }
+
+  /**
    * Endpoint de login de usuario./**
    * Autentica credenciales y devuelve token JWT.
    */

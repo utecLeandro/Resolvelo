@@ -107,10 +107,11 @@ export class AuthService {
         { expiresIn: '24h' },
       );
 
-      // Iniciar verificación de email en AWS SES (modo Sandbox)
+      // En modo Sandbox, primero debemos verificar la identidad en AWS
       await this.emailService.verificarIdentidadEmail(usuario.email);
 
-      // Enviar nuestro propio correo de verificación
+      // Intentar enviar el correo de verificación propio
+      // En Sandbox esto fallará la primera vez porque la identidad aún no está VERIFIED
       try {
         await this.emailService.enviarCorreoVerificacion(
           usuario.email,
@@ -119,7 +120,7 @@ export class AuthService {
         );
       } catch (e: any) {
         console.warn(
-          '⚠️ No se pudo enviar el correo de verificación propio (probablemente Sandbox):',
+          '⚠️ Sandbox: No se pudo enviar correo propio. El usuario debe verificar primero en AWS y luego solicitar reenvío.',
           e.message,
         );
       }
@@ -203,6 +204,45 @@ export class AuthService {
       return { message: 'Cuenta verificada exitosamente' };
     } catch (error) {
       throw new BadRequestException('Token de verificación inválido o expirado');
+    }
+  }
+
+  /**
+   * Reenvía el correo de verificación para usuarios en estado PENDIENTE.
+   * Útil para modo Sandbox donde el primer intento falla.
+   */
+  async reenviarVerificacion(email: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { email },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (usuario.estadoVerificacion === 'VERIFICADA') {
+      return { message: 'El usuario ya está verificado' };
+    }
+
+    const verificationToken = this.jwtService.sign(
+      { sub: String(usuario.id), purpose: 'verification' },
+      { expiresIn: '24h' },
+    );
+
+    try {
+      // En reintento, si el usuario ya verificó en AWS, esto funcionará
+      await this.emailService.enviarCorreoVerificacion(
+        usuario.email,
+        usuario.nombre,
+        verificationToken,
+      );
+      return { message: 'Correo de verificación reenviado exitosamente' };
+    } catch (e: any) {
+      // Si falla de nuevo, volvemos a pedir verificación a AWS por si acaso
+      await this.emailService.verificarIdentidadEmail(usuario.email);
+      throw new ServiceUnavailableException(
+        'No se pudo enviar el correo. Asegúrate de haber aceptado primero el email de verificación de AWS (modo Sandbox).',
+      );
     }
   }
 
