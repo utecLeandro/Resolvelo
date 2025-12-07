@@ -29,7 +29,9 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly passwordStrengthService: PasswordStrengthService,
-  ) {}
+  ) {
+    console.log('AuthController initialized');
+  }
 
   /**
    * Endpoint de registro de usuario.

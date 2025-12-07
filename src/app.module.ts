@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Module } from '@nestjs/common';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { Module } from '@nestjs/common';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -56,4 +56,4 @@ export class AppModule {
   }
 }
 // Marcador para verificar que este AppModule se está compilando y usando en dist
-export const __APP_MODULE_MARKER__ = 'Admin+TransaccionesIncluded_v2';
+export const __APP_MODULE_MARKER__ = 'v3_ResendVerification_Fixed';
