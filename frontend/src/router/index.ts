@@ -8,6 +8,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import LoginPage from '../views/LoginPage.vue'
 import RegisterPage from '../views/RegisterPage.vue'
 import PendingVerification from '../views/PendingVerification.vue'
+import VerificarEmail from '../views/VerificarEmail.vue'
 import CatalogoPage from '../views/CatalogoPage.vue'
 import DetallePublicacion from '../views/DetallePublicacion.vue'
 import PerfilPage from '../views/PerfilPage.vue'
@@ -108,6 +109,15 @@ const routes: RouteRecordRaw[] = [
   },
   { path: '/registro', name: 'Registro', component: RegisterPage },
   { path: '/verificacion-pendiente', name: 'VerificaciónPendiente', component: PendingVerification },
+  {
+    path: '/verificar-email',
+    name: 'VerificarEmail',
+    component: VerificarEmail,
+    meta: {
+      title: 'Verificación de Email - ReSolVelo',
+      description: 'Verifica tu correo electrónico para activar tu cuenta',
+    },
+  },
   { path: '/gubuy/callback', name: 'GubUyCallback', component: GubUyCallbackPage },
   { path: '/gubuy/simulado', name: 'GubUySimulado', component: GubUySimuladoPage },
   {

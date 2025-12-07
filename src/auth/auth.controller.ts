@@ -42,6 +42,16 @@ export class AuthController {
   }
 
   /**
+   * Endpoint para verificar email con token.
+   */
+  @Get('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(@Query('token') token: string) {
+    if (!token) throw new BadRequestException('Token requerido');
+    return this.authService.verificarEmail(token);
+  }
+
+  /**
    * Endpoint de login de usuario./**
    * Autentica credenciales y devuelve token JWT.
    */

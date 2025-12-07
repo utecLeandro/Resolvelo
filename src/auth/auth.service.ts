@@ -97,20 +97,33 @@ export class AuthService {
           emailVerificado: false,
           telefonoVerificado: false,
           perfilPublico: true,
-          activo: true,
+          activo: false,
         },
       });
+
+      // Token de verificación
+      const verificationToken = this.jwtService.sign(
+        { sub: String(usuario.id), purpose: 'verification' },
+        { expiresIn: '24h' },
+      );
 
       // Iniciar verificación de email en AWS SES (modo Sandbox)
       await this.emailService.verificarIdentidadEmail(usuario.email);
 
-      // Enviar email de bienvenida (opcional)
-      // Como el email aun no está verificado en SES, este envío podría fallar si se hace inmediatamente
-      // y AWS no ha procesado la verificación. Sin embargo, en un flujo real,
-      // el link de verificación iría en este correo.
-      // Dado que usamos el flujo nativo de SES para verificar, el usuario recibirá el mail de AWS.
-      // Una vez verificado, podríamos enviarle la bienvenida.
-      
+      // Enviar nuestro propio correo de verificación
+      try {
+        await this.emailService.enviarCorreoVerificacion(
+          usuario.email,
+          usuario.nombre,
+          verificationToken,
+        );
+      } catch (e: any) {
+        console.warn(
+          '⚠️ No se pudo enviar el correo de verificación propio (probablemente Sandbox):',
+          e.message,
+        );
+      }
+
       // Simular servicio externo de verificación (por ahora responde OK)
       const verificationOk = true; // mock
 
@@ -157,6 +170,43 @@ export class AuthService {
   }
 
   /**
+   * Verifica el email del usuario mediante token
+   */
+  async verificarEmail(token: string) {
+    try {
+      const payload = this.jwtService.verify(token);
+      if (payload.purpose !== 'verification') {
+        throw new BadRequestException('Token inválido para verificación');
+      }
+      const userId = payload.sub;
+
+      const usuario = await this.prisma.usuario.findUnique({
+        where: { id: BigInt(userId) },
+      });
+      if (!usuario) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      if (usuario.estadoVerificacion === 'VERIFICADA') {
+        return { message: 'El usuario ya está verificado' };
+      }
+
+      await this.prisma.usuario.update({
+        where: { id: BigInt(userId) },
+        data: {
+          estadoVerificacion: 'VERIFICADA',
+          emailVerificado: true,
+          activo: true, // Activamos al usuario automáticamente
+        },
+      });
+
+      return { message: 'Cuenta verificada exitosamente' };
+    } catch (error) {
+      throw new BadRequestException('Token de verificación inválido o expirado');
+    }
+  }
+
+  /**
    * Autentica un usuario con email y contraseña
    * Valida credenciales y genera token JWT (mock por ahora)
    */
@@ -183,6 +233,11 @@ export class AuthService {
 
       // Verificar que el usuario esté activo
       if (!usuario.activo) {
+        if (usuario.estadoVerificacion !== 'VERIFICADA') {
+          throw new ForbiddenException(
+            'Debes verificar tu email antes de iniciar sesión. Revisa tu correo.',
+          );
+        }
         throw new UnauthorizedException(
           'Cuenta desactivada. Contacta al administrador.',
         );

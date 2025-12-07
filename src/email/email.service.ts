@@ -66,6 +66,32 @@ export class EmailService {
   }
 
   /**
+   * Envía un correo de verificación de cuenta con un token
+   */
+  async enviarCorreoVerificacion(to: string, nombre: string, token: string) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const link = `${frontendUrl}/verificar-email?token=${token}`;
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563EB;">¡Bienvenido a ReSolVelo!</h2>
+        <p>Hola ${nombre},</p>
+        <p>Gracias por registrarte. Para activar tu cuenta, por favor verifica tu correo electrónico haciendo clic en el siguiente botón:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${link}" style="background-color: #2563EB; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Verificar mi correo</a>
+        </div>
+        <p>O copia y pega este enlace en tu navegador:</p>
+        <p><a href="${link}">${link}</a></p>
+        <p>Si no creaste esta cuenta, puedes ignorar este correo.</p>
+        <hr style="border: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #666;">ReSolVelo - Alquiler de Instrumentos Musicales</p>
+      </div>
+    `;
+
+    return this.sendMail(to, 'Verifica tu cuenta en ReSolVelo', html);
+  }
+
+  /**
    * Solicita a AWS SES que envíe un email de verificación a la dirección indicada.
    * Esto es necesario en modo Sandbox para poder enviar correos a esta dirección.
    */

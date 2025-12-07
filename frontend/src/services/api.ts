@@ -171,6 +171,17 @@ export const authService = {
     }
   },
 
+  // Verificar email de usuario
+  async verificarEmail(token: string): Promise<{ message: string }> {
+    try {
+      const response = await api.get(`/auth/verify-email?token=${token}`)
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for verificarEmail:', error.message)
+      return await fetchFallback(`/auth/verify-email?token=${token}`)
+    }
+  },
+
   // Solicitar recuperación de contraseña
   async forgotPassword(email: string): Promise<{ message: string }> {
     try {

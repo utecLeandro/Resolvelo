@@ -180,7 +180,7 @@
                     :class="u.activo ? 'bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-gray-300' : 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500'"
                     @click="toggleEstado(u)"
                   >
-                    {{ u.activo ? 'Deshabilitar' : 'Habilitar' }}
+                    {{ u.activo ? 'Desactivar' : 'Activar' }}
                   </button>
                   <button
                     v-if="u.estadoVerificacion === 'PENDIENTE'"
