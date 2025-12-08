@@ -231,6 +231,9 @@ router.beforeEach((to, from, next) => {
         'VerificaciónPendiente',
         'RecuperarContrasena',
         'ResetPassword',
+        'VerificarEmail',
+        'GubUyCallback',
+        'GubUySimulado',
       ])
       if (from.name && !rutasAuth.has(String(from.name))) {
         const rutaAnterior = from.fullPath
