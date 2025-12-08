@@ -457,7 +457,7 @@ export class AuthService {
     });
 
     // Construir link de recuperación
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
     const resetLink = `${frontendUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
     try {

@@ -213,12 +213,7 @@ export class MensajesService {
 
       if (!reserva || !receptor || !mensaje) return;
 
-      const originFromCors = process.env.CORS_ORIGIN?.split(',')[0]?.trim();
-      const frontendBase = (
-        process.env.FRONTEND_URL ||
-        originFromCors ||
-        'https://develop.d2jhmkfagiypdq.amplifyapp.com'
-      ).replace(/\/$/, '');
+      const frontendBase = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
       const link = `${frontendBase}/mensajes/reserva/${encodeURIComponent(reservaId)}`;
       
       const nombreEmisor = `${mensaje.emisor.nombre} ${mensaje.emisor.apellido}`;

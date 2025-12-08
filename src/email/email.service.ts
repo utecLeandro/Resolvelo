@@ -69,13 +69,7 @@ export class EmailService {
    * Envía un correo de verificación de cuenta con un token
    */
   async enviarCorreoVerificacion(to: string, nombre: string, token: string) {
-    const isProduction = process.env.NODE_ENV === 'production';
-    // Fallback URL: Amplify en producción, localhost en desarrollo
-    const defaultUrl = isProduction
-      ? 'https://develop.d2jhmkfagiypdq.amplifyapp.com'
-      : 'http://localhost:5173';
-    
-    const frontendUrl = process.env.FRONTEND_URL || defaultUrl;
+    const frontendUrl = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
     const link = `${frontendUrl}/verificar-email?token=${token}`;
 
     const html = `

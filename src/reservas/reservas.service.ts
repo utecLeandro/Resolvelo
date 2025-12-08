@@ -140,7 +140,8 @@ export class ReservasService {
 
     // Enviar correo al propietario
     try {
-      const linkGestion = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reservas-recibidas`;
+      const frontendUrl = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
+      const linkGestion = `${frontendUrl}/reservas-recibidas`;
       await this.emailService.sendMail(
         reserva.propietario.email,
         `Nueva solicitud de reserva: ${reserva.publicacion.titulo}`,
@@ -155,7 +156,7 @@ export class ReservasService {
       );
 
       // Enviar correo de confirmación al arrendatario
-      const linkDetalle = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/mis-reservas`;
+      const linkDetalle = `${frontendUrl}/mis-reservas`;
       await this.emailService.sendMail(
         reserva.usuario.email,
         `Solicitud enviada: ${reserva.publicacion.titulo}`,
@@ -516,7 +517,8 @@ export class ReservasService {
           `📧 Intentando enviar notificación. Cambio de estado: ${anterior} -> ${actual} (Reserva: ${id})`,
         );
         try {
-          const linkDetalle = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/mis-reservas`;
+          const frontendUrl = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
+          const linkDetalle = `${frontendUrl}/mis-reservas`;
           await this.emailService.sendMail(
             reserva.usuario.email,
             `Actualización de reserva: ${reserva.publicacion.titulo}`,

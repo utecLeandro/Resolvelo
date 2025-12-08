@@ -267,12 +267,7 @@ export class NotificacionesService {
       data: { reservaId: reserva.id, publicacionId: reserva.publicacion?.id },
     };
     this.emitir(propietarioId, { tipo: 'PUSH', item });
-    const originFromCors = process.env.CORS_ORIGIN?.split(',')[0]?.trim();
-    const frontendBase = (
-      process.env.FRONTEND_URL ||
-      originFromCors ||
-      'https://develop.d2jhmkfagiypdq.amplifyapp.com'
-    ).replace(/\/$/, '');
+    const frontendBase = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
     const link = `${frontendBase}/mis-publicaciones?pub=${encodeURIComponent(String(reserva.publicacion?.id))}`;
     const html = `
       <p>Tienes una nueva solicitud de reserva.</p>
@@ -304,12 +299,7 @@ export class NotificacionesService {
     };
     this.emitir(reserva.propietarioId, { tipo: 'PUSH', item });
     this.emitir(reserva.usuarioId, { tipo: 'PUSH', item });
-    const originFromCors = process.env.CORS_ORIGIN?.split(',')[0]?.trim();
-    const frontendBase = (
-      process.env.FRONTEND_URL ||
-      originFromCors ||
-      'https://develop.d2jhmkfagiypdq.amplifyapp.com'
-    ).replace(/\/$/, '');
+    const frontendBase = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
     const linkArrendatario = `${frontendBase}/mis-reservas`;
     const linkPropietario = `${frontendBase}/mis-publicaciones?pub=${encodeURIComponent(String(reserva.publicacion?.id))}`;
     await this.enviarEmail(
@@ -344,12 +334,7 @@ export class NotificacionesService {
       },
     };
     this.emitir(reserva.propietarioId, { tipo: 'PUSH', item });
-    const originFromCors = process.env.CORS_ORIGIN?.split(',')[0]?.trim();
-    const frontendBase = (
-      process.env.FRONTEND_URL ||
-      originFromCors ||
-      'https://develop.d2jhmkfagiypdq.amplifyapp.com'
-    ).replace(/\/$/, '');
+    const frontendBase = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
     const link = `${frontendBase}/mis-publicaciones?pub=${encodeURIComponent(String(reserva.publicacion?.id))}`;
     const html = `
       <p>Se confirmó el pago de una reserva.</p>
