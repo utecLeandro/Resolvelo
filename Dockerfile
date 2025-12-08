@@ -87,6 +87,8 @@ ENV PRISMA_MIGRATE_DEPLOY=0
 
 # Copiar script de entrada que intenta migrar (opcional) y arranca la app
 COPY --from=build --chown=nestjs:nodejs /app/entrypoint.sh ./entrypoint.sh
+# Corregir finales de línea (CRLF -> LF) para evitar errores en Linux
+RUN sed -i 's/\r$//' entrypoint.sh
 RUN chmod +x entrypoint.sh
 
 # Comando de inicio: usa dumb-init y el script de entrada
