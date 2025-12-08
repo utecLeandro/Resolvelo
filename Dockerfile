@@ -71,7 +71,7 @@ COPY --from=build --chown=nestjs:nodejs /app/package*.json ./
 # Copiar script de entrada que intenta migrar (opcional) y arranca la app
 COPY --from=build --chown=nestjs:nodejs /app/entrypoint.sh ./entrypoint.sh
 # Corregir finales de línea (CRLF -> LF) para evitar errores en Linux (como root antes de cambiar de usuario)
-RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
+RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh && chown nestjs:nodejs entrypoint.sh
 
 # Cambiar al usuario no-root
 USER nestjs
