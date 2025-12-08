@@ -68,6 +68,11 @@ COPY --from=build --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=build --chown=nestjs:nodejs /app/healthcheck.js ./
 COPY --from=build --chown=nestjs:nodejs /app/package*.json ./
 
+# Copiar script de entrada que intenta migrar (opcional) y arranca la app
+COPY --from=build --chown=nestjs:nodejs /app/entrypoint.sh ./entrypoint.sh
+# Corregir finales de línea (CRLF -> LF) para evitar errores en Linux (como root antes de cambiar de usuario)
+RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
+
 # Cambiar al usuario no-root
 USER nestjs
 
@@ -84,12 +89,6 @@ ENTRYPOINT ["dumb-init", "--"]
 # Variable para controlar si se ejecutan migraciones al iniciar
 # Por defecto NO se ejecutan para evitar fallos de despliegue cuando la BD no está lista
 ENV PRISMA_MIGRATE_DEPLOY=0
-
-# Copiar script de entrada que intenta migrar (opcional) y arranca la app
-COPY --from=build --chown=nestjs:nodejs /app/entrypoint.sh ./entrypoint.sh
-# Corregir finales de línea (CRLF -> LF) para evitar errores en Linux
-RUN sed -i 's/\r$//' entrypoint.sh
-RUN chmod +x entrypoint.sh
 
 # Comando de inicio: usa dumb-init y el script de entrada
 CMD ["./entrypoint.sh"]
