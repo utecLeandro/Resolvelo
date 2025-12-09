@@ -402,6 +402,7 @@ export class ReservasService {
               imagenes: true,
             },
           },
+          transacciones: true,
         },
         orderBy: { fechaInicio: 'asc' },
       });
