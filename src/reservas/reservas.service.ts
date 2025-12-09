@@ -83,9 +83,9 @@ export class ReservasService {
       throw new BadRequestException('La fecha de inicio debe ser en el futuro');
     }
 
-    if (fin <= inicio) {
+    if (fin < inicio) {
       throw new BadRequestException(
-        'La fecha de fin debe ser posterior a la fecha de inicio',
+        'La fecha de fin debe ser posterior o igual a la fecha de inicio',
       );
     }
 
