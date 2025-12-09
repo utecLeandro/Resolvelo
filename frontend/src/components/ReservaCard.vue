@@ -62,7 +62,10 @@
               </svg>
               <div>
                 <div class="font-medium">Precio Total</div>
-                <div class="text-lg font-bold text-blue-600">${{ formatearPrecio(reserva.precioTotal) }}</div>
+                <div class="text-lg font-bold text-blue-600">${{ formatearPrecio(precioFinalCalculado) }}</div>
+                <div class="text-xs text-gray-500" title="Incluye tarifa de servicio">
+                  (Alquiler ${{ formatearPrecio(reserva.precioTotal) }} + Servicio)
+                </div>
               </div>
             </div>
 
@@ -270,6 +273,21 @@ const emit = defineEmits<{
 
 // Estado reactivo
 const mostrarMotivoRechazo = ref(false)
+
+// Computed
+const precioFinalCalculado = computed(() => {
+  const precioBase = typeof props.reserva.precioTotal === 'string' 
+    ? parseFloat(props.reserva.precioTotal) 
+    : props.reserva.precioTotal
+  
+  // Si la reserva está pendiente de pago (CONFIRMADA), mostramos el precio con comisión
+  if (props.reserva.estado === 'CONFIRMADA') {
+    const feePercentage = Number(import.meta.env.VITE_PLATFORM_FEE_PERCENTAGE) || 0.10
+    return precioBase * (1 + feePercentage)
+  }
+  
+  return precioBase
+})
 
 // Clases CSS para los diferentes estados
 const estadoClases = {

@@ -268,9 +268,19 @@
                 <span class="text-2xl font-bold text-gray-900">${{ publicacion.precioPorDia }}</span>
               </div>
               <!-- Total estimado según rango seleccionado -->
-              <div v-if="diasSeleccionados > 0 && !mensajeErrorFechas" class="flex justify-between items-center">
-                <span class="text-gray-600">Total por {{ diasSeleccionados }} días</span>
-                <span class="text-2xl font-bold text-gray-900">${{ totalEstimado.toLocaleString() }}</span>
+              <div v-if="diasSeleccionados > 0 && !mensajeErrorFechas" class="border-t border-gray-100 pt-3 mt-3">
+                <div class="flex justify-between items-center mb-1 text-sm text-gray-500">
+                  <span>Alquiler ({{ diasSeleccionados }} días)</span>
+                  <span>${{ totalEstimado.toLocaleString() }}</span>
+                </div>
+                <div class="flex justify-between items-center mb-2 text-sm text-gray-500">
+                  <span>Tarifa de servicio</span>
+                  <span>${{ comisionEstimada.toLocaleString(undefined, { maximumFractionDigits: 2 }) }}</span>
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                  <span class="font-bold text-gray-900">Total a pagar</span>
+                  <span class="text-2xl font-bold text-blue-600">${{ totalConComision.toLocaleString(undefined, { maximumFractionDigits: 2 }) }}</span>
+                </div>
               </div>
               <div v-if="publicacion.precioPorSemana" class="flex justify-between items-center">
                 <span class="text-gray-600">Por semana</span>
@@ -520,6 +530,15 @@ const totalEstimado = computed(() => {
   if (!publicacion.value) return 0
   if (!diasSeleccionados.value || mensajeErrorFechas.value) return 0
   return publicacion.value.precioPorDia * diasSeleccionados.value
+})
+
+const comisionEstimada = computed(() => {
+  const feePercentage = Number(import.meta.env.VITE_PLATFORM_FEE_PERCENTAGE) || 0.10
+  return totalEstimado.value * feePercentage
+})
+
+const totalConComision = computed(() => {
+  return totalEstimado.value + comisionEstimada.value
 })
 
 // Imágenes y navegación

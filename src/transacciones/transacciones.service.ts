@@ -320,7 +320,13 @@ export class TransaccionesService {
       Math.ceil(
         (fechaFin.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24),
       ) + 1;
-    const montoTotal = Number(reserva.publicacion.precioPorDia) * diasReserva;
+
+    // Calcular montos
+    const montoPropietario =
+      Number(reserva.publicacion.precioPorDia) * diasReserva;
+    const feePercentage = Number(process.env.PLATFORM_FEE_PERCENTAGE) || 0.1;
+    const comisionPlataforma = montoPropietario * feePercentage;
+    const montoTotal = montoPropietario + comisionPlataforma;
 
     const transaccion = await this.prisma.transaccion.create({
       data: {
@@ -333,6 +339,8 @@ export class TransaccionesService {
         usuarioId: reserva.usuarioId,
         reservaId: BigInt(reservaId),
         fechaProcesamiento: new Date(),
+        montoNeto: montoPropietario, // Guardamos lo que corresponde al propietario
+        comisionPlataforma: comisionPlataforma, // Guardamos nuestra ganancia
       },
     });
 
@@ -360,11 +368,18 @@ export class TransaccionesService {
     const body: any = {
       items: [
         {
-          title: `Pago de reserva: ${reserva.publicacion.titulo}`,
+          title: `Alquiler: ${reserva.publicacion.titulo} (${diasReserva} días)`,
           description: descripcion || `Reserva ${reserva.id}`,
           quantity: 1,
           currency_id: 'UYU',
-          unit_price: Number(montoTotal),
+          unit_price: Number(montoPropietario.toFixed(2)),
+        },
+        {
+          title: 'Tarifa de Servicio ReSolVelo',
+          description: 'Comisión por uso de plataforma',
+          quantity: 1,
+          currency_id: 'UYU',
+          unit_price: Number(comisionPlataforma.toFixed(2)),
         },
       ],
       payer: {
