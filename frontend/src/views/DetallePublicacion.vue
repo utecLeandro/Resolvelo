@@ -400,6 +400,7 @@ const datosUsuario = ref<any>(null)
 // Fechas de alquiler (RES-15)
 const hoy = (() => {
   const fecha = new Date()
+  fecha.setDate(fecha.getDate() + 1)
   fecha.setHours(0, 0, 0, 0) // Establecer a medianoche para evitar problemas de hora
   return fecha
 })()

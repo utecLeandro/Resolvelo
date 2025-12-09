@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
   <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
@@ -91,7 +91,15 @@
                 <span class="text-gray-600">Precio por día:</span>
                 <span class="font-medium">${{ reserva.publicacion.precioPorDia }}</span>
               </div>
-              <div class="flex justify-between text-lg font-semibold mt-2">
+              <div class="flex justify-between text-sm mt-1">
+                <span class="text-gray-600">Subtotal:</span>
+                <span class="font-medium">${{ calcularSubtotal() }}</span>
+              </div>
+              <div class="flex justify-between text-sm mt-1">
+                <span class="text-gray-600">Costo de servicio (10%):</span>
+                <span class="font-medium">${{ calcularCostoServicio() }}</span>
+              </div>
+              <div class="flex justify-between text-lg font-semibold mt-2 pt-2 border-t">
                 <span>Total:</span>
                 <span class="text-blue-600">${{ calcularTotal() }}</span>
               </div>
@@ -210,7 +218,23 @@ const calcularTotal = () => {
   if (isNaN(precioPorDia)) return 0
   const dias = calcularDias()
   if (isNaN(dias)) return 0
+  const subtotal = precioPorDia * dias
+  const costoServicio = subtotal * 0.10
+  return subtotal + costoServicio
+}
+
+const calcularSubtotal = () => {
+  if (!reserva.value) return 0
+  const precioPorDiaRaw = reserva.value.publicacion?.precioPorDia
+  const precioPorDia = typeof precioPorDiaRaw === 'string' ? parseFloat(precioPorDiaRaw) : Number(precioPorDiaRaw)
+  if (isNaN(precioPorDia)) return 0
+  const dias = calcularDias()
+  if (isNaN(dias)) return 0
   return precioPorDia * dias
+}
+
+const calcularCostoServicio = () => {
+  return calcularSubtotal() * 0.10
 }
 
 const formatearFecha = (fecha: string) => {

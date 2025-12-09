@@ -53,7 +53,15 @@
                 <p class="text-gray-600">Precio por día:</p>
                 <p class="text-gray-900">${{ transaccion.reserva?.publicacion?.precioPorDia }}</p>
               </div>
-              <div class="text-right">
+              <div>
+                <p class="text-gray-600">Subtotal:</p>
+                <p class="text-gray-900">${{ calcularSubtotal(transaccion) }}</p>
+              </div>
+              <div>
+                <p class="text-gray-600">Costo servicio (10%):</p>
+                <p class="text-gray-900">${{ calcularCostoServicio(transaccion) }}</p>
+              </div>
+              <div class="text-right col-span-2 pt-2 border-t">
                 <p class="text-gray-900 font-bold">Total:</p>
                 <p class="text-blue-600 font-extrabold text-lg">${{ calcularTotal(transaccion) }}</p>
               </div>
@@ -75,7 +83,7 @@
             <p v-if="mpPago.id"><strong>ID MP:</strong> {{ mpPago.id }}</p>
             <p v-if="mpPago.status"><strong>Estado MP:</strong> {{ mpPago.status }}</p>
             <p v-if="mpPago.date"><strong>Fecha aprobación:</strong> {{ formatearFecha(mpPago.date) }}</p>
-            <p v-if="mpPago.amount"><strong>Monto pagado:</strong> ${{ mpPago.amount }}</p>
+            <!-- <p v-if="mpPago.amount"><strong>Monto pagado:</strong> ${{ mpPago.amount }}</p> -->
             <p v-if="mpPago.method"><strong>Método:</strong> {{ mpPago.method }}</p>
             <p v-if="mpPago.installments"><strong>Cuotas:</strong> {{ mpPago.installments }}</p>
             <p v-if="mpPago.card_last4"><strong>Tarjeta:</strong> •••• {{ mpPago.card_last4 }}</p>
@@ -125,7 +133,19 @@ const calcularDias = (inicioStr: string, finStr: string) => {
 const calcularTotal = (tx: Transaccion) => {
   const dias = calcularDias(tx.reserva!.fechaInicio, tx.reserva!.fechaFin)
   const precio = tx.reserva!.publicacion.precioPorDia
+  const subtotal = dias * precio
+  const costoServicio = subtotal * 0.10
+  return subtotal + costoServicio
+}
+
+const calcularSubtotal = (tx: Transaccion) => {
+  const dias = calcularDias(tx.reserva!.fechaInicio, tx.reserva!.fechaFin)
+  const precio = tx.reserva!.publicacion.precioPorDia
   return dias * precio
+}
+
+const calcularCostoServicio = (tx: Transaccion) => {
+  return calcularSubtotal(tx) * 0.10
 }
 
 // Banner fijo como antes
