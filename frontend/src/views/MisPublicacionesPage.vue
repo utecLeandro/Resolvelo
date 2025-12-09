@@ -1231,6 +1231,14 @@ watch(focusReservaId, async (id) => {
   }, 150)
 })
 
+watch(pestanaActiva, async (nuevaPestana) => {
+  if (nuevaPestana === 'reservas-activas') {
+    await cargarReservasActivas()
+  } else if (nuevaPestana === 'historial') {
+    await cargarHistorialReservas()
+  }
+})
+
 // Métodos - Pestañas
  
 
