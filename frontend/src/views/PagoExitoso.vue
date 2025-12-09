@@ -120,7 +120,7 @@ const calcularDias = (inicioStr: string, finStr: string) => {
   const inicio = new Date(inicioStr)
   const fin = new Date(finStr)
   const diff = fin.getTime() - inicio.getTime()
-  return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+  return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1)
 }
 const calcularTotal = (tx: Transaccion) => {
   const dias = calcularDias(tx.reserva!.fechaInicio, tx.reserva!.fechaFin)
