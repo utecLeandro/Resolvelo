@@ -32,8 +32,8 @@
               ]"
             >
               Solicitudes de Alquiler
-              <span v-if="solicitudesPendientes.length > 0" class="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs font-medium">
-                {{ solicitudesPendientes.length }}
+              <span v-if="solicitudesPendientesCount.length > 0" class="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs font-medium">
+                {{ solicitudesPendientesCount.length }}
               </span>
             </button>
             <button
