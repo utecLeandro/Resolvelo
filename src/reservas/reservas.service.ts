@@ -107,8 +107,8 @@ export class ReservasService {
         },
         OR: [
           {
-            fechaInicio: { lt: fin },
-            fechaFin: { gt: inicio },
+            fechaInicio: { lte: fin },
+            fechaFin: { gte: inicio },
           },
         ],
       },
