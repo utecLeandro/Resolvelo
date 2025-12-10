@@ -75,6 +75,11 @@ export class ReservasService {
     const fin = new Date(fechaFin);
     const ahora = new Date();
 
+    // Normalizar fechas a medianoche para evitar problemas con la hora actual
+    inicio.setHours(0, 0, 0, 0);
+    fin.setHours(0, 0, 0, 0);
+    ahora.setHours(0, 0, 0, 0);
+
     if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
       throw new BadRequestException('Las fechas proporcionadas no son válidas');
     }

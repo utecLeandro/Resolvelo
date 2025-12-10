@@ -757,6 +757,11 @@ export class PublicacionesService {
           'Las fechas proporcionadas no son válidas',
         );
       }
+
+      // Normalizar fechas
+      fechaInicio.setHours(0, 0, 0, 0);
+      fechaFin.setHours(0, 0, 0, 0);
+
       if (fechaInicio > fechaFin) {
         throw new BadRequestException(
           'El rango de fechas es inválido: fechaInicio es posterior a fechaFin',
