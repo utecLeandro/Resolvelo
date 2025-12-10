@@ -426,8 +426,12 @@ const fechasDeshabilitadas = computed(() => {
   const fechasOcupadas: Date[] = []
   
   reservasActivas.value.forEach(reserva => {
-    const inicio = new Date(reserva.fechaInicio)
-    const fin = new Date(reserva.fechaFin)
+    // Parsear como UTC para evitar problemas de zona horaria
+    const dInicio = new Date(reserva.fechaInicio)
+    const dFin = new Date(reserva.fechaFin)
+    
+    const inicio = new Date(dInicio.getUTCFullYear(), dInicio.getUTCMonth(), dInicio.getUTCDate())
+    const fin = new Date(dFin.getUTCFullYear(), dFin.getUTCMonth(), dFin.getUTCDate())
     
     // Generar todas las fechas entre inicio y fin (inclusive)
     const fechaActual = new Date(inicio)
@@ -447,8 +451,11 @@ const fechasConSombreado = computed(() => {
   // Agregar fechas reservadas para sombreado rojo
   if (reservasActivas.value && reservasActivas.value.length > 0) {
     reservasActivas.value.forEach(reserva => {
-      const inicio = new Date(reserva.fechaInicio)
-      const fin = new Date(reserva.fechaFin)
+      const dInicio = new Date(reserva.fechaInicio)
+      const dFin = new Date(reserva.fechaFin)
+      
+      const inicio = new Date(dInicio.getUTCFullYear(), dInicio.getUTCMonth(), dInicio.getUTCDate())
+      const fin = new Date(dFin.getUTCFullYear(), dFin.getUTCMonth(), dFin.getUTCDate())
       
       const fechaActual = new Date(inicio)
       while (fechaActual <= fin) {
@@ -470,8 +477,11 @@ const marcadoresConTooltips = computed(() => {
   // Marcadores solo para fechas reservadas (sin tooltips para fechas disponibles)
   if (reservasActivas.value && reservasActivas.value.length > 0) {
     reservasActivas.value.forEach(reserva => {
-      const inicio = new Date(reserva.fechaInicio)
-      const fin = new Date(reserva.fechaFin)
+      const dInicio = new Date(reserva.fechaInicio)
+      const dFin = new Date(reserva.fechaFin)
+      
+      const inicio = new Date(dInicio.getUTCFullYear(), dInicio.getUTCMonth(), dInicio.getUTCDate())
+      const fin = new Date(dFin.getUTCFullYear(), dFin.getUTCMonth(), dFin.getUTCDate())
       
       const fechaActual = new Date(inicio)
       while (fechaActual <= fin) {

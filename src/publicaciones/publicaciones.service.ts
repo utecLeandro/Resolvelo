@@ -723,7 +723,6 @@ export class PublicacionesService {
           publicacionId: BigInt(id),
           estado: {
             in: [
-              EstadoReserva.PENDIENTE,
               EstadoReserva.CONFIRMADA,
               EstadoReserva.EN_CURSO,
             ],
@@ -783,7 +782,6 @@ export class PublicacionesService {
           publicacionId: BigInt(id),
           estado: {
             in: [
-              EstadoReserva.PENDIENTE,
               EstadoReserva.CONFIRMADA,
               EstadoReserva.EN_CURSO,
             ],
