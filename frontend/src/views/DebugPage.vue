@@ -85,18 +85,41 @@
         </div>
       </div>
     </div>
+
+    <!-- Componentes de UI -->
+    <BaseToast
+      :visible="toastVisible"
+      :title="toastTitle"
+      :message="toastMessage"
+      :type="toastType"
+      @close="toastVisible = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { usuarioService, publicacionesService } from '@/services/api'
+import BaseToast from '../components/common/BaseToast.vue'
 
 // Estados reactivos
 const tokenInfo = ref('')
 const userData = ref('')
 const perfilAPI = ref('')
 const publicacionesUsuario = ref('')
+
+// Estado para notificaciones
+const toastVisible = ref(false)
+const toastMessage = ref('')
+const toastType = ref<'success' | 'error' | 'warning' | 'info'>('success')
+const toastTitle = ref('')
+
+const mostrarNotificacion = (mensaje: string, tipo: 'success' | 'error' | 'warning' | 'info' = 'info', titulo?: string) => {
+  toastMessage.value = mensaje
+  toastType.value = tipo
+  toastTitle.value = titulo || (tipo === 'success' ? 'Éxito' : tipo === 'error' ? 'Error' : tipo === 'warning' ? 'Atención' : 'Información')
+  toastVisible.value = true
+}
 
 // Cargar datos al montar el componente
 onMounted(() => {
@@ -174,6 +197,6 @@ function limpiarDatos() {
   userData.value = 'No hay datos de usuario almacenados'
   perfilAPI.value = ''
   publicacionesUsuario.value = ''
-  alert('Datos limpiados del localStorage')
+  mostrarNotificacion('Datos limpiados del localStorage', 'info')
 }
 </script>

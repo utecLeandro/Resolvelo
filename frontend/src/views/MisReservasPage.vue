@@ -85,17 +85,6 @@
         </div>
       </div>
 
-      <div v-if="toastVisible" class="bg-green-50 border border-green-200 rounded-md p-4 mb-6 flex items-start">
-        <svg class="h-5 w-5 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        <div class="ml-3">
-          <h3 class="text-sm font-medium text-green-800">Pago acreditado</h3>
-          <p class="mt-1 text-sm text-green-700">{{ toastMessage }}</p>
-        </div>
-        <button class="ml-auto text-sm text-green-700 hover:text-green-900" @click="toastVisible = false">Cerrar</button>
-      </div>
-
       <!-- Estado de carga -->
       <div v-if="cargando" class="flex justify-center items-center py-12">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -145,7 +134,7 @@
               :key="reserva.id" 
               :reserva="reserva" 
               :tipo="'pendiente'"
-              @cancelar="cancelarReserva"
+              @cancelar="confirmarCancelacion"
             />
           </div>
         </div>
@@ -240,23 +229,44 @@
   </div>
 </div>
 
-<div v-if="modalCalificacionVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-  <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4">Calificar experiencia</h3>
-    <div class="flex items-center space-x-2 mb-4">
-      <button v-for="n in 5" :key="n" @click="seleccionarEstrellas(n)" :aria-label="`Seleccionar ${n} estrellas`" class="p-1">
-        <svg class="w-8 h-8" :class="puntuacionSeleccionada >= n ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      </button>
-    </div>
-    <textarea v-model="comentarioCalificacion" class="w-full h-24 border border-gray-300 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Escribe una breve descripción"></textarea>
-    <div class="mt-6 flex space-x-3">
-      <button @click="enviarCalificacion" :disabled="puntuacionSeleccionada===0 || enviandoCalificacion" :class="['flex-1 py-2 px-4 rounded-md font-medium text-white', puntuacionSeleccionada===0 || enviandoCalificacion ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700']">Enviar</button>
-      <button @click="cerrarModalCalificacion" class="flex-1 py-2 px-4 rounded-md font-medium bg-gray-100 text-gray-700 hover:bg-gray-200">Cancelar</button>
-    </div>
+<BaseToast
+  :visible="toastVisible"
+  :title="toastTitle"
+  :message="toastMessage"
+  :type="toastType"
+  @close="toastVisible = false"
+/>
+
+<BaseModal
+  :isOpen="modalConfirmacionVisible"
+  :title="modalConfirmacionTitulo"
+  @close="cerrarModalConfirmacion"
+>
+  <p class="text-gray-700">{{ modalConfirmacionMensaje }}</p>
+  <template #footer>
+    <button @click="cerrarModalConfirmacion" class="px-4 py-2 rounded-md text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors">Cancelar</button>
+    <button @click="ejecutarAccionConfirmada" class="px-4 py-2 rounded-md text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors">Confirmar</button>
+  </template>
+</BaseModal>
+
+<BaseModal
+  :isOpen="modalCalificacionVisible"
+  title="Calificar experiencia"
+  @close="cerrarModalCalificacion"
+>
+  <div class="flex items-center space-x-2 mb-4 justify-center">
+    <button v-for="n in 5" :key="n" @click="seleccionarEstrellas(n)" :aria-label="`Seleccionar ${n} estrellas`" class="p-1 focus:outline-none transform hover:scale-110 transition-transform">
+      <svg class="w-8 h-8 transition-colors duration-200" :class="puntuacionSeleccionada >= n ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+      </svg>
+    </button>
   </div>
-</div>
+  <textarea v-model="comentarioCalificacion" class="w-full h-24 border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow resize-none" placeholder="Cuéntanos tu experiencia (opcional)"></textarea>
+  <template #footer>
+    <button @click="cerrarModalCalificacion" class="px-4 py-2 rounded-md font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">Cancelar</button>
+    <button @click="enviarCalificacion" :disabled="puntuacionSeleccionada===0 || enviandoCalificacion" :class="['px-4 py-2 rounded-md font-medium text-white transition-colors', puntuacionSeleccionada===0 || enviandoCalificacion ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700']">Enviar reseña</button>
+  </template>
+</BaseModal>
 </template>
 
 <script setup lang="ts">
@@ -264,6 +274,8 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { reservasService, calificacionesService } from '../services/api'
 import ReservaCard from '../components/ReservaCard.vue'
+import BaseModal from '../components/common/BaseModal.vue'
+import BaseToast from '../components/common/BaseToast.vue'
 
 // Tipos para las reservas
 interface ReservaArrendatario {
@@ -313,6 +325,33 @@ const error = ref<string | null>(null)
 const procesando = ref<string | null>(null)
 const toastVisible = ref(false)
 const toastMessage = ref('')
+const toastTitle = ref('Notificación')
+const toastType = ref<'success' | 'error' | 'info'>('info')
+
+// Estado para modal de confirmación
+const modalConfirmacionVisible = ref(false)
+const modalConfirmacionTitulo = ref('Confirmación')
+const modalConfirmacionMensaje = ref('')
+const accionConfirmada = ref<(() => Promise<void>) | null>(null)
+
+const cerrarModalConfirmacion = () => {
+  modalConfirmacionVisible.value = false
+  accionConfirmada.value = null
+}
+
+const ejecutarAccionConfirmada = async () => {
+  if (accionConfirmada.value) {
+    await accionConfirmada.value()
+  }
+  cerrarModalConfirmacion()
+}
+
+const mostrarToast = (mensaje: string, tipo: 'success' | 'error' | 'info' = 'info', titulo?: string) => {
+  toastMessage.value = mensaje
+  toastType.value = tipo
+  toastTitle.value = titulo || (tipo === 'success' ? 'Éxito' : tipo === 'error' ? 'Error' : 'Información')
+  toastVisible.value = true
+}
 
 // Computed para filtrar reservas por estado
 const reservasPendientes = computed(() => 
@@ -475,10 +514,14 @@ const cargarMisReservas = async () => {
   }
 }
 
-const cancelarReserva = async (reservaId: string) => {
-  const confirmacion = confirm('¿Estás seguro de que quieres cancelar esta reserva?')
-  if (!confirmacion) return
+const confirmarCancelacion = (reservaId: string) => {
+  modalConfirmacionTitulo.value = 'Cancelar reserva'
+  modalConfirmacionMensaje.value = '¿Estás seguro de que quieres cancelar esta reserva?'
+  accionConfirmada.value = async () => await cancelarReserva(reservaId)
+  modalConfirmacionVisible.value = true
+}
 
+const cancelarReserva = async (reservaId: string) => {
   try {
     procesando.value = reservaId
     await reservasService.cancelarReserva(reservaId)
@@ -491,10 +534,10 @@ const cancelarReserva = async (reservaId: string) => {
       }
     }
     
-    alert('Reserva cancelada exitosamente')
+    mostrarToast('Reserva cancelada exitosamente', 'success')
   } catch (err: any) {
     console.error('Error al cancelar reserva:', err)
-    alert(err.response?.data?.message || 'Error al cancelar la reserva')
+    mostrarToast(err.response?.data?.message || 'Error al cancelar la reserva', 'error')
   } finally {
     procesando.value = null
   }
@@ -507,7 +550,7 @@ const procesarPago = async (reservaId: string) => {
     router.push(`/pago/${reservaId}`)
   } catch (err: any) {
     console.error('Error al procesar pago:', err)
-    alert(err.response?.data?.message || 'Error al procesar el pago')
+    mostrarToast(err.response?.data?.message || 'Error al procesar el pago', 'error')
   } finally {
     procesando.value = null
   }
@@ -550,7 +593,7 @@ const seleccionarEstrellas = (n: number) => {
     }
     const resp = await calificacionesService.crearCalificacion(payload)
     if (resp?.success) {
-      alert('Reseña enviada exitosamente')
+      mostrarToast('Reseña enviada exitosamente', 'success')
       const reserva = reservas.value.find(r => r.id === reservaParaCalificarId.value)
       cerrarModalCalificacion()
       if (reserva) router.push(`/publicacion/${reserva.publicacion.id}`)
@@ -560,11 +603,11 @@ const seleccionarEstrellas = (n: number) => {
     } catch (error: any) {
       const status = error?.response?.status
       if (status === 401) {
-        alert('Tu sesión expiró. Iniciá sesión nuevamente.')
+        mostrarToast('Tu sesión expiró. Iniciá sesión nuevamente.', 'error')
       } else if (status === 403) {
-        alert('No estás autorizado para calificar esta reserva.')
+        mostrarToast('No estás autorizado para calificar esta reserva.', 'error')
       } else {
-        alert(error?.response?.data?.message || error?.message || 'Error al enviar la reseña')
+        mostrarToast(error?.response?.data?.message || error?.message || 'Error al enviar la reseña', 'error')
       }
     } finally {
       enviandoCalificacion.value = false

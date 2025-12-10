@@ -824,120 +824,154 @@
   </div>
 
   <!-- Modal de rechazo -->
-  <div v-if="modalRechazoVisible" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-      <div class="mt-3">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Rechazar solicitud</h3>
-        <p class="text-sm text-gray-600 mb-4">
-          ¿Estás seguro de que quieres rechazar esta solicitud de alquiler?
-        </p>
-        
-        <div class="mb-4">
-          <label for="motivo" class="block text-sm font-medium text-gray-700 mb-2">
-            Motivo (opcional)
-          </label>
-          <textarea
-            id="motivo"
-            v-model="motivoRechazo"
-            rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-            placeholder="Explica brevemente el motivo del rechazo..."
-          ></textarea>
-        </div>
+  <BaseModal
+    :isOpen="modalRechazoVisible"
+    title="Rechazar solicitud"
+    @close="cerrarModalRechazo"
+  >
+    <div class="mt-2">
+      <p class="text-sm text-gray-600 mb-4">
+        ¿Estás seguro de que quieres rechazar esta solicitud de alquiler?
+      </p>
+      
+      <div class="mb-4">
+        <label for="motivo" class="block text-sm font-medium text-gray-700 mb-2">
+          Motivo (opcional)
+        </label>
+        <textarea
+          id="motivo"
+          v-model="motivoRechazo"
+          rows="3"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+          placeholder="Explica brevemente el motivo del rechazo..."
+        ></textarea>
+      </div>
 
-        <div class="flex space-x-3">
-          <button
-            @click="confirmarRechazo"
-            :disabled="!!procesandoSolicitud"
-            class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span v-if="procesandoSolicitud" class="flex items-center justify-center">
-              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Procesando...
-            </span>
-            <span v-else>Confirmar rechazo</span>
-          </button>
-          <button
-            @click="cerrarModalRechazo"
-            :disabled="!!procesandoSolicitud"
-            class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Cancelar
-          </button>
-        </div>
+      <div class="flex space-x-3 justify-end mt-4">
+        <button
+          @click="cerrarModalRechazo"
+          :disabled="!!procesandoSolicitud"
+          class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200"
+        >
+          Cancelar
+        </button>
+        <button
+          @click="confirmarRechazo"
+          :disabled="!!procesandoSolicitud"
+          class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 flex items-center"
+        >
+          <span v-if="procesandoSolicitud" class="mr-2">
+            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          </span>
+          {{ procesandoSolicitud ? 'Procesando...' : 'Confirmar rechazo' }}
+        </button>
       </div>
     </div>
-  </div>
+  </BaseModal>
 
   <!-- Modal de calificación -->
-  <div v-if="modalCalificacionVisible" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-      <div class="mt-3">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Calificar arrendatario</h3>
-        
-        <div v-if="reservaAcalificar" class="mb-4 p-3 bg-gray-50 rounded-md">
-          <p class="text-sm text-gray-600">
-            <strong>Arrendatario:</strong> {{ reservaAcalificar.usuario?.nombre }} {{ reservaAcalificar.usuario?.apellido }}
-          </p>
-          <p class="text-sm text-gray-600">
-            <strong>Equipo:</strong> {{ reservaAcalificar.publicacion?.titulo }}
-          </p>
-        </div>
-        
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Calificación
-          </label>
-          <div class="flex items-center space-x-1">
-            <button
-              v-for="star in 5"
-              :key="star"
-              @click="calificacion = star"
-              class="text-2xl focus:outline-none"
-              :class="star <= calificacion ? 'text-yellow-400' : 'text-gray-300'"
-            >
-              ★
-            </button>
-            <span class="ml-2 text-sm text-gray-600">({{ calificacion }}/5)</span>
-          </div>
-        </div>
-
-        <div class="mb-4">
-          <label for="comentario" class="block text-sm font-medium text-gray-700 mb-2">
-            Comentario (opcional)
-          </label>
-          <textarea
-            id="comentario"
-            v-model="comentarioCalificacion"
-            rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Comparte tu experiencia con este arrendatario..."
-          ></textarea>
-        </div>
-
-        <div class="flex space-x-3">
+  <BaseModal
+    :isOpen="modalCalificacionVisible"
+    title="Calificar arrendatario"
+    @close="cerrarModalCalificacion"
+  >
+    <div class="mt-2">
+      <div v-if="reservaAcalificar" class="mb-4 p-3 bg-gray-50 rounded-md">
+        <p class="text-sm text-gray-600">
+          <strong>Arrendatario:</strong> {{ reservaAcalificar.usuario?.nombre }} {{ reservaAcalificar.usuario?.apellido }}
+        </p>
+        <p class="text-sm text-gray-600">
+          <strong>Equipo:</strong> {{ reservaAcalificar.publicacion?.titulo }}
+        </p>
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Calificación
+        </label>
+        <div class="flex items-center space-x-1">
           <button
-            @click="enviarCalificacion"
-            :disabled="enviandoCalificacion"
-            class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            v-for="star in 5"
+            :key="star"
+            @click="calificacion = star"
+            class="text-2xl focus:outline-none"
+            :class="star <= calificacion ? 'text-yellow-400' : 'text-gray-300'"
           >
-            <span v-if="enviandoCalificacion" class="flex items-center justify-center">
-              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Enviando...
-            </span>
-            <span v-else>Enviar calificación</span>
+            ★
           </button>
-          <button
-            @click="cerrarModalCalificacion"
-            :disabled="enviandoCalificacion"
-            class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Cancelar
-          </button>
+          <span class="ml-2 text-sm text-gray-600">({{ calificacion }}/5)</span>
         </div>
       </div>
+
+      <div class="mb-4">
+        <label for="comentario" class="block text-sm font-medium text-gray-700 mb-2">
+          Comentario (opcional)
+        </label>
+        <textarea
+          id="comentario"
+          v-model="comentarioCalificacion"
+          rows="3"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Comparte tu experiencia con este arrendatario..."
+        ></textarea>
+      </div>
+
+      <div class="flex space-x-3 justify-end mt-4">
+        <button
+          @click="cerrarModalCalificacion"
+          :disabled="enviandoCalificacion"
+          class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200"
+        >
+          Cancelar
+        </button>
+        <button
+          @click="enviarCalificacion"
+          :disabled="enviandoCalificacion"
+          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center"
+        >
+          <span v-if="enviandoCalificacion" class="mr-2">
+            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          </span>
+          {{ enviandoCalificacion ? 'Enviando...' : 'Enviar calificación' }}
+        </button>
+      </div>
     </div>
-  </div>
+  </BaseModal>
+
+  <!-- Modal de confirmación genérico -->
+  <BaseModal
+    :isOpen="modalConfirmacionVisible"
+    :title="modalConfirmacionTitulo"
+    @close="cerrarModalConfirmacion"
+  >
+    <div class="mt-2">
+      <p class="text-sm text-gray-500 whitespace-pre-line">{{ modalConfirmacionMensaje }}</p>
+    </div>
+    <template #footer>
+      <button
+        @click="cerrarModalConfirmacion"
+        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200"
+      >
+        Cancelar
+      </button>
+      <button
+        @click="ejecutarAccionConfirmada"
+        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+      >
+        Confirmar
+      </button>
+    </template>
+  </BaseModal>
+
+  <!-- Toast Notificaciones -->
+  <BaseToast
+    :visible="toastVisible"
+    :title="toastTitle"
+    :message="toastMessage"
+    :type="toastType"
+    @close="toastVisible = false"
+    @update:visible="toastVisible = $event"
+  />
 </template>
 
 <script setup lang="ts">
@@ -945,6 +979,9 @@ import { ref, onMounted, computed, watch, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { publicacionesService, reservasService } from '../services/api'
 import type { Publicacion } from '../services/api'
+import BaseModal from '../components/common/BaseModal.vue'
+import BaseToast from '../components/common/BaseToast.vue'
+
 let bc: BroadcastChannel | null = null
 
 // Tipos para las solicitudes
@@ -1007,45 +1044,35 @@ const highlightSolicitudId = ref<string | null>(null)
 const focusReservaId = ref<string | null>(null)
 const highlightReservaId = ref<string | null>(null)
 
-// Función de notificación nativa
+// Estado para Toast y Modals
+const toastVisible = ref(false)
+const toastTitle = ref('')
+const toastMessage = ref('')
+const toastType = ref<'success' | 'error' | 'info'>('info')
+
+const modalConfirmacionVisible = ref(false)
+const modalConfirmacionTitulo = ref('')
+const modalConfirmacionMensaje = ref('')
+const accionConfirmada = ref<(() => Promise<void>) | null>(null)
+
+// Función de notificación
 const mostrarNotificacion = (mensaje: string, tipo: 'success' | 'error' = 'success', offsetPx: number = 16) => {
-  try {
-    // Crear elemento de notificación
-    const notificacion = document.createElement('div')
-    notificacion.className = `fixed right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-all duration-300 ${
-      tipo === 'success' ? 'bg-green-500' : 'bg-red-500'
-    }`
-    notificacion.textContent = mensaje
-    notificacion.style.top = `${offsetPx}px`
-    
-    // Estilos iniciales para animación
-    notificacion.style.transform = 'translateX(100%)'
-    notificacion.style.opacity = '0'
-    
-    // Agregar al DOM
-    document.body.appendChild(notificacion)
-    
-    // Animar entrada
-    setTimeout(() => {
-      notificacion.style.transform = 'translateX(0)'
-      notificacion.style.opacity = '1'
-    }, 10)
-    
-    // Remover después de 3 segundos
-    setTimeout(() => {
-      notificacion.style.transform = 'translateX(100%)'
-      notificacion.style.opacity = '0'
-      setTimeout(() => {
-        if (document.body.contains(notificacion)) {
-          document.body.removeChild(notificacion)
-        }
-      }, 300)
-    }, 3000)
-  } catch (error) {
-    console.error('Error en mostrarNotificacion:', error)
-    // Fallback: usar alert nativo
-    alert(`${tipo === 'success' ? '✅' : '❌'} ${mensaje}`)
+  toastTitle.value = tipo === 'success' ? 'Éxito' : 'Error'
+  toastMessage.value = mensaje
+  toastType.value = tipo
+  toastVisible.value = true
+}
+
+const ejecutarAccionConfirmada = async () => {
+  if (accionConfirmada.value) {
+    await accionConfirmada.value()
   }
+  cerrarModalConfirmacion()
+}
+
+const cerrarModalConfirmacion = () => {
+  modalConfirmacionVisible.value = false
+  accionConfirmada.value = null
 }
 
 // Watcher temporal para debug
@@ -1454,22 +1481,23 @@ const cargarHistorialReservas = async () => {
 // Métodos - Acciones de Reservas
 
 const finalizarReserva = async (reservaId: string) => {
-  if (!confirm('¿Confirmas que el instrumento ha sido devuelto y deseas finalizar la reserva?')) {
-    return
+  modalConfirmacionTitulo.value = 'Finalizar reserva'
+  modalConfirmacionMensaje.value = '¿Confirmas que el instrumento ha sido devuelto y deseas finalizar la reserva?'
+  accionConfirmada.value = async () => {
+    try {
+      cargandoReservasActivas.value = true
+      await reservasService.finalizarReserva(reservaId)
+      mostrarNotificacion('Reserva finalizada exitosamente', 'success')
+      
+      // Recargar reservas activas
+      await cargarReservasActivas()
+    } catch (err: any) {
+      console.error('Error al finalizar reserva:', err)
+      mostrarNotificacion(err.response?.data?.message || 'Error al finalizar la reserva', 'error')
+      cargandoReservasActivas.value = false
+    }
   }
-  
-  try {
-    cargandoReservasActivas.value = true
-    await reservasService.finalizarReserva(reservaId)
-    mostrarNotificacion('Reserva finalizada exitosamente', 'success')
-    
-    // Recargar reservas activas
-    await cargarReservasActivas()
-  } catch (err: any) {
-    console.error('Error al finalizar reserva:', err)
-    mostrarNotificacion(err.response?.data?.message || 'Error al finalizar la reserva', 'error')
-    cargandoReservasActivas.value = false
-  }
+  modalConfirmacionVisible.value = true
 }
 
 const verDetalleReserva = (reservaId: string) => {
@@ -1572,13 +1600,10 @@ const editarPublicacion = (id: string) => {
 }
 
 const confirmarEliminar = (publicacion: Publicacion) => {
-  const confirmacion = confirm(
-    `¿Estás seguro de que quieres eliminar la publicación "${publicacion.titulo}"?\n\nEsta acción no se puede deshacer.`
-  )
-  
-  if (confirmacion) {
-    eliminarPublicacion(publicacion.id)
-  }
+  modalConfirmacionTitulo.value = 'Eliminar publicación'
+  modalConfirmacionMensaje.value = `¿Estás seguro de que quieres eliminar la publicación "${publicacion.titulo}"?\n\nEsta acción no se puede deshacer.`
+  accionConfirmada.value = async () => await eliminarPublicacion(publicacion.id)
+  modalConfirmacionVisible.value = true
 }
 
 const eliminarPublicacion = async (id: string) => {
@@ -1592,10 +1617,10 @@ const eliminarPublicacion = async (id: string) => {
     }
     
     // Mostrar mensaje de éxito
-    alert('Publicación eliminada exitosamente')
+    mostrarNotificacion('Publicación eliminada exitosamente', 'success')
   } catch (err: any) {
     console.error('Error al eliminar publicación:', err)
-    alert(err.response?.data?.message || 'Error al eliminar la publicación')
+    mostrarNotificacion(err.response?.data?.message || 'Error al eliminar la publicación', 'error')
   } finally {
     eliminando.value = null
   }

@@ -370,6 +370,34 @@
       </div>
       
     </main>
+
+    <BaseToast
+      :visible="toastVisible"
+      :title="toastTitle"
+      :message="toastMessage"
+      :type="toastType"
+      @close="toastVisible = false"
+    />
+
+    <BaseModal
+      :isOpen="modalExitoVisible"
+      title="¡Solicitud enviada!"
+      @close="cerrarModalExito"
+    >
+      <div class="text-center py-4">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+          <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <p class="text-gray-700">Tu solicitud de alquiler ha sido enviada al propietario. Te notificaremos cuando sea aprobada.</p>
+      </div>
+      <template #footer>
+        <button @click="cerrarModalExito" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+          Entendido
+        </button>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -382,6 +410,8 @@ import type { Publicacion, ReservaActiva, CrearReservaRequest } from '../service
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import ImagenesUploader from '../components/ImagenesUploader.vue'
+import BaseToast from '../components/common/BaseToast.vue'
+import BaseModal from '../components/common/BaseModal.vue'
 
 // Composables
 const route = useRoute()
@@ -391,6 +421,25 @@ const router = useRouter()
 const publicacion = ref<Publicacion | null>(null)
 const cargando = ref(false)
 const error = ref<string | null>(null)
+
+const toastVisible = ref(false)
+const toastMessage = ref('')
+const toastTitle = ref('Notificación')
+const toastType = ref<'success' | 'error' | 'info'>('info')
+
+const modalExitoVisible = ref(false)
+
+const mostrarToast = (mensaje: string, tipo: 'success' | 'error' | 'info' = 'info', titulo?: string) => {
+  toastMessage.value = mensaje
+  toastType.value = tipo
+  toastTitle.value = titulo || (tipo === 'success' ? 'Éxito' : tipo === 'error' ? 'Error' : 'Información')
+  toastVisible.value = true
+}
+
+const cerrarModalExito = () => {
+  modalExitoVisible.value = false
+  router.push('/mis-reservas')
+}
 
 const usuarioAutenticado = ref(false)
 const datosUsuario = ref<any>(null)
@@ -735,15 +784,15 @@ const formatearRangoFechas = (dates: Date[]) => {
 const contactarPropietario = async () => {
   // Validar rango antes de continuar
   if (!fechaInicio.value || !fechaFin.value) {
-    alert('Selecciona un rango de fechas para continuar.')
+    mostrarToast('Selecciona un rango de fechas para continuar.', 'error')
     return
   }
   if (mensajeErrorFechas.value) {
-    alert(mensajeErrorFechas.value)
+    mostrarToast(mensajeErrorFechas.value, 'error')
     return
   }
   if (disponibilidadRango.value === false) {
-    alert('El instrumento no está disponible en el rango seleccionado.')
+    mostrarToast('El instrumento no está disponible en el rango seleccionado.', 'error')
     return
   }
 
@@ -778,7 +827,7 @@ const contactarPropietario = async () => {
     // Usuario autenticado - crear la reserva
     try {
       if (!publicacion.value || !datosUsuario.value) {
-        alert('Error: No se pudo obtener la información necesaria.')
+        mostrarToast('Error: No se pudo obtener la información necesaria.', 'error')
         return
       }
 
@@ -801,16 +850,14 @@ const contactarPropietario = async () => {
       const resultado = await reservasService.crearReserva(datosReserva)
       
       if (resultado.success) {
-        alert(`¡Solicitud enviada exitosamente! Tu solicitud de alquiler ha sido enviada al propietario. Te notificaremos cuando sea aprobada.`)
-        // Redirigir a mis reservas para ver la solicitud creada
-        router.push('/mis-reservas')
+        modalExitoVisible.value = true
       } else {
-        alert('Error al enviar la solicitud. Por favor, inténtalo de nuevo.')
+        mostrarToast('Error al enviar la solicitud. Por favor, inténtalo de nuevo.', 'error')
       }
     } catch (error: any) {
       console.error('Error creando reserva:', error)
       const mensaje = error.response?.data?.message || error.message || 'Error desconocido'
-      alert(`Error al enviar la solicitud: ${mensaje}`)
+      mostrarToast(`Error al enviar la solicitud: ${mensaje}`, 'error')
     }
   }
 }
