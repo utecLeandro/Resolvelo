@@ -84,8 +84,8 @@ export class ReservasService {
       throw new BadRequestException('Las fechas proporcionadas no son válidas');
     }
 
-    if (inicio <= ahora) {
-      throw new BadRequestException('La fecha de inicio debe ser en el futuro');
+    if (inicio < ahora) {
+      throw new BadRequestException('La fecha de inicio debe ser en el futuro o el día actual');
     }
 
     if (fin < inicio) {

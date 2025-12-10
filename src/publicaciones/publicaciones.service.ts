@@ -762,6 +762,15 @@ export class PublicacionesService {
       fechaInicio.setHours(0, 0, 0, 0);
       fechaFin.setHours(0, 0, 0, 0);
 
+      const ahora = new Date();
+      ahora.setHours(0, 0, 0, 0);
+
+      if (fechaInicio < ahora) {
+        throw new BadRequestException(
+          'El rango de fechas no puede comenzar en el pasado',
+        );
+      }
+
       if (fechaInicio > fechaFin) {
         throw new BadRequestException(
           'El rango de fechas es inválido: fechaInicio es posterior a fechaFin',
