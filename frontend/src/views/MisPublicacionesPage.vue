@@ -1056,7 +1056,7 @@ const modalConfirmacionMensaje = ref('')
 const accionConfirmada = ref<(() => Promise<void>) | null>(null)
 
 // Función de notificación
-const mostrarNotificacion = (mensaje: string, tipo: 'success' | 'error' = 'success', offsetPx: number = 16) => {
+const mostrarNotificacion = (mensaje: string, tipo: 'success' | 'error' = 'success') => {
   toastTitle.value = tipo === 'success' ? 'Éxito' : 'Error'
   toastMessage.value = mensaje
   toastType.value = tipo
@@ -1326,7 +1326,7 @@ const aprobarSolicitud = async (solicitud: SolicitudReserva) => {
       window.dispatchEvent(evento)
       
       // Mostrar mensaje de éxito
-      mostrarNotificacion('Solicitud aprobada exitosamente', 'success', 64)
+      mostrarNotificacion('Solicitud aprobada exitosamente', 'success')
       
       // Recargar solo las publicaciones (para actualizar estadísticas)
       await cargarPublicaciones()
