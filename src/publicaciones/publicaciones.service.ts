@@ -790,8 +790,8 @@ export class PublicacionesService {
           },
           NOT: {
             OR: [
-              { fechaFin: { lt: fechaInicio } },
-              { fechaInicio: { gt: fechaFin } },
+              { fechaFin: { lte: fechaInicio } },
+              { fechaInicio: { gte: fechaFin } },
             ],
           },
         },
@@ -968,8 +968,8 @@ export class PublicacionesService {
           },
           NOT: {
             OR: [
-              { fechaFin: { lt: fechaInicio } }, // Reserva termina estrictamente antes de que inicie el rango
-              { fechaInicio: { gt: fechaFin } }, // Reserva inicia estrictamente después de que termine el rango
+              { fechaFin: { lte: fechaInicio } }, // Reserva termina estrictamente antes de que inicie el rango
+              { fechaInicio: { gte: fechaFin } }, // Reserva inicia estrictamente después de que termine el rango
             ],
           },
         },
