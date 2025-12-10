@@ -123,7 +123,7 @@ const imagenPrincipalUrl = computed(() => {
   return target?.url || ''
 })
 
-const formatearFecha = (fecha?: string) => fecha ? new Date(fecha).toLocaleDateString('es-UY', { year: 'numeric', month: 'long', day: 'numeric' }) : '-'
+const formatearFecha = (fecha?: string) => fecha ? new Date(fecha).toLocaleDateString('es-UY', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : '-'
 const calcularDias = (inicioStr: string, finStr: string) => {
   const inicio = new Date(inicioStr)
   const fin = new Date(finStr)
