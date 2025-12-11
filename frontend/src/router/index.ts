@@ -252,6 +252,14 @@ router.beforeEach((to, from, next) => {
       return next({ name: 'Login', query: { redirect } })
     }
   }
+  
+  // Actualizar título de la página
+  if (to.meta && to.meta.title) {
+    document.title = to.meta.title as string
+  } else {
+    document.title = 'ReSolVelo'
+  }
+
   next()
 })
 
