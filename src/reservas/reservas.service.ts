@@ -414,6 +414,9 @@ export class ReservasService {
   }
 
   async finalizarReserva(id: string) {
+    // Generar liquidación para el propietario
+    await this.transaccionesService.generarLiquidacion(BigInt(id));
+
     return this.actualizarReserva(id, { estado: EstadoReserva.COMPLETADA });
   }
 

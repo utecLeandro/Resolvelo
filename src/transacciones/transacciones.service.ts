@@ -41,6 +41,83 @@ export class TransaccionesService {
   ) {}
 
   /**
+   * Genera una liquidación pendiente para el propietario
+   */
+  async generarLiquidacion(reservaId: bigint) {
+    try {
+      // 1. Verificar si ya existe liquidación para esta reserva
+      const liquidacionExistente = await this.prisma.transaccion.findFirst({
+        where: {
+          reservaId: reservaId,
+          tipo: 'LIQUIDACION',
+        },
+      });
+
+      if (liquidacionExistente) {
+        return liquidacionExistente;
+      }
+
+      // 2. Obtener datos de la reserva y el pago original
+      const reserva = await this.prisma.reserva.findUnique({
+        where: { id: reservaId },
+        include: {
+          transacciones: {
+            where: {
+              tipo: 'PAGO_RESERVA',
+              estado: 'COMPLETADA',
+            },
+          },
+        },
+      });
+
+      if (!reserva) {
+        throw new NotFoundException('Reserva no encontrada');
+      }
+
+      const pagoOriginal = reserva.transacciones[0];
+      if (!pagoOriginal) {
+        // Si no hay pago original, no generamos liquidación (ej. reserva gratuita o error)
+        console.warn(
+          `Intento de liquidación sin pago previo para reserva ${reservaId}`,
+        );
+        return null;
+      }
+
+      // 3. Calcular montos
+      // Usamos los montos guardados en el pago original si existen, o recalculamos
+      const montoTotal = Number(pagoOriginal.monto);
+      const comisionPlataforma = Number(
+        pagoOriginal.comisionPlataforma || montoTotal * 0.03,
+      );
+      const comisionPasarela = Number(
+        pagoOriginal.comisionPasarela || montoTotal * 0.02,
+      );
+      const montoLiquidar = montoTotal - comisionPlataforma - comisionPasarela;
+
+      // 4. Crear transacción de liquidación
+      return await this.prisma.transaccion.create({
+        data: {
+          tipo: 'LIQUIDACION',
+          estado: 'PENDIENTE', // Queda pendiente para pago manual
+          monto: montoLiquidar,
+          montoNeto: montoLiquidar,
+          comisionPlataforma: comisionPlataforma,
+          comisionPasarela: comisionPasarela,
+          descripcion: `Liquidación por alquiler #${reservaId}`,
+          usuarioId: reserva.propietarioId,
+          reservaId: reservaId,
+          fechaProcesamiento: new Date(),
+        },
+      });
+    } catch (error) {
+      console.error(`Error generando liquidación: ${error.message}`);
+      // No lanzamos excepción para no romper el flujo de finalización de reserva,
+      // pero logueamos el error grave.
+      return null;
+    }
+  }
+
+  /**
    * Simula el procesamiento de un pago externo
    * Por ahora siempre devuelve aprobado
    */
