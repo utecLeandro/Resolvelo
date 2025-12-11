@@ -133,4 +133,28 @@ export class TransaccionesController {
     );
     return tx;
   }
+
+  // --- Endpoints para Admin / Liquidaciones ---
+
+  @Get('liquidaciones/pendientes')
+  // @Roles('ADMIN') // TODO: Descomentar cuando tengamos RolesGuard
+  async obtenerLiquidacionesPendientes() {
+    return this.transaccionesService.obtenerLiquidacionesPendientes();
+  }
+
+  @Put('liquidaciones/:id/completar')
+  // @Roles('ADMIN') // TODO: Descomentar cuando tengamos RolesGuard
+  async completarLiquidacion(
+    @Param('id') id: string,
+    @Body() body: { referenciaPago: string; notas?: string },
+  ) {
+    if (!body.referenciaPago) {
+      throw new BadRequestException('Se requiere una referencia de pago');
+    }
+    return this.transaccionesService.marcarLiquidacionCompletada(
+      id,
+      body.referenciaPago,
+      body.notas,
+    );
+  }
 }

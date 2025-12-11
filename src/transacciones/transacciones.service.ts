@@ -118,6 +118,98 @@ export class TransaccionesService {
   }
 
   /**
+   * Obtiene liquidaciones pendientes (Para Admin)
+   */
+  async obtenerLiquidacionesPendientes() {
+    try {
+      return await this.prisma.transaccion.findMany({
+        where: {
+          tipo: 'LIQUIDACION',
+          estado: 'PENDIENTE',
+        },
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              email: true,
+              telefono: true,
+            },
+          },
+          reserva: {
+            include: {
+              publicacion: {
+                select: {
+                  titulo: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          fechaCreacion: 'asc',
+        },
+      });
+    } catch (error) {
+      throw new BadRequestException(
+        `Error al obtener liquidaciones pendientes: ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+
+  /**
+   * Marca una liquidación como completada (Pago realizado manualmente)
+   */
+  async marcarLiquidacionCompletada(
+    id: string,
+    referenciaPago: string,
+    notas?: string,
+  ) {
+    try {
+      const liquidacion = await this.prisma.transaccion.findUnique({
+        where: { id: BigInt(id) },
+      });
+
+      if (!liquidacion) {
+        throw new NotFoundException('Liquidación no encontrada');
+      }
+
+      if (liquidacion.tipo !== 'LIQUIDACION') {
+        throw new BadRequestException(
+          'La transacción no es de tipo LIQUIDACION',
+        );
+      }
+
+      if (liquidacion.estado !== 'PENDIENTE') {
+        throw new BadRequestException(
+          `La liquidación ya está en estado ${liquidacion.estado}`,
+        );
+      }
+
+      return await this.prisma.transaccion.update({
+        where: { id: BigInt(id) },
+        data: {
+          estado: 'COMPLETADA',
+          fechaCompletado: new Date(),
+          referenciaExterna: referenciaPago,
+          notasInternas: notas,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Error al completar liquidación: ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+
+  /**
    * Simula el procesamiento de un pago externo
    * Por ahora siempre devuelve aprobado
    */
