@@ -32,6 +32,7 @@ import GubUySimuladoPage from '../views/GubUySimuladoPage.vue'
 import AdminUsersPage from '../views/AdminUsersPage.vue'
 import AdminHomePage from '../views/AdminHomePage.vue'
 import AdminPublicacionesPage from '../views/AdminPublicacionesPage.vue'
+import AdminLiquidacionesPage from '../views/AdminLiquidacionesPage.vue'
 
 // Definición de rutas de la aplicación
 const routes: RouteRecordRaw[] = [
@@ -65,6 +66,16 @@ const routes: RouteRecordRaw[] = [
     meta: {
       title: 'Gestión de Publicaciones - ReSolVelo',
       description: 'Listado y moderación de publicaciones',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/admin/liquidaciones',
+    name: 'AdminLiquidaciones',
+    component: AdminLiquidacionesPage,
+    meta: {
+      title: 'Gestión de Liquidaciones - ReSolVelo',
+      description: 'Pagos pendientes a propietarios',
       requiresAuth: true,
     },
   },
