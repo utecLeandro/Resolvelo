@@ -216,6 +216,61 @@ export class TransaccionesService {
   }
 
   /**
+   * Reembolsa una transacción completada asociada a una reserva
+   */
+  async reembolsarTransaccion(reservaId: bigint) {
+    try {
+      // 1. Buscar la transacción completada
+      const transaccion = await this.prisma.transaccion.findFirst({
+        where: {
+          reservaId: reservaId,
+          estado: 'COMPLETADA',
+        },
+      });
+
+      if (!transaccion) {
+        // No hay transacción para reembolsar, no es un error, simplemente no hacemos nada
+        return null;
+      }
+
+      if (!transaccion.referenciaExterna) {
+        throw new BadRequestException(
+          'No se puede reembolsar una transacción sin referencia externa',
+        );
+      }
+
+      // 2. Realizar reembolso en MercadoPago
+      // Usamos axios directamente para asegurar compatibilidad con la API de refunds
+      await axios.post(
+        `https://api.mercadopago.com/v1/payments/${transaccion.referenciaExterna}/refunds`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${MP_DEFAULT_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
+            'X-Idempotency-Key': `refund-${transaccion.id}`,
+          },
+        },
+      );
+
+      // 3. Actualizar estado de la transacción
+      const transaccionReembolsada = await this.prisma.transaccion.update({
+        where: { id: transaccion.id },
+        data: {
+          estado: 'REEMBOLSADA',
+        },
+      });
+
+      return transaccionReembolsada;
+    } catch (error) {
+      console.error('Error al reembolsar transacción:', error);
+      throw new BadRequestException(
+        `Error al reembolsar transacción: ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+
+  /**
    * Obtener transacciones de un usuario
    */
   async obtenerTransaccionesUsuario(usuarioId: string) {
