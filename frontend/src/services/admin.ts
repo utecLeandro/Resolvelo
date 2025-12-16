@@ -10,38 +10,6 @@ export interface UsuarioAdminListItem {
   activo: boolean
   estadoVerificacion: string
   fechaCreacion: string
-  // ===================== LIQUIDACIONES (PAGOS A PROPIETARIOS) =====================
-  
-  /**
-   * Obtiene la lista de liquidaciones pendientes para revisión del admin.
-   */
-  async obtenerLiquidacionesPendientes(): Promise<any[]> {
-    const response = await api.get('/transacciones/liquidaciones/pendientes')
-    if (response.status !== 200) {
-      const mensaje = (response.data && (response.data.message || response.data.error)) || 'Error al obtener liquidaciones'
-      const err: any = new Error(mensaje)
-      err.response = response
-      throw err
-    }
-    return response.data
-  },
-
-  /**
-   * Marca una liquidación como completada manualmente por el admin.
-   */
-  async completarLiquidacion(id: string, referenciaPago: string, notas?: string): Promise<any> {
-    const response = await api.put(`/transacciones/liquidaciones/${id}/completar`, {
-      referenciaPago,
-      notas
-    })
-    if (response.status !== 200) {
-      const mensaje = (response.data && (response.data.message || response.data.error)) || 'Error al completar liquidación'
-      const err: any = new Error(mensaje)
-      err.response = response
-      throw err
-    }
-    return response.data
-  }
 }
 
 export interface RespuestaUsuariosAdmin {
@@ -164,39 +132,6 @@ export const adminService = {
     }
     return response.data
   },
-
-  // ===================== LIQUIDACIONES (PAGOS A PROPIETARIOS) =====================
-  
-  /**
-   * Obtiene la lista de liquidaciones pendientes para revisión del admin.
-   */
-  async obtenerLiquidacionesPendientes(): Promise<any[]> {
-    const response = await api.get('/transacciones/liquidaciones/pendientes')
-    if (response.status !== 200) {
-      const mensaje = (response.data && (response.data.message || response.data.error)) || 'Error al obtener liquidaciones'
-      const err: any = new Error(mensaje)
-      err.response = response
-      throw err
-    }
-    return response.data
-  },
-
-  /**
-   * Marca una liquidación como completada manualmente por el admin.
-   */
-  async completarLiquidacion(id: string, referenciaPago: string, notas?: string): Promise<any> {
-    const response = await api.put(`/transacciones/liquidaciones/${id}/completar`, {
-      referenciaPago,
-      notas
-    })
-    if (response.status !== 200) {
-      const mensaje = (response.data && (response.data.message || response.data.error)) || 'Error al completar liquidación'
-      const err: any = new Error(mensaje)
-      err.response = response
-      throw err
-    }
-    return response.data
-  }
 }
 
 export default adminService

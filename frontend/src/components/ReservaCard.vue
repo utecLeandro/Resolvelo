@@ -321,8 +321,7 @@ const formatearFecha = (fecha: string): string => {
   return new Date(fecha).toLocaleDateString('es-UY', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC'
+    day: 'numeric'
   })
 }
 

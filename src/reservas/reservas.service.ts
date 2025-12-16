@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
-import { TransaccionesService } from '../transacciones/transacciones.service';
 import { CrearReservaDto } from './dto/crear-reserva.dto';
 import { emailTemplates } from '../email/email.templates';
 import { EstadoReserva } from '@prisma/client';
@@ -19,7 +18,6 @@ export class ReservasService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
-    private readonly transaccionesService: TransaccionesService,
   ) {}
 
   async crearReserva(crearReservaDto: CrearReservaDto) {
@@ -77,22 +75,17 @@ export class ReservasService {
     const fin = new Date(fechaFin);
     const ahora = new Date();
 
-    // Normalizar fechas a medianoche para evitar problemas con la hora actual
-    inicio.setHours(0, 0, 0, 0);
-    fin.setHours(0, 0, 0, 0);
-    ahora.setHours(0, 0, 0, 0);
-
     if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
       throw new BadRequestException('Las fechas proporcionadas no son válidas');
     }
 
-    if (inicio < ahora) {
-      throw new BadRequestException('La fecha de inicio debe ser en el futuro o el día actual');
+    if (inicio <= ahora) {
+      throw new BadRequestException('La fecha de inicio debe ser en el futuro');
     }
 
-    if (fin < inicio) {
+    if (fin <= inicio) {
       throw new BadRequestException(
-        'La fecha de fin debe ser posterior o igual a la fecha de inicio',
+        'La fecha de fin debe ser posterior a la fecha de inicio',
       );
     }
 
@@ -147,8 +140,7 @@ export class ReservasService {
 
     // Enviar correo al propietario
     try {
-      const frontendUrl = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
-      const linkGestion = `${frontendUrl}/reservas-recibidas`;
+      const linkGestion = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reservas-recibidas`;
       await this.emailService.sendMail(
         reserva.propietario.email,
         `Nueva solicitud de reserva: ${reserva.publicacion.titulo}`,
@@ -163,7 +155,7 @@ export class ReservasService {
       );
 
       // Enviar correo de confirmación al arrendatario
-      const linkDetalle = `${frontendUrl}/mis-reservas`;
+      const linkDetalle = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/mis-reservas`;
       await this.emailService.sendMail(
         reserva.usuario.email,
         `Solicitud enviada: ${reserva.publicacion.titulo}`,
@@ -361,19 +353,6 @@ export class ReservasService {
   }
 
   async rechazarReserva(id: string) {
-    // Intentar reembolsar si existe pago
-    try {
-      await this.transaccionesService.reembolsarTransaccion(BigInt(id));
-    } catch (error) {
-      this.logger.error(
-        `Error al intentar reembolsar reserva rechazada ${id}: ${error.message}`,
-      );
-      // No detenemos el rechazo si falla el reembolso, pero lo logueamos.
-      // O quizás deberíamos detenerlo? El usuario dijo "reembolso automático".
-      // Si falla, queda el dinero retenido. Mejor lanzar error o al menos asegurar que el admin se entere.
-      // Por ahora logueamos error pero permitimos rechazo para no bloquear flujo,
-      // aunque idealmente debería ser transaccional.
-    }
     return this.actualizarReserva(id, { estado: EstadoReserva.RECHAZADA });
   }
 
@@ -385,38 +364,10 @@ export class ReservasService {
   }
 
   async cancelarReserva(id: string) {
-    // Verificar si corresponde reembolso: Solo si la fecha de inicio es futura
-    const reserva = await this.prisma.reserva.findUnique({
-      where: { id: BigInt(id) },
-    });
-
-    if (reserva) {
-      const fechaInicio = new Date(reserva.fechaInicio);
-      const hoy = new Date();
-
-      // Si la reserva aún no ha comenzado, procedemos con el reembolso
-      if (fechaInicio > hoy) {
-        try {
-          await this.transaccionesService.reembolsarTransaccion(BigInt(id));
-        } catch (error) {
-          this.logger.error(
-            `Error al intentar reembolsar reserva cancelada ${id}: ${error.message}`,
-          );
-        }
-      } else {
-        this.logger.log(
-          `Reserva ${id} cancelada después del inicio. No se procesa reembolso automático.`,
-        );
-      }
-    }
-
     return this.actualizarReserva(id, { estado: EstadoReserva.CANCELADA });
   }
 
   async finalizarReserva(id: string) {
-    // Generar liquidación para el propietario
-    await this.transaccionesService.generarLiquidacion(BigInt(id));
-
     return this.actualizarReserva(id, { estado: EstadoReserva.COMPLETADA });
   }
 
@@ -450,7 +401,6 @@ export class ReservasService {
               imagenes: true,
             },
           },
-          transacciones: true,
         },
         orderBy: { fechaInicio: 'asc' },
       });
@@ -562,12 +512,8 @@ export class ReservasService {
 
       // Enviar notificaciones por cambio de estado
       if (actual && anterior !== actual) {
-        this.logger.log(
-          `📧 Intentando enviar notificación. Cambio de estado: ${anterior} -> ${actual} (Reserva: ${id})`,
-        );
         try {
-          const frontendUrl = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
-          const linkDetalle = `${frontendUrl}/mis-reservas`;
+          const linkDetalle = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/mis-reservas`;
           await this.emailService.sendMail(
             reserva.usuario.email,
             `Actualización de reserva: ${reserva.publicacion.titulo}`,
@@ -587,10 +533,6 @@ export class ReservasService {
             error instanceof Error ? error.stack : error,
           );
         }
-      } else {
-        this.logger.log(
-          `ℹ️ No se envía notificación. Actual: ${actual}, Anterior: ${anterior}, Igual: ${actual === anterior} (Reserva: ${id})`,
-        );
       }
 
       return {
