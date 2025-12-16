@@ -235,6 +235,18 @@
         </div>
       </div>
     </div>
+    <!-- Toast Notification -->
+    <div
+      v-if="toastVisible"
+      class="fixed bottom-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white flex items-center gap-3 transition-all duration-300 transform translate-y-0"
+      :class="toastType === 'success' ? 'bg-green-600' : 'bg-red-600'"
+      role="alert"
+    >
+      <span v-if="toastType === 'success'">✅</span>
+      <span v-else>⚠️</span>
+      <span class="font-medium">{{ toastMessage }}</span>
+      <button @click="toastVisible = false" class="ml-2 text-white/80 hover:text-white">✕</button>
+    </div>
   </div>
 </template>
 
@@ -247,6 +259,20 @@ const liquidaciones = ref<any[]>([])
 const showModal = ref(false)
 const selectedLiquidacion = ref<any>(null)
 const procesandoPago = ref(false)
+
+// Toast state
+const toastVisible = ref(false)
+const toastMessage = ref('')
+const toastType = ref<'success' | 'error'>('success')
+
+const mostrarToast = (mensaje: string, tipo: 'success' | 'error' = 'success') => {
+  toastMessage.value = mensaje
+  toastType.value = tipo
+  toastVisible.value = true
+  setTimeout(() => {
+    toastVisible.value = false
+  }, 4000)
+}
 
 const form = ref({
   referenciaPago: '',
@@ -276,7 +302,7 @@ const cargarLiquidaciones = async () => {
     liquidaciones.value = await adminService.obtenerLiquidacionesPendientes()
   } catch (error) {
     console.error('Error cargando liquidaciones:', error)
-    alert('Error al cargar las liquidaciones pendientes')
+    mostrarToast('Error al cargar las liquidaciones pendientes', 'error')
   } finally {
     loading.value = false
   }
@@ -308,10 +334,10 @@ const confirmarPago = async () => {
     // Éxito: recargar lista y cerrar modal
     await cargarLiquidaciones()
     cerrarModal()
-    alert('Pago registrado correctamente')
+    mostrarToast('Pago registrado correctamente', 'success')
   } catch (error) {
     console.error('Error completando liquidación:', error)
-    alert('Ocurrió un error al registrar el pago')
+    mostrarToast('Ocurrió un error al registrar el pago', 'error')
   } finally {
     procesandoPago.value = false
   }

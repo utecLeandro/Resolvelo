@@ -326,9 +326,32 @@ export class TransaccionesService {
     );
 
     // Retornar solo las que no han sido liquidadas
-    return pagosCompletados.filter(
+    const pendientes = pagosCompletados.filter(
       (p) => !reservasLiquidadasIds.has(p.reservaId),
     );
+
+    // Mapear para manejar BigInt antes de retornar
+    return pendientes.map((p) => ({
+      ...p,
+      id: p.id.toString(),
+      usuarioId: p.usuarioId.toString(),
+      reservaId: p.reservaId?.toString() || null,
+      reserva: p.reserva
+        ? {
+            ...p.reserva,
+            id: p.reserva.id.toString(),
+            usuarioId: p.reserva.usuarioId.toString(),
+            publicacionId: p.reserva.publicacionId.toString(),
+            propietarioId: p.reserva.propietarioId.toString(),
+            propietario: p.reserva.propietario
+              ? {
+                  ...p.reserva.propietario,
+                  id: p.reserva.propietario.id.toString(),
+                }
+              : null,
+          }
+        : null,
+    }));
   }
 
   /**
