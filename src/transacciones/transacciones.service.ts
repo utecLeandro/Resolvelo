@@ -318,15 +318,20 @@ export class TransaccionesService {
       // Si no hay pagos, retornar vacío directamente
       if (!pagosCompletados.length) return [];
 
-      // Filtrar aquellas que ya tienen una LIQUIDACION asociada
-      const idsReservas = pagosCompletados
-        .map((p) => p.reservaId)
-        .filter((id) => id !== null) as bigint[];
+      // Optimización: convertir a Set de strings para búsqueda O(1)
+      const idsReservasStrings = pagosCompletados
+        .map((p) => p.reservaId?.toString())
+        .filter((id): id is string => id !== undefined && id !== null);
+
+      console.log(`[TransaccionesService] Verificando liquidaciones para ${idsReservasStrings.length} reservas`);
+
+      // Convertimos los IDs de vuelta a BigInt para la query de Prisma por seguridad de tipos
+      const idsReservasBigInt = idsReservasStrings.map(id => BigInt(id));
 
       const liquidacionesExistentes = await this.prisma.transaccion.findMany({
         where: {
           tipo: 'LIQUIDACION',
-          reservaId: { in: idsReservas },
+          reservaId: { in: idsReservasBigInt },
         },
         select: { reservaId: true },
       });
@@ -335,17 +340,19 @@ export class TransaccionesService {
         liquidacionesExistentes.map((l) => l.reservaId?.toString()),
       );
 
-      // Retornar solo las que no han sido liquidadas
       const pendientes = pagosCompletados.filter(
         (p) =>
           p.reservaId &&
           !reservasLiquidadasIds.has(p.reservaId.toString()),
       );
+      
+      console.log(`[TransaccionesService] Encontradas ${pendientes.length} liquidaciones pendientes de procesar`);
 
       // Función auxiliar segura para conversión numérica
       const toNum = (val: any) => {
         if (val === null || val === undefined) return 0;
-        return Number(val);
+        const num = Number(val);
+        return isNaN(num) ? 0 : num;
       };
 
       // Función auxiliar segura para conversión a string (BigInt o IDs)
@@ -356,56 +363,62 @@ export class TransaccionesService {
 
       // Mapear con validaciones extremas para evitar errores con datos antiguos o inconsistentes
       const resultados = pendientes.map((p) => {
-        let reservaSafe = null;
+        try {
+          let reservaSafe = null;
 
-        if (p.reserva) {
-          // Verificar existencia de relaciones anidadas
-          const propietario = p.reserva.propietario
-            ? {
-                ...p.reserva.propietario,
-                id: toStr(p.reserva.propietario.id),
-              }
-            : null;
+          if (p.reserva) {
+            // Verificar existencia de relaciones anidadas
+            const propietario = p.reserva.propietario
+              ? {
+                  ...p.reserva.propietario,
+                  id: toStr(p.reserva.propietario.id),
+                }
+              : null;
 
-          const publicacion = p.reserva.publicacion
-            ? {
-                titulo: p.reserva.publicacion.titulo,
-              }
-            : null; // Si no hay publicación, enviamos null o un objeto vacío seguro
+            const publicacion = p.reserva.publicacion
+              ? {
+                  titulo: p.reserva.publicacion.titulo,
+                }
+              : null;
 
-          reservaSafe = {
-            ...p.reserva,
-            id: toStr(p.reserva.id),
-            usuarioId: toStr(p.reserva.usuarioId),
-            publicacionId: toStr(p.reserva.publicacionId),
-            propietarioId: toStr(p.reserva.propietarioId),
-            precioTotal: toNum(p.reserva.precioTotal),
-            comisionPlataforma: toNum(p.reserva.comisionPlataforma),
-            deposito: toNum(p.reserva.deposito),
-            propietario,
-            publicacion, // Incluir la publicación procesada
+            reservaSafe = {
+              ...p.reserva,
+              id: toStr(p.reserva.id),
+              usuarioId: toStr(p.reserva.usuarioId),
+              publicacionId: toStr(p.reserva.publicacionId),
+              propietarioId: toStr(p.reserva.propietarioId),
+              precioTotal: toNum(p.reserva.precioTotal),
+              comisionPlataforma: toNum(p.reserva.comisionPlataforma),
+              deposito: toNum(p.reserva.deposito),
+              propietario,
+              publicacion,
+            };
+          }
+
+          return {
+            ...p,
+            id: toStr(p.id),
+            usuarioId: toStr(p.usuarioId),
+            reservaId: toStr(p.reservaId),
+            monto: toNum(p.monto),
+            comisionPlataforma: toNum(p.comisionPlataforma),
+            comisionPasarela: toNum(p.comisionPasarela),
+            montoNeto: toNum(p.montoNeto),
+            reserva: reservaSafe,
           };
+        } catch (err) {
+          console.error(`[TransaccionesService] Error procesando item ${p.id}:`, err);
+          return null;
         }
+      }).filter(item => item !== null);
 
-        return {
-          ...p,
-          id: toStr(p.id),
-          usuarioId: toStr(p.usuarioId),
-          reservaId: toStr(p.reservaId),
-          monto: toNum(p.monto),
-          comisionPlataforma: toNum(p.comisionPlataforma),
-          comisionPasarela: toNum(p.comisionPasarela),
-          montoNeto: toNum(p.montoNeto),
-          reserva: reservaSafe,
-        };
-      });
+      console.log(`[TransaccionesService] Retornando ${resultados.length} liquidaciones procesadas.`);
 
-      // Serialización final de seguridad para garantizar que no queden BigInts
-      return JSON.parse(
-        JSON.stringify(resultados, (key, value) =>
-          typeof value === 'bigint' ? value.toString() : value,
-        ),
-      );
+      // Retornar directamente los resultados ya saneados.
+      // El interceptor global (BigIntSerializerInterceptor) no encontrará BigInts ni Decimals
+      // porque ya los convertimos a string/number.
+      return resultados;
+
     } catch (error) {
       console.error(
         '❌ [TransaccionesService] Error al obtener liquidaciones pendientes:',
