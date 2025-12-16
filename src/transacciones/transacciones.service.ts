@@ -281,6 +281,113 @@ export class TransaccionesService {
   }
 
   /**
+   * Obtiene las reservas pagadas que aún no se han liquidado al propietario
+   */
+  async obtenerLiquidacionesPendientes() {
+    // Buscar transacciones de PAGO_RESERVA completadas
+    const pagosCompletados = await this.prisma.transaccion.findMany({
+      where: {
+        tipo: 'PAGO_RESERVA',
+        estado: 'COMPLETADA',
+      },
+      include: {
+        reserva: {
+          include: {
+            propietario: {
+              select: {
+                id: true,
+                nombre: true,
+                apellido: true,
+                email: true,
+                telefono: true,
+              },
+            },
+            publicacion: {
+              select: {
+                titulo: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Filtrar aquellas que ya tienen una LIQUIDACION asociada
+    const liquidacionesExistentes = await this.prisma.transaccion.findMany({
+      where: {
+        tipo: 'LIQUIDACION',
+        reservaId: { in: pagosCompletados.map((p) => p.reservaId) },
+      },
+      select: { reservaId: true },
+    });
+
+    const reservasLiquidadasIds = new Set(
+      liquidacionesExistentes.map((l) => l.reservaId),
+    );
+
+    // Retornar solo las que no han sido liquidadas
+    return pagosCompletados.filter(
+      (p) => !reservasLiquidadasIds.has(p.reservaId),
+    );
+  }
+
+  /**
+   * Marca una liquidación como completada (crea la transacción de liquidación)
+   */
+  async marcarLiquidacionCompletada(
+    idTransaccionPago: string,
+    referenciaPago: string,
+    notas?: string,
+  ) {
+    const pago = await this.prisma.transaccion.findUnique({
+      where: { id: BigInt(idTransaccionPago) },
+      include: { reserva: true },
+    });
+
+    if (!pago) {
+      throw new NotFoundException('Transacción de pago no encontrada');
+    }
+
+    if (pago.tipo !== 'PAGO_RESERVA' || pago.estado !== 'COMPLETADA') {
+      throw new BadRequestException(
+        'La transacción no es un pago de reserva completado',
+      );
+    }
+
+    // Verificar si ya existe liquidación
+    const liquidacionExistente = await this.prisma.transaccion.findFirst({
+      where: {
+        tipo: 'LIQUIDACION',
+        reservaId: pago.reservaId,
+      },
+    });
+
+    if (liquidacionExistente) {
+      throw new BadRequestException(
+        'Esta reserva ya ha sido liquidada al propietario',
+      );
+    }
+
+    // Crear la transacción de liquidación
+    return this.prisma.transaccion.create({
+      data: {
+        tipo: 'LIQUIDACION',
+        estado: 'COMPLETADA',
+        monto: pago.montoNeto || pago.monto,
+        moneda: pago.moneda,
+        metodoPago: 'TRANSFERENCIA_BANCARIA',
+        referenciaExterna: referenciaPago,
+        descripcion: `Liquidación a propietario por reserva ${pago.reservaId}`,
+        notasInternas: notas,
+        usuarioId: pago.reserva.propietarioId,
+        reservaId: pago.reservaId,
+        fechaProcesamiento: new Date(),
+        fechaCompletado: new Date(),
+      },
+    });
+  }
+
+  /**
    * Crea una preferencia de Mercado Pago y devuelve la URL para redirigir al checkout
    */
   async crearPreferenciaMercadoPago(

@@ -6,6 +6,8 @@ import {
   CreateEmailIdentityCommand,
 } from '@aws-sdk/client-sesv2';
 
+import { emailTemplates } from './email.templates';
+
 @Injectable()
 export class EmailService {
   private transporter: nodemailer.Transporter;
@@ -62,6 +64,17 @@ export class EmailService {
         error.stack,
       );
     }
+  }
+
+  /**
+   * Envía el correo de verificación de cuenta
+   */
+  async enviarCorreoVerificacion(to: string, nombre: string, token: string) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const link = `${frontendUrl}/verificar-email?token=${token}`;
+    const html = emailTemplates.bienvenida(nombre, link);
+    const subject = 'Verifica tu cuenta en ReSolVelo';
+    return this.sendMail(to, subject, html);
   }
 
   /**
