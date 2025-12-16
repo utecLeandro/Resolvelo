@@ -342,37 +342,63 @@ export class TransaccionesService {
           !reservasLiquidadasIds.has(p.reservaId.toString()),
       );
 
-      // Mapear para manejar BigInt antes de retornar y asegurar serialización segura
-      const resultados = pendientes.map((p) => ({
-        ...p,
-        id: p.id.toString(),
-        usuarioId: p.usuarioId.toString(),
-        reservaId: p.reservaId?.toString() || null,
-        monto: p.monto ? Number(p.monto) : 0,
-        comisionPlataforma: p.comisionPlataforma
-          ? Number(p.comisionPlataforma)
-          : 0,
-        comisionPasarela: p.comisionPasarela ? Number(p.comisionPasarela) : 0,
-        montoNeto: p.montoNeto ? Number(p.montoNeto) : 0,
-        reserva: p.reserva
-          ? {
-              ...p.reserva,
-              id: p.reserva.id.toString(),
-              usuarioId: p.reserva.usuarioId.toString(),
-              publicacionId: p.reserva.publicacionId.toString(),
-              propietarioId: p.reserva.propietarioId.toString(),
-              precioTotal: Number(p.reserva.precioTotal),
-              comisionPlataforma: Number(p.reserva.comisionPlataforma),
-              deposito: p.reserva.deposito ? Number(p.reserva.deposito) : 0,
-              propietario: p.reserva.propietario
-                ? {
-                    ...p.reserva.propietario,
-                    id: p.reserva.propietario.id.toString(),
-                  }
-                : null,
-            }
-          : null,
-      }));
+      // Función auxiliar segura para conversión numérica
+      const toNum = (val: any) => {
+        if (val === null || val === undefined) return 0;
+        return Number(val);
+      };
+
+      // Función auxiliar segura para conversión a string (BigInt o IDs)
+      const toStr = (val: any) => {
+        if (val === null || val === undefined) return null;
+        return val.toString();
+      };
+
+      // Mapear con validaciones extremas para evitar errores con datos antiguos o inconsistentes
+      const resultados = pendientes.map((p) => {
+        let reservaSafe = null;
+
+        if (p.reserva) {
+          // Verificar existencia de relaciones anidadas
+          const propietario = p.reserva.propietario
+            ? {
+                ...p.reserva.propietario,
+                id: toStr(p.reserva.propietario.id),
+              }
+            : null;
+
+          const publicacion = p.reserva.publicacion
+            ? {
+                titulo: p.reserva.publicacion.titulo,
+              }
+            : null; // Si no hay publicación, enviamos null o un objeto vacío seguro
+
+          reservaSafe = {
+            ...p.reserva,
+            id: toStr(p.reserva.id),
+            usuarioId: toStr(p.reserva.usuarioId),
+            publicacionId: toStr(p.reserva.publicacionId),
+            propietarioId: toStr(p.reserva.propietarioId),
+            precioTotal: toNum(p.reserva.precioTotal),
+            comisionPlataforma: toNum(p.reserva.comisionPlataforma),
+            deposito: toNum(p.reserva.deposito),
+            propietario,
+            publicacion, // Incluir la publicación procesada
+          };
+        }
+
+        return {
+          ...p,
+          id: toStr(p.id),
+          usuarioId: toStr(p.usuarioId),
+          reservaId: toStr(p.reservaId),
+          monto: toNum(p.monto),
+          comisionPlataforma: toNum(p.comisionPlataforma),
+          comisionPasarela: toNum(p.comisionPasarela),
+          montoNeto: toNum(p.montoNeto),
+          reserva: reservaSafe,
+        };
+      });
 
       // Serialización final de seguridad para garantizar que no queden BigInts
       return JSON.parse(
