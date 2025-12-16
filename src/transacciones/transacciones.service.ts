@@ -284,74 +284,109 @@ export class TransaccionesService {
    * Obtiene las reservas pagadas que aún no se han liquidado al propietario
    */
   async obtenerLiquidacionesPendientes() {
-    // Buscar transacciones de PAGO_RESERVA completadas
-    const pagosCompletados = await this.prisma.transaccion.findMany({
-      where: {
-        tipo: 'PAGO_RESERVA',
-        estado: 'COMPLETADA',
-      },
-      include: {
-        reserva: {
-          include: {
-            propietario: {
-              select: {
-                id: true,
-                nombre: true,
-                apellido: true,
-                email: true,
-                telefono: true,
+    try {
+      // Buscar transacciones de PAGO_RESERVA completadas
+      // Solo nos interesan las que tienen reservaId (no nulas)
+      const pagosCompletados = await this.prisma.transaccion.findMany({
+        where: {
+          tipo: 'PAGO_RESERVA',
+          estado: 'COMPLETADA',
+          reservaId: { not: null },
+        },
+        include: {
+          reserva: {
+            include: {
+              propietario: {
+                select: {
+                  id: true,
+                  nombre: true,
+                  apellido: true,
+                  email: true,
+                  telefono: true,
+                },
               },
-            },
-            publicacion: {
-              select: {
-                titulo: true,
+              publicacion: {
+                select: {
+                  titulo: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    // Filtrar aquellas que ya tienen una LIQUIDACION asociada
-    const liquidacionesExistentes = await this.prisma.transaccion.findMany({
-      where: {
-        tipo: 'LIQUIDACION',
-        reservaId: { in: pagosCompletados.map((p) => p.reservaId) },
-      },
-      select: { reservaId: true },
-    });
+      // Si no hay pagos, retornar vacío directamente
+      if (!pagosCompletados.length) return [];
 
-    const reservasLiquidadasIds = new Set(
-      liquidacionesExistentes.map((l) => l.reservaId),
-    );
+      // Filtrar aquellas que ya tienen una LIQUIDACION asociada
+      const idsReservas = pagosCompletados
+        .map((p) => p.reservaId)
+        .filter((id) => id !== null) as bigint[];
 
-    // Retornar solo las que no han sido liquidadas
-    const pendientes = pagosCompletados.filter(
-      (p) => !reservasLiquidadasIds.has(p.reservaId),
-    );
+      const liquidacionesExistentes = await this.prisma.transaccion.findMany({
+        where: {
+          tipo: 'LIQUIDACION',
+          reservaId: { in: idsReservas },
+        },
+        select: { reservaId: true },
+      });
 
-    // Mapear para manejar BigInt antes de retornar
-    return pendientes.map((p) => ({
-      ...p,
-      id: p.id.toString(),
-      usuarioId: p.usuarioId.toString(),
-      reservaId: p.reservaId?.toString() || null,
-      reserva: p.reserva
-        ? {
-            ...p.reserva,
-            id: p.reserva.id.toString(),
-            usuarioId: p.reserva.usuarioId.toString(),
-            publicacionId: p.reserva.publicacionId.toString(),
-            propietarioId: p.reserva.propietarioId.toString(),
-            propietario: p.reserva.propietario
-              ? {
-                  ...p.reserva.propietario,
-                  id: p.reserva.propietario.id.toString(),
-                }
-              : null,
-          }
-        : null,
-    }));
+      const reservasLiquidadasIds = new Set(
+        liquidacionesExistentes.map((l) => l.reservaId?.toString()),
+      );
+
+      // Retornar solo las que no han sido liquidadas
+      const pendientes = pagosCompletados.filter(
+        (p) =>
+          p.reservaId &&
+          !reservasLiquidadasIds.has(p.reservaId.toString()),
+      );
+
+      // Mapear para manejar BigInt antes de retornar y asegurar serialización segura
+      const resultados = pendientes.map((p) => ({
+        ...p,
+        id: p.id.toString(),
+        usuarioId: p.usuarioId.toString(),
+        reservaId: p.reservaId?.toString() || null,
+        monto: p.monto ? Number(p.monto) : 0,
+        comisionPlataforma: p.comisionPlataforma
+          ? Number(p.comisionPlataforma)
+          : 0,
+        comisionPasarela: p.comisionPasarela ? Number(p.comisionPasarela) : 0,
+        montoNeto: p.montoNeto ? Number(p.montoNeto) : 0,
+        reserva: p.reserva
+          ? {
+              ...p.reserva,
+              id: p.reserva.id.toString(),
+              usuarioId: p.reserva.usuarioId.toString(),
+              publicacionId: p.reserva.publicacionId.toString(),
+              propietarioId: p.reserva.propietarioId.toString(),
+              precioTotal: Number(p.reserva.precioTotal),
+              comisionPlataforma: Number(p.reserva.comisionPlataforma),
+              deposito: p.reserva.deposito ? Number(p.reserva.deposito) : 0,
+              propietario: p.reserva.propietario
+                ? {
+                    ...p.reserva.propietario,
+                    id: p.reserva.propietario.id.toString(),
+                  }
+                : null,
+            }
+          : null,
+      }));
+
+      // Serialización final de seguridad para garantizar que no queden BigInts
+      return JSON.parse(
+        JSON.stringify(resultados, (key, value) =>
+          typeof value === 'bigint' ? value.toString() : value,
+        ),
+      );
+    } catch (error) {
+      console.error(
+        '❌ [TransaccionesService] Error al obtener liquidaciones pendientes:',
+        error,
+      );
+      throw error;
+    }
   }
 
   /**
