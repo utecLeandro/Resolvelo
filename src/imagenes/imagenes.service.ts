@@ -24,34 +24,25 @@ export class ImagenesService {
     const s3 = new S3Client({ region });
     const expiresInSec = 15 * 60;
     const uploads: PresignUploadUrl[] = [];
-    try {
-      for (const f of payload.files) {
-        const ext = this.extensionFromContentType(f.contentType);
-        const key = `publicaciones/${payload.publicacionId}/${randomUUID()}.${ext}`;
-        const expiresAt = new Date(
-          Date.now() + expiresInSec * 1000,
-        ).toISOString();
-        const command = new PutObjectCommand({
-          Bucket: bucket,
-          Key: key,
-          ContentType: f.contentType,
-        });
-        const url = await getSignedUrl(s3, command, {
-          expiresIn: expiresInSec,
-        });
-        uploads.push({
-          key,
-          url,
-          method: 'PUT',
-          expiresAt,
-          contentType: f.contentType,
-        });
-      }
-    } catch (error: any) {
-      console.error('Error generando presigned URLs S3:', error);
-      throw new BadRequestException(
-        'Error generando URLs de subida: ' + (error.message || error),
-      );
+    for (const f of payload.files) {
+      const ext = this.extensionFromContentType(f.contentType);
+      const key = `publicaciones/${payload.publicacionId}/${randomUUID()}.${ext}`;
+      const expiresAt = new Date(
+        Date.now() + expiresInSec * 1000,
+      ).toISOString();
+      const command = new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        ContentType: f.contentType,
+      });
+      const url = await getSignedUrl(s3, command, { expiresIn: expiresInSec });
+      uploads.push({
+        key,
+        url,
+        method: 'PUT',
+        expiresAt,
+        contentType: f.contentType,
+      });
     }
 
     return { uploads };

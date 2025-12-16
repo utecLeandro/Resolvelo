@@ -253,15 +253,6 @@
         </div>
       </div>
     </div>
-    
-    <!-- Componentes de UI -->
-    <BaseToast
-      :visible="toastVisible"
-      :title="toastTitle"
-      :message="toastMessage"
-      :type="toastType"
-      @close="toastVisible = false"
-    />
   </div>
 </template>
 
@@ -270,7 +261,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { publicacionesService, type ActualizarPublicacionRequest } from '../services/api'
 import ImagenesUploader from '../components/ImagenesUploader.vue'
-import BaseToast from '../components/common/BaseToast.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -279,12 +269,6 @@ const route = useRoute()
 const cargandoPublicacion = ref(true)
 const enviando = ref(false)
 const errorCarga = ref<string | null>(null)
-
-// Estado para notificaciones
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastType = ref<'success' | 'error' | 'warning' | 'info'>('success')
-const toastTitle = ref('')
 
 // Estado del formulario
 const formulario = ref({
@@ -306,13 +290,6 @@ const departamentos = [
   'Florida', 'Lavalleja', 'San José', 'Colonia', 'Soriano',
   'Río Negro', 'Paysandú', 'Salto', 'Artigas'
 ]
-
-const mostrarNotificacion = (mensaje: string, tipo: 'success' | 'error' | 'warning' = 'success', titulo?: string) => {
-  toastMessage.value = mensaje
-  toastType.value = tipo
-  toastTitle.value = titulo || (tipo === 'success' ? 'Éxito' : tipo === 'error' ? 'Error' : 'Atención')
-  toastVisible.value = true
-}
 
 // Cargar datos de la publicación al montar el componente
 onMounted(async () => {
@@ -360,14 +337,14 @@ const actualizarPublicacion = async () => {
   if (!formulario.value.titulo || !formulario.value.categoria || !formulario.value.descripcion || 
       !formulario.value.precio || !formulario.value.ciudad || !formulario.value.departamento || 
       !formulario.value.estadoInstrumento) {
-    mostrarNotificacion('Por favor, completa todos los campos requeridos.', 'warning')
+    alert('Por favor, completa todos los campos requeridos.')
     return
   }
 
   // Validar que el precio sea un número válido
   const precio = parseFloat(formulario.value.precio)
   if (isNaN(precio) || precio <= 0) {
-    mostrarNotificacion('Por favor, ingresa un precio válido mayor a 0.', 'warning')
+    alert('Por favor, ingresa un precio válido mayor a 0.')
     return
   }
 
@@ -404,17 +381,15 @@ const actualizarPublicacion = async () => {
     await publicacionesService.actualizarPublicacion(publicacionId, datosActualizacion)
 
     // Mostrar mensaje de éxito y redirigir
-    mostrarNotificacion('¡Publicación actualizada exitosamente!', 'success')
-    setTimeout(() => {
-      router.push('/mis-publicaciones')
-    }, 1500)
+    alert('¡Publicación actualizada exitosamente!')
+    router.push('/mis-publicaciones')
 
   } catch (error: any) {
     console.error('Error al actualizar publicación:', error)
     if (error.response?.data?.message) {
-      mostrarNotificacion(`Error: ${error.response.data.message}`, 'error')
+      alert(`Error: ${error.response.data.message}`)
     } else {
-      mostrarNotificacion('Error al actualizar la publicación. Por favor, intenta nuevamente.', 'error')
+      alert('Error al actualizar la publicación. Por favor, intenta nuevamente.')
     }
   } finally {
     enviando.value = false

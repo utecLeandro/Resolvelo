@@ -243,29 +243,10 @@
             </button>
           </div>
         </form>
+
+        
       </div>
     </div>
-
-    <!-- Componentes de UI -->
-    <BaseToast
-      :visible="toastVisible"
-      :title="toastTitle"
-      :message="toastMessage"
-      :type="toastType"
-      @close="toastVisible = false"
-    />
-
-    <BaseModal
-      :isOpen="modalVisible"
-      :title="modalTitle"
-      @close="cerrarModal"
-    >
-      <p class="text-gray-700">{{ modalMessage }}</p>
-      <template #footer>
-        <button v-if="!modalSoloAceptar" @click="cerrarModal" class="px-4 py-2 rounded-md text-sm bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors">Cancelar</button>
-        <button @click="cerrarModal" class="px-4 py-2 rounded-md text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors">Aceptar</button>
-      </template>
-    </BaseModal>
   </div>
 </template>
 
@@ -274,8 +255,6 @@ import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { publicacionesService, type CrearPublicacionRequest } from '../services/api'
 import ImagenesUploader from '../components/ImagenesUploader.vue'
-import BaseToast from '../components/common/BaseToast.vue'
-import BaseModal from '../components/common/BaseModal.vue'
 
 const router = useRouter()
 
@@ -303,27 +282,7 @@ const departamentos = [
   'Río Negro', 'Paysandú', 'Salto', 'Artigas'
 ]
 
-// Estado para notificaciones y modales
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastType = ref<'success' | 'error' | 'warning' | 'info'>('success')
-const toastTitle = ref('')
-
-const modalVisible = ref(false)
-const modalTitle = ref('')
-const modalMessage = ref('')
-const modalSoloAceptar = ref(false)
-
-const mostrarNotificacion = (mensaje: string, tipo: 'success' | 'error' | 'warning' = 'success', titulo?: string) => {
-  toastMessage.value = mensaje
-  toastType.value = tipo
-  toastTitle.value = titulo || (tipo === 'success' ? 'Éxito' : tipo === 'error' ? 'Error' : 'Atención')
-  toastVisible.value = true
-}
-
-const cerrarModal = () => {
-  modalVisible.value = false
-}
+// Variables eliminadas: imagenes, progresoSubida, errorImagenes
 
 // Método para crear la publicación
 const crearPublicacion = async () => {
@@ -331,14 +290,14 @@ const crearPublicacion = async () => {
   if (!formulario.value.titulo || !formulario.value.categoria || !formulario.value.descripcion || 
       !formulario.value.precio || !formulario.value.ciudad || !formulario.value.departamento || 
       !formulario.value.estadoInstrumento) {
-    mostrarNotificacion('Por favor, completa todos los campos requeridos.', 'warning')
+    alert('Por favor, completa todos los campos requeridos.')
     return
   }
 
   // Validar que el precio sea un número válido
   const precio = parseFloat(formulario.value.precio)
   if (isNaN(precio) || precio <= 0) {
-    mostrarNotificacion('El precio por día debe ser un número válido mayor a 0.', 'warning')
+    alert('El precio por día debe ser un número válido mayor a 0.')
     return
   }
 
@@ -374,10 +333,7 @@ const crearPublicacion = async () => {
       const exito = await (uploaderRef.value as any).subir()
       if (!exito) {
         const errorMsg = (uploaderRef.value as any).mensajeError || 'Error desconocido'
-        modalTitle.value = 'Atención'
-        modalMessage.value = `La publicación fue creada, pero falló la subida de imágenes. Detalle del error: "${errorMsg}". Por favor verifica tu conexión o inténtalo más tarde desde "Mis Publicaciones".`
-        modalSoloAceptar.value = true
-        modalVisible.value = true
+        alert(`⚠️ La publicación fue creada, pero falló la subida de imágenes. Detalle del error: "${errorMsg}". Por favor verifica tu conexión o inténtalo más tarde desde "Mis Publicaciones".`)
         // No redirigimos para que el usuario pueda ver el error en el componente uploader
         return
       }
@@ -388,9 +344,9 @@ const crearPublicacion = async () => {
     
     // Mostrar mensaje de error más específico
     if (error.response?.data?.message) {
-      mostrarNotificacion(`Error: ${error.response.data.message}`, 'error')
+      alert(`Error: ${error.response.data.message}`)
     } else {
-      mostrarNotificacion('Error al crear la publicación. Por favor, intenta nuevamente.', 'error')
+      alert('Error al crear la publicación. Por favor, intenta nuevamente.')
     }
   } finally {
     enviando.value = false

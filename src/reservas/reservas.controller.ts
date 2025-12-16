@@ -72,9 +72,6 @@ export class ReservasController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async aceptarSolicitud(@Param('id') reservaId: string, @Request() req: any) {
-    console.log(
-      `🎯 [CONTROLLER] Aceptar solicitud reserva ${reservaId} por usuario ${req.user.id}`,
-    );
     try {
       // Verificar que la reserva existe y pertenece al propietario
       const reserva = await this.reservasService.obtenerReservaPorId(reservaId);
@@ -99,20 +96,12 @@ export class ReservasController {
 
       const resultado = await this.reservasService.confirmarReserva(reservaId);
 
-      console.log(
-        `✅ [CONTROLLER] Solicitud aceptada exitosamente. Estado: ${resultado.data.estado}`,
-      );
-
       return {
         success: true,
         message: 'Solicitud aceptada exitosamente',
         data: resultado.data,
       };
     } catch (error) {
-      console.error(
-        `❌ [CONTROLLER] Error al aceptar solicitud ${reservaId}:`,
-        error,
-      );
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException
