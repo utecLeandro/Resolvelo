@@ -3,10 +3,9 @@ import { MensajesController } from './mensajes.controller';
 import { MensajesService } from './mensajes.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { NotificacionesModule } from '../notificaciones/notificaciones.module';
-import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [PrismaModule, NotificacionesModule, EmailModule],
+  imports: [PrismaModule, NotificacionesModule],
   controllers: [MensajesController],
   providers: [MensajesService],
   exports: [MensajesService],

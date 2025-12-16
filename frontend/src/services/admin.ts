@@ -132,6 +132,29 @@ export const adminService = {
     }
     return response.data
   },
+
+  // ===================== LIQUIDACIONES =====================
+  async obtenerLiquidacionesPendientes(): Promise<any[]> {
+    const response = await api.get('/transacciones/liquidaciones/pendientes')
+    if (response.status !== 200) {
+      const mensaje = (response.data && (response.data.message || response.data.error)) || 'Error al obtener liquidaciones pendientes'
+      const err: any = new Error(mensaje)
+      err.response = response
+      throw err
+    }
+    return response.data
+  },
+
+  async completarLiquidacion(id: string, referenciaPago: string, notas?: string): Promise<any> {
+    const response = await api.put(`/transacciones/liquidaciones/${id}/completar`, { referenciaPago, notas })
+    if (response.status !== 200 && response.status !== 201) {
+      const mensaje = (response.data && (response.data.message || response.data.error)) || 'Error al completar liquidación'
+      const err: any = new Error(mensaje)
+      err.response = response
+      throw err
+    }
+    return response.data
+  },
 }
 
 export default adminService

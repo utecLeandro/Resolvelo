@@ -7,6 +7,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '../services/api'
 import { Switch } from '@headlessui/vue'
+import TerminosCondicionesModal from '../components/TerminosCondicionesModal.vue'
 
 const router = useRouter()
 
@@ -21,6 +22,7 @@ const showConfirmPassword = ref(false)
 const telefono = ref('')
 const documentoIdentidad = ref('')
 const aceptaTerminos = ref(false)
+const showTerminosModal = ref(false)
 const isLoading = ref(false)
 const formError = ref('')
 const fieldErrors = ref<Record<string, string>>({})
@@ -319,9 +321,17 @@ const onSubmit = async () => {
                   :class="aceptaTerminos ? 'bg-blue-600' : 'bg-gray-200'" aria-label="Aceptar términos y condiciones">
             <span class="inline-block h-5 w-5 transform rounded-full bg-white transition" :class="aceptaTerminos ? 'translate-x-5' : 'translate-x-1'" />
           </Switch>
-          <span class="text-sm text-gray-700">Acepto los términos y la política de privacidad</span>
+          <span class="text-sm text-gray-700">
+            Acepto los 
+            <button type="button" @click="showTerminosModal = true" class="text-blue-600 hover:text-blue-800 underline focus:outline-none">
+              términos y la política de privacidad
+            </button>
+          </span>
         </div>
         <p v-if="fieldErrors.aceptaTerminos" class="text-sm text-red-600">{{ fieldErrors.aceptaTerminos }}</p>
+
+        <!-- Modal de Términos y Condiciones -->
+        <TerminosCondicionesModal :open="showTerminosModal" @close="showTerminosModal = false" />
 
         <!-- Mensaje de error general del formulario -->
         <div v-if="formError" class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm mb-4" role="alert">

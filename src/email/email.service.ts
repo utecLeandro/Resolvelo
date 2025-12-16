@@ -6,13 +6,15 @@ import {
   CreateEmailIdentityCommand,
 } from '@aws-sdk/client-sesv2';
 
+import { emailTemplates } from './email.templates';
+
 @Injectable()
 export class EmailService {
   private transporter: nodemailer.Transporter;
   private sesClient: SESv2Client;
   private readonly logger = new Logger(EmailService.name);
   private readonly fromEmail =
-    process.env.EMAIL_FROM || 'plataformaresolvelo@gmail.com';
+    process.env.EMAIL_FROM || 'no-reply@resolvelo.com';
 
   constructor() {
     // Configuración AWS SES v2
@@ -61,34 +63,18 @@ export class EmailService {
         `❌ Error enviando email a ${to}: ${error.message}`,
         error.stack,
       );
-      throw error;
     }
   }
 
   /**
-   * Envía un correo de verificación de cuenta con un token
+   * Envía el correo de verificación de cuenta
    */
   async enviarCorreoVerificacion(to: string, nombre: string, token: string) {
-    const frontendUrl = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const link = `${frontendUrl}/verificar-email?token=${token}`;
-
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #2563EB;">¡Bienvenido a ReSolVelo!</h2>
-        <p>Hola ${nombre},</p>
-        <p>Gracias por registrarte. Para activar tu cuenta, por favor verifica tu correo electrónico haciendo clic en el siguiente botón:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${link}" style="background-color: #2563EB; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Verificar mi correo</a>
-        </div>
-        <p>O copia y pega este enlace en tu navegador:</p>
-        <p><a href="${link}">${link}</a></p>
-        <p>Si no creaste esta cuenta, puedes ignorar este correo.</p>
-        <hr style="border: 1px solid #eee; margin: 20px 0;">
-        <p style="font-size: 12px; color: #666;">ReSolVelo - Alquiler de Instrumentos Musicales</p>
-      </div>
-    `;
-
-    return this.sendMail(to, 'Verifica tu cuenta en ReSolVelo', html);
+    const html = emailTemplates.bienvenida(nombre, link);
+    const subject = 'Verifica tu cuenta en ReSolVelo';
+    return this.sendMail(to, subject, html);
   }
 
   /**

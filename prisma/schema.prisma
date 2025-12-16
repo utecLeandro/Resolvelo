@@ -513,6 +513,7 @@ enum TipoTransaccion {
   DEPOSITO
   REEMBOLSO
   COMISION
+  LIQUIDACION
 }
 
 enum CategoriaEquipo {

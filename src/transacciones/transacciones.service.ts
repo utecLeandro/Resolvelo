@@ -281,6 +281,210 @@ export class TransaccionesService {
   }
 
   /**
+   * Obtiene las reservas pagadas que aún no se han liquidado al propietario
+   */
+  async obtenerLiquidacionesPendientes() {
+    try {
+      // Buscar transacciones de PAGO_RESERVA completadas
+      // Solo nos interesan las que tienen reservaId (no nulas)
+      const pagosCompletados = await this.prisma.transaccion.findMany({
+        where: {
+          tipo: 'PAGO_RESERVA',
+          estado: 'COMPLETADA',
+          reservaId: { not: null },
+        },
+        include: {
+          reserva: {
+            include: {
+              propietario: {
+                select: {
+                  id: true,
+                  nombre: true,
+                  apellido: true,
+                  email: true,
+                  telefono: true,
+                },
+              },
+              publicacion: {
+                select: {
+                  titulo: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // Si no hay pagos, retornar vacío directamente
+      if (!pagosCompletados.length) return [];
+
+      // Optimización: convertir a Set de strings para búsqueda O(1)
+      const idsReservasStrings = pagosCompletados
+        .map((p) => p.reservaId?.toString())
+        .filter((id): id is string => id !== undefined && id !== null);
+
+      console.log(`[TransaccionesService] Verificando liquidaciones para ${idsReservasStrings.length} reservas`);
+
+      // Convertimos los IDs de vuelta a BigInt para la query de Prisma por seguridad de tipos
+      const idsReservasBigInt = idsReservasStrings.map(id => BigInt(id));
+
+      const liquidacionesExistentes = await this.prisma.transaccion.findMany({
+        where: {
+          tipo: 'LIQUIDACION',
+          reservaId: { in: idsReservasBigInt },
+        },
+        select: { reservaId: true },
+      });
+
+      const reservasLiquidadasIds = new Set(
+        liquidacionesExistentes.map((l) => l.reservaId?.toString()),
+      );
+
+      const pendientes = pagosCompletados.filter(
+        (p) =>
+          p.reservaId &&
+          !reservasLiquidadasIds.has(p.reservaId.toString()),
+      );
+      
+      console.log(`[TransaccionesService] Encontradas ${pendientes.length} liquidaciones pendientes de procesar`);
+
+      // Función auxiliar segura para conversión numérica
+      const toNum = (val: any) => {
+        if (val === null || val === undefined) return 0;
+        const num = Number(val);
+        return isNaN(num) ? 0 : num;
+      };
+
+      // Función auxiliar segura para conversión a string (BigInt o IDs)
+      const toStr = (val: any) => {
+        if (val === null || val === undefined) return null;
+        return val.toString();
+      };
+
+      // Mapear con validaciones extremas para evitar errores con datos antiguos o inconsistentes
+      const resultados = pendientes.map((p) => {
+        try {
+          let reservaSafe = null;
+
+          if (p.reserva) {
+            // Verificar existencia de relaciones anidadas
+            const propietario = p.reserva.propietario
+              ? {
+                  ...p.reserva.propietario,
+                  id: toStr(p.reserva.propietario.id),
+                }
+              : null;
+
+            const publicacion = p.reserva.publicacion
+              ? {
+                  titulo: p.reserva.publicacion.titulo,
+                }
+              : null;
+
+            reservaSafe = {
+              ...p.reserva,
+              id: toStr(p.reserva.id),
+              usuarioId: toStr(p.reserva.usuarioId),
+              publicacionId: toStr(p.reserva.publicacionId),
+              propietarioId: toStr(p.reserva.propietarioId),
+              precioTotal: toNum(p.reserva.precioTotal),
+              comisionPlataforma: toNum(p.reserva.comisionPlataforma),
+              deposito: toNum(p.reserva.deposito),
+              propietario,
+              publicacion,
+            };
+          }
+
+          return {
+            ...p,
+            id: toStr(p.id),
+            usuarioId: toStr(p.usuarioId),
+            reservaId: toStr(p.reservaId),
+            monto: toNum(p.monto),
+            comisionPlataforma: toNum(p.comisionPlataforma),
+            comisionPasarela: toNum(p.comisionPasarela),
+            montoNeto: toNum(p.montoNeto),
+            reserva: reservaSafe,
+          };
+        } catch (err) {
+          console.error(`[TransaccionesService] Error procesando item ${p.id}:`, err);
+          return null;
+        }
+      }).filter(item => item !== null);
+
+      console.log(`[TransaccionesService] Retornando ${resultados.length} liquidaciones procesadas.`);
+
+      // Retornar directamente los resultados ya saneados.
+      // El interceptor global (BigIntSerializerInterceptor) no encontrará BigInts ni Decimals
+      // porque ya los convertimos a string/number.
+      return resultados;
+
+    } catch (error) {
+      console.error(
+        '❌ [TransaccionesService] Error al obtener liquidaciones pendientes:',
+        error,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Marca una liquidación como completada (crea la transacción de liquidación)
+   */
+  async marcarLiquidacionCompletada(
+    idTransaccionPago: string,
+    referenciaPago: string,
+    notas?: string,
+  ) {
+    const pago = await this.prisma.transaccion.findUnique({
+      where: { id: BigInt(idTransaccionPago) },
+      include: { reserva: true },
+    });
+
+    if (!pago) {
+      throw new NotFoundException('Transacción de pago no encontrada');
+    }
+
+    if (pago.tipo !== 'PAGO_RESERVA' || pago.estado !== 'COMPLETADA') {
+      throw new BadRequestException(
+        'La transacción no es un pago de reserva completado',
+      );
+    }
+
+    // Verificar si ya existe liquidación
+    const liquidacionExistente = await this.prisma.transaccion.findFirst({
+      where: {
+        tipo: 'LIQUIDACION',
+        reservaId: pago.reservaId,
+      },
+    });
+
+    if (liquidacionExistente) {
+      throw new BadRequestException(
+        'Esta reserva ya ha sido liquidada al propietario',
+      );
+    }
+
+    // Crear la transacción de liquidación
+    return this.prisma.transaccion.create({
+      data: {
+        tipo: 'LIQUIDACION',
+        estado: 'COMPLETADA',
+        monto: pago.montoNeto || pago.monto,
+        moneda: pago.moneda,
+        metodoPago: 'TRANSFERENCIA_BANCARIA',
+        referenciaExterna: referenciaPago,
+        descripcion: `Liquidación a propietario por reserva ${pago.reservaId}`,
+        notasInternas: notas,
+        usuarioId: pago.reserva.propietarioId,
+        reservaId: pago.reservaId,
+        fechaProcesamiento: new Date(),
+        fechaCompletado: new Date(),
+      },
+    });
+  }
+
+  /**
    * Crea una preferencia de Mercado Pago y devuelve la URL para redirigir al checkout
    */
   async crearPreferenciaMercadoPago(
