@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Patch, Param, Body } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -30,5 +30,22 @@ export class AdminUsersController {
       rol || undefined,
       activoBool,
     );
+  }
+
+  @Patch(':id/estado')
+  async cambiarEstado(
+    @Param('id') id: string,
+    @Body('activo') activo: boolean,
+    @Body('motivo') motivo?: string,
+  ) {
+    return this.adminService.cambiarEstadoUsuario(id, activo, motivo);
+  }
+
+  @Patch(':id/verificar')
+  async verificarUsuario(
+    @Param('id') id: string,
+    @Body('motivo') motivo?: string,
+  ) {
+    return this.adminService.verificarUsuario(id, motivo);
   }
 }

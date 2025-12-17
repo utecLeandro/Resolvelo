@@ -62,6 +62,72 @@ export class AdminService {
     };
   }
 
+  async cambiarEstadoUsuario(id: string, activo: boolean, motivo?: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(id) },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    const usuarioActualizado = await this.prisma.usuario.update({
+      where: { id: BigInt(id) },
+      data: {
+        activo: activo,
+        // TODO: Registrar motivo en log de auditoria si existiera tabla
+      },
+    });
+
+    return {
+      message: `Usuario ${activo ? 'activado' : 'desactivado'} correctamente`,
+      usuario: {
+        id: usuarioActualizado.id.toString(),
+        nombre: usuarioActualizado.nombre,
+        apellido: usuarioActualizado.apellido,
+        email: usuarioActualizado.email,
+        rol: usuarioActualizado.rol,
+        activo: usuarioActualizado.activo,
+        estadoVerificacion: usuarioActualizado.estadoVerificacion,
+        fechaCreacion: usuarioActualizado.fechaCreacion.toISOString(),
+      },
+    };
+  }
+
+  async verificarUsuario(id: string, motivo?: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(id) },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    const usuarioActualizado = await this.prisma.usuario.update({
+      where: { id: BigInt(id) },
+      data: {
+        estadoVerificacion: 'VERIFICADA',
+        emailVerificado: true,
+        telefonoVerificado: true,
+        // TODO: Registrar motivo
+      },
+    });
+
+    return {
+      message: 'Usuario verificado correctamente',
+      usuario: {
+        id: usuarioActualizado.id.toString(),
+        nombre: usuarioActualizado.nombre,
+        apellido: usuarioActualizado.apellido,
+        email: usuarioActualizado.email,
+        rol: usuarioActualizado.rol,
+        activo: usuarioActualizado.activo,
+        estadoVerificacion: usuarioActualizado.estadoVerificacion,
+        fechaCreacion: usuarioActualizado.fechaCreacion.toISOString(),
+      },
+    };
+  }
+
   async cambiarRolUsuario(
     adminId: string | number,
     usuarioObjetivoId: string,
