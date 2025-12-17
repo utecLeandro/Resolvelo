@@ -13,8 +13,8 @@ export class AdminUsersController {
 
   @Get()
   async listarUsuarios(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query('pagina') page: number = 1,
+    @Query('limite') limit: number = 10,
     @Query('search') search: string = '',
   ) {
     return this.adminService.listarUsuarios(

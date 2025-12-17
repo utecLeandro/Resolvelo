@@ -38,21 +38,13 @@ export class ReservasController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async obtenerTodasMisSolicitudes(@Request() req: any) {
-    console.log('🎯 [CONTROLLER] obtenerTodasMisSolicitudes - Iniciando');
-    console.log('🎯 [CONTROLLER] Usuario autenticado:', req.user);
     const propietarioId = req.user.id; // El ID del usuario autenticado
-    console.log('🎯 [CONTROLLER] PropietarioId extraído:', propietarioId);
 
     try {
       const resultado =
         await this.reservasService.obtenerTodasLasSolicitudes(propietarioId);
-      console.log('🎯 [CONTROLLER] Resultado del servicio:', resultado);
       return resultado;
     } catch (error) {
-      console.error(
-        '🎯 [CONTROLLER] Error en obtenerTodasMisSolicitudes:',
-        error,
-      );
       throw error;
     }
   }
@@ -61,10 +53,6 @@ export class ReservasController {
   @UseGuards(JwtAuthGuard)
   async obtenerMisReservas(@Request() req: any) {
     const arrendatarioId = req.user?.id;
-    console.log('🔍 Obteniendo reservas para arrendatario:', {
-      arrendatarioId,
-      userObject: req.user,
-    });
     return this.reservasService.obtenerReservasArrendatario(arrendatarioId);
   }
 
@@ -72,9 +60,6 @@ export class ReservasController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async aceptarSolicitud(@Param('id') reservaId: string, @Request() req: any) {
-    console.log(
-      `🎯 [CONTROLLER] Aceptar solicitud reserva ${reservaId} por usuario ${req.user.id}`,
-    );
     try {
       // Verificar que la reserva existe y pertenece al propietario
       const reserva = await this.reservasService.obtenerReservaPorId(reservaId);
@@ -99,20 +84,12 @@ export class ReservasController {
 
       const resultado = await this.reservasService.confirmarReserva(reservaId);
 
-      console.log(
-        `✅ [CONTROLLER] Solicitud aceptada exitosamente. Estado: ${resultado.data.estado}`,
-      );
-
       return {
         success: true,
         message: 'Solicitud aceptada exitosamente',
         data: resultado.data,
       };
     } catch (error) {
-      console.error(
-        `❌ [CONTROLLER] Error al aceptar solicitud ${reservaId}:`,
-        error,
-      );
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException
