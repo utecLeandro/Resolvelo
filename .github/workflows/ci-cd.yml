@@ -1,52 +1,173 @@
-# Workflow de despliegue del backend a AWS App Runner vía ECR
-# - Construye y publica imagen Docker
-# - Actualiza/crea servicio App Runner
-# Requiere configurar OIDC con un Role en AWS e incluir secrets en GitHub
-
-name: Backend Deploy to App Runner
+name: 🚀 CI/CD Pipeline - ReSolVelo
 
 on:
-  workflow_run:
-    workflows: ["🚀 CI/CD Pipeline - ReSolVelo"]
-    types:
-      - completed
-    branches: [ "main", "develop" ]
-  # Permite ejecutar manualmente desde la UI de GitHub Actions
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
   workflow_dispatch:
 
 env:
+  NODE_VERSION: "18"
+  POSTGRES_VERSION: "14"
+  # AWS & App Runner Configuration
   AWS_REGION: ${{ secrets.AWS_REGION }}
-  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }} # ej: resolvelo-backend
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
   APP_RUNNER_SERVICE_ARN: ${{ secrets.APP_RUNNER_SERVICE_ARN }}
   VPC_CONNECTOR_ARN: ${{ secrets.VPC_CONNECTOR_ARN }}
   AUTO_SCALING_CONFIG_ARN: ${{ secrets.AUTO_SCALING_CONFIG_ARN }}
-  DB_SECRET_ARN: ${{ secrets.DB_SECRET_ARN }} # Secrets Manager ARN para DATABASE_URL
-  JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }} # Secrets Manager ARN para JWT_SECRET
-  APP_RUNNER_INSTANCE_ROLE_ARN: ${{ secrets.APP_RUNNER_INSTANCE_ROLE_ARN }} # Secret para Instance Role
-  # Rol para que App Runner pueda descargar la imagen de ECR (fallback al valor conocido si no hay secret)
+  DB_SECRET_ARN: ${{ secrets.DB_SECRET_ARN }}
+  JWT_SECRET_ARN: ${{ secrets.JWT_SECRET_ARN }}
+  APP_RUNNER_INSTANCE_ROLE_ARN: ${{ secrets.APP_RUNNER_INSTANCE_ROLE_ARN }}
   APP_RUNNER_ECR_ACCESS_ROLE_ARN: ${{ secrets.APP_RUNNER_ECR_ACCESS_ROLE_ARN || 'arn:aws:iam::197946144414:role/service-role/AppRunnerECRAccessRole' }}
-  # Mercado Pago
   MP_ACCESS_TOKEN_ARN: ${{ secrets.MP_ACCESS_TOKEN_ARN }}
   MP_PUBLIC_KEY: ${{ secrets.MP_PUBLIC_KEY }}
   AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
 
 jobs:
+  # 🔍 Análisis de código y linting
+  lint:
+    name: 🔍 Lint y Formato
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+      - name: 🟢 Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - name: 📦 Instalar dependencias
+        run: npm ci
+      - name: 🔍 Ejecutar ESLint
+        run: npm run lint
+      - name: 🎨 Verificar formato con Prettier
+        run: npm run format:check
+      - name: 📝 Verificar convenciones de commits
+        if: github.event_name == 'pull_request'
+        uses: wagoid/commitlint-github-action@v5
+
+  # 🧪 Tests unitarios y de integración
+  test:
+    name: 🧪 Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: resolvelo_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+      - name: 🟢 Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - name: 📦 Instalar dependencias
+        run: npm ci
+      - name: 🗄️ Configurar base de datos de prueba
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/resolvelo_test
+        run: |
+          npx prisma db push
+          npx prisma generate
+      - name: 🧪 Ejecutar tests unitarios
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/resolvelo_test
+          JWT_SECRET: test-secret-key
+          NODE_ENV: test
+        run: npm run test
+      - name: 📊 Generar reporte de cobertura
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/resolvelo_test
+          JWT_SECRET: test-secret-key
+          NODE_ENV: test
+        run: npm run test:cov
+      - name: 📈 Subir cobertura a Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+  # 🔒 Análisis de seguridad
+  security:
+    name: 🔒 Análisis de Seguridad
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+      - name: 🟢 Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - name: 📦 Instalar dependencias
+        run: npm ci
+      - name: 🔍 Auditoría de dependencias
+        run: npm audit --audit-level moderate
+
+  # 🏗️ Build y validación
+  build:
+    name: 🏗️ Build
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+      - name: 🟢 Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - name: 📦 Instalar dependencias
+        run: npm ci
+      - name: 🔧 Generar cliente Prisma
+        run: npx prisma generate
+      - name: 🏗️ Build de la aplicación
+        run: npm run build
+      - name: 📦 Verificar artefactos de build
+        run: |
+          ls -la dist/
+          echo "✅ Build completado exitosamente"
+
+  # 📊 Análisis de calidad de código
+  sonarcloud:
+    name: 📊 SonarCloud
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 📊 Análisis SonarCloud
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # 🚀 Build & Deploy to App Runner
   deploy:
     name: Build & Deploy to App Runner
     runs-on: ubuntu-latest
-    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') || github.event_name == 'workflow_dispatch' }}
+    needs: [lint, test, security, build]
+    if: ${{ (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')) || github.event_name == 'workflow_dispatch' }}
     permissions:
       id-token: write
       contents: read
     steps:
-      - name: Checkout (Workflow Run)
-        if: ${{ github.event_name == 'workflow_run' }}
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-
-      - name: Checkout (Manual/Push)
-        if: ${{ github.event_name != 'workflow_run' }}
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Validate configuration (develop)
@@ -69,16 +190,16 @@ jobs:
           check AWS_REGION
           check ECR_REPOSITORY
           check AWS_DEPLOY_ROLE_ARN
-          # Opcionales según topología
+          # Opcionales
           echo "ℹ️ Variables opcionales (no bloquean si faltan)"
           [ -z "${VPC_CONNECTOR_ARN:-}" ] && echo "⚠️ VPC_CONNECTOR_ARN no configurada" || echo "✅ VPC_CONNECTOR_ARN configurada"
           [ -z "${AUTO_SCALING_CONFIG_ARN:-}" ] && echo "⚠️ AUTO_SCALING_CONFIG_ARN no configurada" || echo "✅ AUTO_SCALING_CONFIG_ARN configurada"
 
-          # Configuración de Roles (requeridos para ECR privado y Secrets)
+          # Configuración de Roles
           check APP_RUNNER_INSTANCE_ROLE_ARN
           check APP_RUNNER_ECR_ACCESS_ROLE_ARN
 
-          # Secretos de entorno (requeridos)
+          # Secretos de entorno
           check DB_SECRET_ARN
           check JWT_SECRET_ARN
           check MP_ACCESS_TOKEN_ARN
@@ -107,7 +228,7 @@ jobs:
       - name: Build & Push Docker image
         env:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.event.workflow_run.head_sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          IMAGE_TAG: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           set -euo pipefail
           IMAGE_URI="$ECR_REGISTRY/${ECR_REPOSITORY}:$IMAGE_TAG"
@@ -124,8 +245,7 @@ jobs:
           set -euo pipefail
           echo "Using image: $IMAGE_URI"
 
-          # Preparar archivos de configuración JSON usando printf para evitar problemas de sintaxis YAML/Heredoc
-          
+          # Preparar archivos de configuración JSON
           printf '{
             "ImageRepository": {
               "ImageIdentifier": "%s",
@@ -174,10 +294,6 @@ jobs:
             }' > network-config.json
           fi
 
-          echo "📄 source-config.json generado"
-          echo "📄 instance-config.json generado"
-          echo "📄 network-config.json generado"
-
           DESCRIBE_RC=1
           if [ -n "${APP_RUNNER_SERVICE_ARN:-}" ]; then
             set +e
@@ -207,10 +323,58 @@ jobs:
             
             echo "✅ Servicio creado con éxito. ServiceArn: $SERVICE_ARN"
             echo "service_arn=$SERVICE_ARN" >> $GITHUB_OUTPUT
-            
-            echo "⚠️ IMPORTANTE: Si es la primera vez, asegurate de guardar este ARN en el secret APP_RUNNER_SERVICE_ARN para futuros despliegues."
+            echo "⚠️ IMPORTANTE: Guarda este ARN en el secret APP_RUNNER_SERVICE_ARN"
           fi
 
       - name: Output service status
         run: |
           aws apprunner describe-service --service-arn "$APP_RUNNER_SERVICE_ARN" || true
+
+  # 📝 Comentario en PR con resultados
+  pr-comment:
+    name: 📝 Comentario en PR
+    runs-on: ubuntu-latest
+    needs: [lint, test, build, security]
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 📝 Comentar resultados en PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('🤖 Resultados del CI/CD')
+            );
+
+            const body = `## 🤖 Resultados del CI/CD
+
+            ✅ **Lint**: Pasado
+            ✅ **Tests**: Pasado  
+            ✅ **Build**: Pasado
+            ✅ **Seguridad**: Pasado
+
+            🎉 **¡Todos los checks han pasado!** Este PR está listo para revisión.
+
+            ---
+            *Generado automáticamente por GitHub Actions*`;
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
