@@ -920,6 +920,11 @@ export const adminService = {
     return response.data
   },
 
+  async obtenerHistorialLiquidaciones(): Promise<any[]> {
+    const response = await api.get('/admin/liquidaciones/historial')
+    return response.data
+  },
+
   async procesarLiquidacion(id: string): Promise<any> {
     const response = await api.put(`/admin/liquidaciones/${id}/procesar`)
     return response.data

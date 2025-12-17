@@ -3,8 +3,8 @@
     <!-- Encabezado -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">Liquidaciones Pendientes</h1>
-        <p class="text-sm text-gray-600">Gestiona los pagos pendientes a propietarios</p>
+        <h1 class="text-2xl font-bold text-gray-900">Liquidaciones</h1>
+        <p class="text-sm text-gray-600">Gestiona los pagos a propietarios y revisa el historial.</p>
       </div>
       <div class="flex items-center gap-2">
         <button
@@ -17,6 +17,34 @@
           Refrescar
         </button>
       </div>
+    </div>
+
+    <!-- Pestañas -->
+    <div class="border-b border-gray-200 mb-6">
+      <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+        <button
+          @click="cambiarPestana('pendientes')"
+          :class="[
+            pestanaActiva === 'pendientes'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+          ]"
+        >
+          Pendientes
+        </button>
+        <button
+          @click="cambiarPestana('historial')"
+          :class="[
+            pestanaActiva === 'historial'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+          ]"
+        >
+          Historial de Pagos
+        </button>
+      </nav>
     </div>
 
     <!-- Mensajes de Estado -->
@@ -46,7 +74,8 @@
 
     <!-- Tabla de Liquidaciones -->
     <div v-if="!cargando && liquidaciones.length === 0" class="bg-white border border-gray-200 rounded-lg p-6 text-center text-gray-600">
-      No hay liquidaciones pendientes.
+      <span v-if="pestanaActiva === 'pendientes'">No hay liquidaciones pendientes.</span>
+      <span v-else>No hay historial de liquidaciones pagadas.</span>
     </div>
 
     <div v-else-if="!cargando && liquidaciones.length > 0" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
@@ -54,18 +83,27 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {{ pestanaActiva === 'historial' ? 'Fecha Pago' : 'Fecha Creación' }}
+              </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reserva</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Propietario</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datos Bancarios</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
-              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              <th v-if="pestanaActiva === 'pendientes'" scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              <th v-else scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="liq in liquidaciones" :key="liq.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ formatDate(liq.fechaCreacion) }}
+                <div v-if="pestanaActiva === 'historial'">
+                  <div class="font-medium">{{ formatDate(liq.fechaCompletado || liq.fechaCreacion) }}</div>
+                  <div class="text-xs text-gray-500">Creada: {{ formatDate(liq.fechaCreacion) }}</div>
+                </div>
+                <div v-else>
+                  {{ formatDate(liq.fechaCreacion) }}
+                </div>
               </td>
               <td class="px-6 py-4 text-sm text-gray-900">
                 <div class="font-medium">#{{ liq.reserva.id }}</div>
@@ -106,7 +144,9 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                 $ {{ liq.monto }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              
+              <!-- Columna de Acciones (Solo pendientes) -->
+              <td v-if="pestanaActiva === 'pendientes'" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <button
                   @click="procesarLiquidacion(liq.id)"
                   :disabled="procesandoId === liq.id || !liq.propietario.datosBancarios"
@@ -120,6 +160,13 @@
                   <span v-if="procesandoId === liq.id">Procesando...</span>
                   <span v-else>Marcar Pagado</span>
                 </button>
+              </td>
+
+              <!-- Columna de Estado (Solo historial) -->
+              <td v-else class="px-6 py-4 whitespace-nowrap text-sm">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  Pagado
+                </span>
               </td>
             </tr>
           </tbody>
@@ -137,6 +184,8 @@ interface Liquidacion {
   id: string
   monto: number
   fechaCreacion: string
+  fechaCompletado?: string
+  estado?: string
   reserva: {
     id: string
     titulo: string
@@ -155,6 +204,7 @@ interface Liquidacion {
   }
 }
 
+const pestanaActiva = ref<'pendientes' | 'historial'>('pendientes')
 const liquidaciones = ref<Liquidacion[]>([])
 const cargando = ref(false)
 const errorMensaje = ref('')
@@ -171,15 +221,26 @@ const formatDate = (dateString: string) => {
   })
 }
 
+const cambiarPestana = (pestana: 'pendientes' | 'historial') => {
+  pestanaActiva.value = pestana
+  cargarLiquidaciones()
+}
+
 const cargarLiquidaciones = async () => {
   cargando.value = true
   errorMensaje.value = ''
   exitoMensaje.value = ''
+  liquidaciones.value = []
+  
   try {
-    liquidaciones.value = await adminService.obtenerLiquidacionesPendientes()
+    if (pestanaActiva.value === 'pendientes') {
+      liquidaciones.value = await adminService.obtenerLiquidacionesPendientes()
+    } else {
+      liquidaciones.value = await adminService.obtenerHistorialLiquidaciones()
+    }
   } catch (error: any) {
     console.error('Error cargando liquidaciones:', error)
-    errorMensaje.value = error.message || 'Error al cargar liquidaciones pendientes.'
+    errorMensaje.value = error.message || 'Error al cargar las liquidaciones.'
   } finally {
     cargando.value = false
   }

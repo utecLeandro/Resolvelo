@@ -16,6 +16,12 @@ export class AdminController {
     return this.adminService.obtenerLiquidacionesPendientes();
   }
 
+  @Get('liquidaciones/historial')
+  @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.SUPER_ADMIN)
+  async obtenerHistorialLiquidaciones() {
+    return this.adminService.obtenerHistorialLiquidaciones();
+  }
+
   @Put('liquidaciones/:id/procesar')
   @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.SUPER_ADMIN)
   async procesarLiquidacion(@Param('id') id: string) {

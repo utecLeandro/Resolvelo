@@ -72,12 +72,42 @@ export class AdminService {
     });
 
     // Desencriptamos los datos sensibles antes de enviarlos al admin
+    return this.mapearLiquidaciones(liquidaciones);
+  }
+
+  async obtenerHistorialLiquidaciones() {
+    const liquidaciones = await this.prisma.transaccion.findMany({
+      where: {
+        tipo: 'LIQUIDACION',
+        estado: 'COMPLETADA',
+      },
+      include: {
+        reserva: {
+          include: {
+            propietario: {
+              include: {
+                datosBancarios: true,
+              },
+            },
+            publicacion: true,
+          },
+        },
+      },
+      orderBy: { fechaCompletado: 'desc' },
+    });
+
+    return this.mapearLiquidaciones(liquidaciones);
+  }
+
+  private mapearLiquidaciones(liquidaciones: any[]) {
     return liquidaciones.map((liq) => {
       const datosBancarios = liq.reserva.propietario.datosBancarios;
       return {
         id: liq.id,
         monto: liq.monto,
         fechaCreacion: liq.fechaCreacion,
+        fechaCompletado: liq.fechaCompletado,
+        estado: liq.estado,
         reserva: {
           id: liq.reserva.id,
           titulo: liq.reserva.publicacion.titulo,
