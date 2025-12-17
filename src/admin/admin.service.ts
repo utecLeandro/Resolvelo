@@ -131,22 +131,21 @@ export class AdminService {
       ]);
 
       return {
-        data: usuarios.map((u) => ({
+        usuarios: usuarios.map((u) => ({
           id: u.id.toString(),
           nombre: u.nombre,
           apellido: u.apellido,
           email: u.email,
           rol: u.rol,
-          telefono: u.telefono,
-          fechaRegistro: u.fechaCreacion, // Mapeamos para compatibilidad si el frontend lo espera así
-          estado: u.activo ? 'ACTIVO' : 'INACTIVO', // Mapeamos un estado legible
+          activo: u.activo,
           estadoVerificacion: u.estadoVerificacion,
+          fechaCreacion: u.fechaCreacion.toISOString(),
         })),
-        meta: {
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
+        paginacion: {
+          paginaActual: page,
+          totalPaginas: Math.ceil(total / limit),
+          totalElementos: total,
+          elementosPorPagina: limit,
         },
       };
     } catch (error) {
@@ -187,6 +186,7 @@ export class AdminService {
           include: {
             propietario: {
               select: {
+                id: true,
                 nombre: true,
                 apellido: true,
                 email: true,
@@ -197,23 +197,28 @@ export class AdminService {
       ]);
 
       return {
-        data: publicaciones.map((p) => ({
+        publicaciones: publicaciones.map((p) => ({
           id: p.id.toString(),
           titulo: p.titulo,
           descripcion: p.descripcion,
-          precioPorDia: Number(p.precioPorDia), // Convertir Decimal a Number explícitamente
+          categoria: p.categoria,
+          precioPorDia: Number(p.precioPorDia),
           estado: p.estado,
-          fechaCreacion: p.fechaCreacion,
+          estadoModeracion: p.estadoModeracion,
+          fechaCreacion: p.fechaCreacion.toISOString(),
+          propietarioId: p.propietarioId.toString(),
           propietario: {
-            nombre: `${p.propietario.nombre} ${p.propietario.apellido}`,
+            id: p.propietario.id.toString(),
+            nombre: p.propietario.nombre,
+            apellido: p.propietario.apellido,
             email: p.propietario.email,
           },
         })),
-        meta: {
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
+        paginacion: {
+          paginaActual: page,
+          totalPaginas: Math.ceil(total / limit),
+          totalElementos: total,
+          elementosPorPagina: limit,
         },
       };
     } catch (error) {
