@@ -15,12 +15,20 @@ export class AdminUsersController {
   async listarUsuarios(
     @Query('pagina') page: number = 1,
     @Query('limite') limit: number = 10,
-    @Query('search') search: string = '',
+    @Query('busqueda') search: string = '',
+    @Query('rol') rol: string = '',
+    @Query('activo') activo: string = '',
   ) {
+    let activoBool: boolean | undefined;
+    if (activo === 'true') activoBool = true;
+    if (activo === 'false') activoBool = false;
+
     return this.adminService.listarUsuarios(
       Number(page),
       Number(limit),
       search,
+      rol || undefined,
+      activoBool,
     );
   }
 }

@@ -16,6 +16,7 @@ export class AdminPublicationsController {
     @Query('pagina') page: number = 1,
     @Query('limite') limit: number = 10,
     @Query('busqueda') search: string = '',
+    @Query('categoria') categoria: string = '',
     @Query('estado') estado: string = 'TODOS',
     @Query('estadoModeracion') estadoModeracion: string = '',
     @Query('incluirTodosEstadosModeracion') incluirTodos: string = 'false',
@@ -27,6 +28,7 @@ export class AdminPublicationsController {
       estado,
       estadoModeracion,
       incluirTodos === 'true',
+      categoria || undefined,
     );
   }
 }

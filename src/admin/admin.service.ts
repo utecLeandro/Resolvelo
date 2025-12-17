@@ -53,7 +53,13 @@ export class AdminService {
   }
 
   async listarRoles() {
-    return Object.values(RolUsuario);
+    const roles = Object.values(RolUsuario);
+    return {
+      roles: roles.map((rol) => ({
+        clave: rol,
+        nombre: rol.replace(/_/g, ' '), // Formato legible
+      })),
+    };
   }
 
   async cambiarRolUsuario(
@@ -96,6 +102,8 @@ export class AdminService {
     page: number = 1,
     limit: number = 10,
     search: string = '',
+    rol?: string,
+    activo?: boolean,
   ) {
     try {
       const skip = (page - 1) * limit;
@@ -103,10 +111,18 @@ export class AdminService {
 
       if (search) {
         where.OR = [
-          { nombre: { contains: search } }, // Case-insensitive en Postgres por defecto o con mode: 'insensitive' si se configura
-          { apellido: { contains: search } },
-          { email: { contains: search } },
+          { nombre: { contains: search, mode: 'insensitive' } },
+          { apellido: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
         ];
+      }
+
+      if (rol) {
+        where.rol = rol;
+      }
+
+      if (typeof activo === 'boolean') {
+        where.activo = activo;
       }
 
       const [total, usuarios] = await Promise.all([
@@ -161,13 +177,21 @@ export class AdminService {
     estado?: string,
     estadoModeracion?: string,
     incluirTodosEstadosModeracion: boolean = false,
+    categoria?: string,
   ) {
     try {
       const skip = (page - 1) * limit;
       const where: any = {};
 
       if (search) {
-        where.titulo = { contains: search };
+        where.OR = [
+          { titulo: { contains: search, mode: 'insensitive' } },
+          { descripcion: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+
+      if (categoria) {
+        where.categoria = categoria;
       }
 
       if (estado && estado !== 'TODOS') {
