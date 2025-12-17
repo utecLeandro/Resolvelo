@@ -62,7 +62,7 @@ export class AdminService {
     };
   }
 
-  async cambiarEstadoUsuario(id: string, activo: boolean, motivo?: string) {
+  async cambiarEstadoUsuario(id: string, activo: boolean, _motivo?: string) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: BigInt(id) },
     });
@@ -75,7 +75,7 @@ export class AdminService {
       where: { id: BigInt(id) },
       data: {
         activo: activo,
-        // TODO: Registrar motivo en log de auditoria si existiera tabla
+        // TODO: Registrar _motivo en log de auditoria si existiera tabla
       },
     });
 
