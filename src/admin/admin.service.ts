@@ -107,8 +107,8 @@ export class AdminService {
       where: { id: BigInt(id) },
       data: {
         estadoVerificacion: 'VERIFICADA',
-        emailVerificado: true,
-        telefonoVerificado: true,
+        // No modificamos emailVerificado ni telefonoVerificado automáticamente
+        // para no interferir con el proceso de verificación propio del usuario
         // TODO: Registrar motivo
       },
     });
