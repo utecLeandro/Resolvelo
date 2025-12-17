@@ -35,7 +35,7 @@ class FakePrismaService {
       this.mensajes.filter((m) => m.reservaId === reservaId).length,
     create: async ({ data }: any) => {
       const msg = {
-        id: `msg_${Date.now()}`,
+        id: BigInt(Date.now()),
         fechaCreacion: new Date().toISOString(),
         leido: false,
         ...data,

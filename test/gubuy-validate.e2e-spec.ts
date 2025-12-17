@@ -58,7 +58,7 @@ describe('Auth - GubUy Validate (E2E)', () => {
         nombre: 'Juan',
         apellido: 'Perez',
         email: 'juan@test.com',
-        documentoIdentidad: '1234567-8',
+        documentoIdentidad: '1111111-1',
         passwordHash: hash,
         passwordSalt: 'salt',
         estadoVerificacion: 'VERIFICADA',
@@ -78,7 +78,7 @@ describe('Auth - GubUy Validate (E2E)', () => {
       .send({
         nombre: 'Juan',
         apellido: 'Perez',
-        documentoIdentidad: '1234567-8',
+        documentoIdentidad: '1111111-1',
         email: 'juan@test.com',
         password: 'JuanTest2024!',
       })
@@ -96,7 +96,7 @@ describe('Auth - GubUy Validate (E2E)', () => {
         nombre: 'Maria',
         apellido: 'Gomez',
         email: 'maria@test.com',
-        documentoIdentidad: '9876543-1',
+        documentoIdentidad: '1234567-2',
         passwordHash: hash,
         passwordSalt: 'salt',
         estadoVerificacion: 'PENDIENTE',
@@ -110,7 +110,7 @@ describe('Auth - GubUy Validate (E2E)', () => {
       .send({
         nombre: 'Maria',
         apellido: 'Gomez',
-        documentoIdentidad: '9876543-1',
+        documentoIdentidad: '1234567-2',
         email: 'maria@test.com',
         password: 'MariaTest2024!',
       })

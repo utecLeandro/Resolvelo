@@ -33,6 +33,18 @@ class FakePrismaService {
       }
       return null;
     },
+    findFirst: async ({ where }: { where: any }) => {
+      if (where.OR && Array.isArray(where.OR)) {
+        for (const cond of where.OR) {
+          const key = Object.keys(cond)[0];
+          const val = cond[key];
+          const found = this.usuarios.find((u) => u[key] === val);
+          if (found) return found;
+        }
+        return null;
+      }
+      return null;
+    },
   };
 }
 
@@ -72,7 +84,7 @@ describe('Auth - Registro de Usuario (E2E)', () => {
       email: `juan${Date.now()}@mail.com`,
       password: 'Password123!',
       telefono: '099123456',
-      documentoIdentidad: '1.234.567-8',
+      documentoIdentidad: '1.111.111-1',
     };
 
     const res = await request(app.getHttpServer())
