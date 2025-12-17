@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EncryptionService } from '../common/services/encryption.service';
-import { EstadoTransaccion } from '@prisma/client';
+import { EstadoTransaccion, RolUsuario } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -9,6 +9,46 @@ export class AdminService {
     private readonly prisma: PrismaService,
     private readonly encryptionService: EncryptionService,
   ) {}
+
+  async listarRoles() {
+    return Object.values(RolUsuario);
+  }
+
+  async cambiarRolUsuario(
+    adminId: string | number,
+    usuarioObjetivoId: string,
+    nuevoRol: RolUsuario,
+  ) {
+    // Verificar que el usuario existe
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(usuarioObjetivoId) },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    // Actualizar el rol
+    const usuarioActualizado = await this.prisma.usuario.update({
+      where: { id: BigInt(usuarioObjetivoId) },
+      data: {
+        rol: nuevoRol,
+        fechaAsignacionRol: new Date(),
+        asignadoPor: adminId.toString(),
+      },
+    });
+
+    return {
+      success: true,
+      message: `Rol de usuario actualizado a ${nuevoRol}`,
+      data: {
+        id: usuarioActualizado.id.toString(),
+        nombre: usuarioActualizado.nombre,
+        email: usuarioActualizado.email,
+        rol: usuarioActualizado.rol,
+      },
+    };
+  }
 
   async obtenerLiquidacionesPendientes() {
     const liquidaciones = await this.prisma.transaccion.findMany({
