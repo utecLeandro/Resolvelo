@@ -11,18 +11,18 @@ describe('Calificaciones (E2E)', () => {
   let tokenUsuario: string;
 
   // Mock Data
-  const mockUsuario = { 
-    id: 1n, 
-    email: 'usuario@test.com', 
-    nombre: 'Usuario', 
+  const mockUsuario = {
+    id: 1n,
+    email: 'usuario@test.com',
+    nombre: 'Usuario',
     apellido: 'Test',
-    rol: 'USUARIO'
+    rol: 'USUARIO',
   };
 
   const mockPublicacion = {
     id: 10n,
     titulo: 'Bicicleta Montaña',
-    propietarioId: 2n
+    propietarioId: 2n,
   };
 
   const mockReserva = {
@@ -33,7 +33,7 @@ describe('Calificaciones (E2E)', () => {
     fechaFin: new Date('2024-01-05'),
     estado: 'COMPLETADA', // Debe ser COMPLETADA según el servicio
     publicacion: mockPublicacion,
-    propietarioId: 2n
+    propietarioId: 2n,
   };
 
   const mockCalificaciones: any[] = [];
@@ -48,7 +48,7 @@ describe('Calificaciones (E2E)', () => {
           return res;
         }
         return null;
-      }
+      },
     },
     calificacion: {
       findFirst: async () => null, // No existe calificación previa
@@ -57,30 +57,37 @@ describe('Calificaciones (E2E)', () => {
           id: BigInt(mockCalificaciones.length + 1),
           ...data,
           fechaCreacion: new Date(),
-          usuarioCalificador: mockUsuario // include mock
+          usuarioCalificador: mockUsuario, // include mock
         };
         mockCalificaciones.push(nueva);
         return nueva;
       },
       findMany: async ({ where }: any) => {
         if (where.publicacionId) {
-            return mockCalificaciones.filter(c => c.publicacionId.toString() === where.publicacionId.toString());
+          return mockCalificaciones.filter(
+            (c) =>
+              c.publicacionId.toString() === where.publicacionId.toString(),
+          );
         }
         return mockCalificaciones;
       },
       count: async () => mockCalificaciones.length,
-      aggregate: async () => ({ _avg: { puntuacion: 4.5 }, _count: { _all: mockCalificaciones.length } })
+      aggregate: async () => ({
+        _avg: { puntuacion: 4.5 },
+        _count: { _all: mockCalificaciones.length },
+      }),
     },
     publicacion: {
-        update: async () => ({})
+      update: async () => ({}),
     },
     usuario: {
-        findUnique: async ({ where }: any) => {
-            if (where.id && where.id.toString() === mockUsuario.id.toString()) return mockUsuario;
-            return null;
-        },
-        update: async () => ({})
-    }
+      findUnique: async ({ where }: any) => {
+        if (where.id && where.id.toString() === mockUsuario.id.toString())
+          return mockUsuario;
+        return null;
+      },
+      update: async () => ({}),
+    },
   };
 
   beforeAll(async () => {
@@ -93,14 +100,19 @@ describe('Calificaciones (E2E)', () => {
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api'); // Importante para coincidir con main.ts
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
-    
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
+
     jwtService = moduleFixture.get<JwtService>(JwtService);
-    tokenUsuario = jwtService.sign({ 
-        sub: mockUsuario.id.toString(), 
+    tokenUsuario = jwtService.sign(
+      {
+        sub: mockUsuario.id.toString(),
         email: mockUsuario.email,
-        rol: mockUsuario.rol
-    }, { secret: process.env.JWT_SECRET || 'secretKey' });
+        rol: mockUsuario.rol,
+      },
+      { secret: process.env.JWT_SECRET || 'secretKey' },
+    );
 
     await app.init();
   });
@@ -113,7 +125,7 @@ describe('Calificaciones (E2E)', () => {
     const dto = {
       reservaId: mockReserva.id.toString(),
       puntuacion: 5,
-      comentario: 'Excelente servicio, muy recomendable.'
+      comentario: 'Excelente servicio, muy recomendable.',
     };
 
     const res = await request(app.getHttpServer())
@@ -131,7 +143,7 @@ describe('Calificaciones (E2E)', () => {
     const dto = {
       reservaId: mockReserva.id.toString(),
       puntuacion: 6, // Máximo es 5
-      comentario: 'Invalido'
+      comentario: 'Invalido',
     };
 
     await request(app.getHttpServer())

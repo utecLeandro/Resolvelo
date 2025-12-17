@@ -87,7 +87,7 @@ class FakePrismaService {
         ),
       };
     },
-    update: async ({ where, data }: any) => {
+    update: async ({ where, data: _data }: any) => {
       return this.publicaciones.find(
         (p) => p.id.toString() === where.id.toString(),
       );
@@ -172,11 +172,11 @@ class FakePrismaService {
 
 describe('Reservas (E2E)', () => {
   let app: INestApplication;
-  let prisma: FakePrismaService;
+  let _prisma: FakePrismaService;
   let jwtService: JwtService;
   let tokenArrendatario: string;
   let tokenPropietario: string;
-  let reservaId: string;
+  let _reservaId: string;
 
   beforeAll(async () => {
     const fakePrisma = new FakePrismaService();
@@ -202,7 +202,7 @@ describe('Reservas (E2E)', () => {
 
     await app.init();
 
-    prisma = app.get(PrismaService) as unknown as FakePrismaService;
+    _prisma = app.get(PrismaService) as unknown as FakePrismaService;
     jwtService = app.get(JwtService);
 
     tokenArrendatario = jwtService.sign({
@@ -248,7 +248,7 @@ describe('Reservas (E2E)', () => {
     expect(res.body).toHaveProperty('success', true);
     expect(res.body.data).toHaveProperty('id');
     expect(res.body.data.estado).toBe('PENDIENTE');
-    reservaId = res.body.data.id;
+    _reservaId = res.body.data.id;
   });
 
   it('/api/reservas/mis-reservas (GET) - Obtener reservas del arrendatario', async () => {

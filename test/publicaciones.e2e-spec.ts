@@ -115,7 +115,7 @@ class FakePrismaService {
 
 describe('Publicaciones (E2E)', () => {
   let app: INestApplication;
-  let prisma: FakePrismaService;
+  let _prisma: FakePrismaService;
   let jwtService: JwtService;
   let token: string;
 
@@ -141,7 +141,7 @@ describe('Publicaciones (E2E)', () => {
 
     await app.init();
 
-    prisma = app.get(PrismaService) as unknown as FakePrismaService;
+    _prisma = app.get(PrismaService) as unknown as FakePrismaService;
     jwtService = app.get(JwtService);
 
     // Generar token para usuario de prueba (ID 1)

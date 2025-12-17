@@ -97,57 +97,62 @@ export class AdminService {
     limit: number = 10,
     search: string = '',
   ) {
-    const skip = (page - 1) * limit;
-    const where: any = {};
+    try {
+      const skip = (page - 1) * limit;
+      const where: any = {};
 
-    if (search) {
-      where.OR = [
-        { nombre: { contains: search } }, // Case-insensitive en Postgres por defecto o con mode: 'insensitive' si se configura
-        { apellido: { contains: search } },
-        { email: { contains: search } },
-      ];
-    }
+      if (search) {
+        where.OR = [
+          { nombre: { contains: search } }, // Case-insensitive en Postgres por defecto o con mode: 'insensitive' si se configura
+          { apellido: { contains: search } },
+          { email: { contains: search } },
+        ];
+      }
 
-    const [total, usuarios] = await Promise.all([
-      this.prisma.usuario.count({ where }),
-      this.prisma.usuario.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { fechaCreacion: 'desc' },
-        select: {
-          id: true,
-          nombre: true,
-          apellido: true,
-          email: true,
-          rol: true,
-          fechaCreacion: true,
-          telefono: true,
-          activo: true,
-          estadoVerificacion: true,
+      const [total, usuarios] = await Promise.all([
+        this.prisma.usuario.count({ where }),
+        this.prisma.usuario.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { fechaCreacion: 'desc' },
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            email: true,
+            rol: true,
+            fechaCreacion: true,
+            telefono: true,
+            activo: true,
+            estadoVerificacion: true,
+          },
+        }),
+      ]);
+
+      return {
+        data: usuarios.map((u) => ({
+          id: u.id.toString(),
+          nombre: u.nombre,
+          apellido: u.apellido,
+          email: u.email,
+          rol: u.rol,
+          telefono: u.telefono,
+          fechaRegistro: u.fechaCreacion, // Mapeamos para compatibilidad si el frontend lo espera así
+          estado: u.activo ? 'ACTIVO' : 'INACTIVO', // Mapeamos un estado legible
+          estadoVerificacion: u.estadoVerificacion,
+        })),
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
         },
-      }),
-    ]);
-
-    return {
-      data: usuarios.map((u) => ({
-        id: u.id.toString(),
-        nombre: u.nombre,
-        apellido: u.apellido,
-        email: u.email,
-        rol: u.rol,
-        telefono: u.telefono,
-        fechaRegistro: u.fechaCreacion, // Mapeamos para compatibilidad si el frontend lo espera así
-        estado: u.activo ? 'ACTIVO' : 'INACTIVO', // Mapeamos un estado legible
-        estadoVerificacion: u.estadoVerificacion,
-      })),
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      };
+    } catch (error) {
+      console.error('Error en listarUsuarios:', error);
+      throw error;
+    }
   }
 
   async listarPublicacionesAdmin(
@@ -156,60 +161,65 @@ export class AdminService {
     search: string = '',
     estado?: string,
   ) {
-    const skip = (page - 1) * limit;
-    const where: any = {};
+    try {
+      const skip = (page - 1) * limit;
+      const where: any = {};
 
-    if (search) {
-      where.titulo = { contains: search };
-    }
-
-    if (estado && estado !== 'TODOS') {
-      // Validar que el estado sea válido para evitar errores de Prisma
-      const estadosValidos = ['ACTIVA', 'PAUSADA', 'INACTIVA', 'ELIMINADA'];
-      if (estadosValidos.includes(estado)) {
-        where.estado = estado;
+      if (search) {
+        where.titulo = { contains: search };
       }
-    }
 
-    const [total, publicaciones] = await Promise.all([
-      this.prisma.publicacion.count({ where }),
-      this.prisma.publicacion.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { fechaCreacion: 'desc' },
-        include: {
-          propietario: {
-            select: {
-              nombre: true,
-              apellido: true,
-              email: true,
+      if (estado && estado !== 'TODOS') {
+        // Validar que el estado sea válido para evitar errores de Prisma
+        const estadosValidos = ['ACTIVA', 'PAUSADA', 'INACTIVA', 'ELIMINADA'];
+        if (estadosValidos.includes(estado)) {
+          where.estado = estado;
+        }
+      }
+
+      const [total, publicaciones] = await Promise.all([
+        this.prisma.publicacion.count({ where }),
+        this.prisma.publicacion.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { fechaCreacion: 'desc' },
+          include: {
+            propietario: {
+              select: {
+                nombre: true,
+                apellido: true,
+                email: true,
+              },
             },
           },
-        },
-      }),
-    ]);
+        }),
+      ]);
 
-    return {
-      data: publicaciones.map((p) => ({
-        id: p.id.toString(),
-        titulo: p.titulo,
-        descripcion: p.descripcion,
-        precioPorDia: Number(p.precioPorDia), // Convertir Decimal a Number explícitamente
-        estado: p.estado,
-        fechaCreacion: p.fechaCreacion,
-        propietario: {
-          nombre: `${p.propietario.nombre} ${p.propietario.apellido}`,
-          email: p.propietario.email,
+      return {
+        data: publicaciones.map((p) => ({
+          id: p.id.toString(),
+          titulo: p.titulo,
+          descripcion: p.descripcion,
+          precioPorDia: Number(p.precioPorDia), // Convertir Decimal a Number explícitamente
+          estado: p.estado,
+          fechaCreacion: p.fechaCreacion,
+          propietario: {
+            nombre: `${p.propietario.nombre} ${p.propietario.apellido}`,
+            email: p.propietario.email,
+          },
+        })),
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
         },
-      })),
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      };
+    } catch (error) {
+      console.error('Error en listarPublicacionesAdmin:', error);
+      throw error;
+    }
   }
 
   async obtenerLiquidacionesPendientes() {
