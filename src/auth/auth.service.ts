@@ -15,7 +15,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // import { emailTemplates } from '../email/email.templates';
+// import { emailTemplates } from '../email/email.templates';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { GubuyValidateDto } from './dto/gubuy-validate.dto';
@@ -203,8 +203,11 @@ export class AuthService {
       });
 
       return { message: 'Cuenta verificada exitosamente' };
-    } catch (error) {
-      throw new BadRequestException('Token de verificación inválido o expirado');
+    } catch {
+      // console.error('Error al verificar email:', _error);
+      throw new BadRequestException(
+        'Token de verificación inválido o expirado',
+      );
     }
   }
 
@@ -239,6 +242,7 @@ export class AuthService {
       );
       return { message: 'Correo de verificación reenviado exitosamente' };
     } catch (e: any) {
+      console.error('Error en reenviarVerificacion:', e?.message || e);
       // Si falla de nuevo, volvemos a pedir verificación a AWS por si acaso
       await this.emailService.verificarIdentidadEmail(usuario.email);
       throw new ServiceUnavailableException(
