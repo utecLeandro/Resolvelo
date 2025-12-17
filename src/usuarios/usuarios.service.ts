@@ -5,10 +5,15 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto';
+import { DatosBancariosDto } from './dto/datos-bancarios.dto';
+import { EncryptionService } from '../common/services/encryption.service';
 
 @Injectable()
 export class UsuariosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly encryptionService: EncryptionService,
+  ) {}
 
   async obtenerPorId(id: string) {
     const usuario = await this.prisma.usuario.findUnique({
@@ -90,4 +95,66 @@ export class UsuariosService {
     });
     return actualizado;
   }
+
+  async obtenerDatosBancarios(usuarioId: string) {
+    const datos = await this.prisma.datosBancarios.findUnique({
+      where: { usuarioId: BigInt(usuarioId) },
+    });
+
+    if (!datos) {
+      return null;
+    }
+
+    return {
+      banco: datos.banco,
+      tipoCuenta: datos.tipoCuenta,
+      numeroCuenta: this.encryptionService.decrypt(datos.numeroCuenta),
+      moneda: datos.moneda,
+      titular: datos.titular,
+    };
+  }
+
+  async guardarDatosBancarios(usuarioId: string, datos: DatosBancariosDto) {
+    // Verificar que el usuario existe
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: BigInt(usuarioId) },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    const numeroCuentaEncriptado = this.encryptionService.encrypt(datos.numeroCuenta);
+
+    const datosGuardados = await this.prisma.datosBancarios.upsert({
+      where: { usuarioId: BigInt(usuarioId) },
+      update: {
+        banco: datos.banco,
+        tipoCuenta: datos.tipoCuenta,
+        numeroCuenta: numeroCuentaEncriptado,
+        moneda: datos.moneda,
+        titular: datos.titular,
+      },
+      create: {
+        usuarioId: BigInt(usuarioId),
+        banco: datos.banco,
+        tipoCuenta: datos.tipoCuenta,
+        numeroCuenta: numeroCuentaEncriptado,
+        moneda: datos.moneda,
+        titular: datos.titular,
+      },
+    });
+
+    return {
+      message: 'Datos bancarios guardados correctamente',
+      datos: {
+        banco: datosGuardados.banco,
+        tipoCuenta: datosGuardados.tipoCuenta,
+        numeroCuenta: '********' + datos.numeroCuenta.slice(-4), // Solo mostramos los últimos 4 dígitos por seguridad en la respuesta
+        moneda: datosGuardados.moneda,
+        titular: datosGuardados.titular,
+      },
+    };
+  }
 }
+

@@ -14,6 +14,7 @@ import {
   HttpException,
   UseInterceptors,
   ForbiddenException,
+  Put,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -21,6 +22,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { UsuariosService } from './usuarios.service';
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto';
+import { DatosBancariosDto } from './dto/datos-bancarios.dto';
 import { ReservasService } from '../reservas/reservas.service';
 import { UpdateReservaDto } from '../reservas/dto/update-reserva.dto';
 import { CrearReservaDto } from '../reservas/dto/crear-reserva.dto';
@@ -33,6 +35,23 @@ export class UsuariosController {
     private readonly usuariosService: UsuariosService,
     private readonly reservasService: ReservasService,
   ) {}
+
+  @Get('datos-bancarios')
+  @UseGuards(JwtAuthGuard)
+  async obtenerDatosBancarios(@Request() req: any) {
+    const usuarioId = req.user.id;
+    return this.usuariosService.obtenerDatosBancarios(usuarioId);
+  }
+
+  @Put('datos-bancarios')
+  @UseGuards(JwtAuthGuard)
+  async guardarDatosBancarios(
+    @Request() req: any,
+    @Body() datos: DatosBancariosDto,
+  ) {
+    const usuarioId = req.user.id;
+    return this.usuariosService.guardarDatosBancarios(usuarioId, datos);
+  }
 
   @Get('test/reservas')
   async testReservas() {

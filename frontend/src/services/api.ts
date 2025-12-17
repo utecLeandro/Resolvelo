@@ -637,18 +637,35 @@ export const publicacionesService = {
 
   // Actualizar una publicación existente
   async actualizarPublicacion(id: string, datos: ActualizarPublicacionRequest): Promise<Publicacion> {
-    // Obtener el perfil del usuario autenticado para conseguir su ID
-    const perfil = await authService.perfil()
-    const response = await api.patch(`/publicaciones/${id}?usuarioId=${perfil.id}`, datos)
-    return response.data
+    try {
+      // Obtener el perfil del usuario autenticado para conseguir su ID
+      const perfil = await authService.perfil()
+      const response = await api.put(`/publicaciones/${id}?usuarioId=${perfil.id}`, datos)
+      return response.data
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for actualizarPublicacion:', error.message)
+      const perfil = await authService.perfil()
+      return await fetchFallback(`/publicaciones/${id}?usuarioId=${perfil.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(datos)
+      })
+    }
   },
 
   // Eliminar una publicación
   async eliminarPublicacion(id: string): Promise<void> {
-    // Obtener el perfil del usuario autenticado para conseguir su ID
-    const perfil = await authService.perfil()
-    await api.delete(`/publicaciones/${id}?usuarioId=${perfil.id}`)
-  },
+    try {
+      // Obtener el perfil del usuario autenticado para conseguir su ID
+      const perfil = await authService.perfil()
+      await api.delete(`/publicaciones/${id}?usuarioId=${perfil.id}`)
+    } catch (error: any) {
+      console.warn('Axios failed, trying fetch fallback for eliminarPublicacion:', error.message)
+      const perfil = await authService.perfil()
+      await fetchFallback(`/publicaciones/${id}?usuarioId=${perfil.id}`, {
+        method: 'DELETE'
+      })
+    }
+  }
 }
 
 export const imagenesService = {
@@ -845,9 +862,24 @@ export const reservasService = {
     const response = await api.patch(`/usuarios/reservas/${reservaId}/cancelar`)
     return response.data
   },
+
+  // Cancelar una reserva (propietario)
+  async cancelarReservaPropietario(reservaId: string): Promise<any> {
+    // Usamos el mismo endpoint ya que el backend maneja la lógica de permisos
+    const response = await api.patch(`/usuarios/reservas/${reservaId}/cancelar`)
+    return response.data
+  },
 }
 
 export default api
+
+export interface DatosBancarios {
+  banco: string
+  tipoCuenta: string
+  numeroCuenta: string
+  moneda: string
+  titular: string
+}
 
 // Servicios de usuario (perfil)
 export const usuarioService = {
@@ -869,7 +901,31 @@ export const usuarioService = {
     })
     return response.data
   },
+
+  async obtenerDatosBancarios(): Promise<DatosBancarios | null> {
+    const response = await api.get('/usuarios/datos-bancarios')
+    return response.data
+  },
+
+  async guardarDatosBancarios(datos: DatosBancarios): Promise<{ message: string; datos: DatosBancarios }> {
+    const response = await api.put('/usuarios/datos-bancarios', datos)
+    return response.data
+  },
 }
+
+// Servicios de administración
+export const adminService = {
+  async obtenerLiquidacionesPendientes(): Promise<any[]> {
+    const response = await api.get('/admin/liquidaciones/pendientes')
+    return response.data
+  },
+
+  async procesarLiquidacion(id: string): Promise<any> {
+    const response = await api.put(`/admin/liquidaciones/${id}/procesar`)
+    return response.data
+  },
+}
+
 
 // Servicios de mensajes
 export interface InfoChatReserva {

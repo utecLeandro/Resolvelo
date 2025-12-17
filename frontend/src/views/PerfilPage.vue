@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick, onUnmounted, computed } from 'vue'
 import { usuarioService, authService, publicacionesService } from '../services/api'
-import type { Publicacion } from '../services/api'
+import type { Publicacion, DatosBancarios } from '../services/api'
 import { useAuth } from '../composables/useAuth'
 
 interface UsuarioPerfil {
@@ -46,7 +46,20 @@ const posStartY = ref(0)
 const misPublicaciones = ref<Publicacion[]>([])
 const cargandoPublicaciones = ref(false)
 const errorPublicaciones = ref('')
-const pestanaActiva = ref<'perfil' | 'publicaciones'>('perfil')
+const pestanaActiva = ref<'perfil' | 'publicaciones' | 'bancarios'>('perfil')
+
+// Variables para datos bancarios
+const datosBancarios = ref<DatosBancarios>({
+  banco: '',
+  tipoCuenta: 'CA', // CA o CC
+  numeroCuenta: '',
+  moneda: 'UYU',
+  titular: ''
+})
+const cargandoDatosBancarios = ref(false)
+const guardandoDatosBancarios = ref(false)
+const mensajeBancario = ref('')
+const errorBancario = ref('')
 
 // Composable para manejar estado global del usuario
 const { actualizarDatosUsuario, datosUsuario } = useAuth()
@@ -305,10 +318,47 @@ const cargarMisPublicaciones = async () => {
   }
 }
 
-const cambiarPestana = (pestana: 'perfil' | 'publicaciones') => {
+const cargarDatosBancarios = async () => {
+  if (!usuarioId.value) return
+  cargandoDatosBancarios.value = true
+  errorBancario.value = ''
+  try {
+    const datos = await usuarioService.obtenerDatosBancarios()
+    if (datos) {
+      datosBancarios.value = datos
+    } else {
+      // Si no tiene datos, pre-llenar titular con nombre usuario
+      datosBancarios.value.titular = `${nombre.value} ${apellido.value}`.trim()
+    }
+  } catch (e: any) {
+    errorBancario.value = e?.response?.data?.message || 'Error al cargar datos bancarios.'
+  } finally {
+    cargandoDatosBancarios.value = false
+  }
+}
+
+const guardarDatosBancarios = async () => {
+  if (!usuarioId.value) return
+  guardandoDatosBancarios.value = true
+  mensajeBancario.value = ''
+  errorBancario.value = ''
+  try {
+    const res = await usuarioService.guardarDatosBancarios(datosBancarios.value)
+    mensajeBancario.value = res.message || 'Datos bancarios guardados correctamente.'
+    datosBancarios.value = res.datos // Actualizar con los datos retornados (numero enmascarado)
+  } catch (e: any) {
+    errorBancario.value = e?.response?.data?.message || 'Error al guardar datos bancarios.'
+  } finally {
+    guardandoDatosBancarios.value = false
+  }
+}
+
+const cambiarPestana = (pestana: 'perfil' | 'publicaciones' | 'bancarios') => {
   pestanaActiva.value = pestana
   if (pestana === 'publicaciones' && misPublicaciones.value.length === 0) {
     cargarMisPublicaciones()
+  } else if (pestana === 'bancarios') {
+    cargarDatosBancarios()
   }
 }
 
@@ -338,6 +388,17 @@ const obtenerImagenPrincipalUrl = (imagenes: any): string => {
           ]"
         >
           Información personal
+        </button>
+        <button
+          @click="cambiarPestana('bancarios')"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            pestanaActiva === 'bancarios'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          ]"
+        >
+          Datos Bancarios
         </button>
         <button
           @click="cambiarPestana('publicaciones')"
@@ -446,6 +507,90 @@ const obtenerImagenPrincipalUrl = (imagenes: any): string => {
           <span v-if="error" id="form-error" class="text-red-600" aria-live="polite">{{ error }}</span>
         </div>
       </form>
+      </div>
+
+      <!-- Pestaña de datos bancarios -->
+      <div v-if="pestanaActiva === 'bancarios'">
+        <div v-if="cargandoDatosBancarios" class="text-gray-600">Cargando datos bancarios…</div>
+        <div v-else>
+          <form @submit.prevent="guardarDatosBancarios" class="space-y-6">
+            <div>
+              <label for="banco" class="block text-sm font-medium text-gray-800">Banco</label>
+              <input
+                id="banco"
+                v-model.trim="datosBancarios.banco"
+                type="text"
+                maxlength="100"
+                placeholder="Nombre del banco"
+                required
+                class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label for="tipoCuenta" class="block text-sm font-medium text-gray-800">Tipo de Cuenta</label>
+              <select
+                id="tipoCuenta"
+                v-model="datosBancarios.tipoCuenta"
+                class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="CA">Caja de Ahorro</option>
+                <option value="CC">Cuenta Corriente</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="numeroCuenta" class="block text-sm font-medium text-gray-800">Número de Cuenta</label>
+              <input
+                id="numeroCuenta"
+                v-model.trim="datosBancarios.numeroCuenta"
+                type="text"
+                maxlength="50"
+                placeholder="Número de cuenta"
+                required
+                class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              />
+              <p class="mt-1 text-xs text-gray-500">Sus datos bancarios se almacenan de forma segura y encriptada.</p>
+            </div>
+
+            <div>
+              <label for="moneda" class="block text-sm font-medium text-gray-800">Moneda</label>
+              <select
+                id="moneda"
+                v-model="datosBancarios.moneda"
+                class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="UYU">Peso Uruguayo (UYU)</option>
+                <option value="USD">Dólar Estadounidense (USD)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="titular" class="block text-sm font-medium text-gray-800">Titular de la Cuenta</label>
+              <input
+                id="titular"
+                v-model.trim="datosBancarios.titular"
+                type="text"
+                maxlength="100"
+                placeholder="Nombre del titular"
+                required
+                class="mt-1 w-full h-12 rounded-xl border border-gray-300 bg-white/95 px-4 text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div class="flex items-center gap-3">
+              <button
+                type="submit"
+                class="px-5 h-12 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="guardandoDatosBancarios"
+              >
+                {{ guardandoDatosBancarios ? 'Guardando…' : 'Guardar Datos Bancarios' }}
+              </button>
+              <span v-if="mensajeBancario" class="text-green-600">{{ mensajeBancario }}</span>
+              <span v-if="errorBancario" class="text-red-600">{{ errorBancario }}</span>
+            </div>
+          </form>
+        </div>
       </div>
 
       <!-- Pestaña de mis publicaciones -->

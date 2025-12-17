@@ -1,19 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AdminController } from './admin.controller';
-import { AdminDebugController } from './admin-debug.controller';
-import { AdminRolesController } from './admin-roles.controller';
 import { AdminService } from './admin.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { PublicacionesModule } from '../publicaciones/publicaciones.module';
+import { EncryptionService } from '../common/services/encryption.service';
 
 @Module({
-  imports: [PublicacionesModule],
-  controllers: [AdminController, AdminDebugController, AdminRolesController],
-  providers: [AdminService, PrismaService],
-  exports: [AdminService],
+  controllers: [AdminController],
+  providers: [AdminService, PrismaService, EncryptionService],
 })
-export class AdminModule {
-  constructor() {
-    console.log('[AdminModule] Módulo de administración cargado');
-  }
-}
+export class AdminModule {}

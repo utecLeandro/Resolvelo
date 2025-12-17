@@ -374,6 +374,39 @@ export class ReservasService {
   }
 
   async finalizarReserva(id: string) {
+    const reserva = await this.prisma.reserva.update({
+      where: { id: BigInt(id) },
+      data: { estado: EstadoReserva.COMPLETADA },
+      include: {
+        propietario: {
+          include: {
+            datosBancarios: true,
+          },
+        },
+      },
+    });
+
+    // Crear registro de liquidación pendiente (independientemente de si tiene datos bancarios o no)
+    await this.prisma.transaccion.create({
+      data: {
+        reserva: { connect: { id: BigInt(id) } },
+        monto: reserva.precioTotal, // Aquí se debería restar la comisión de la plataforma si aplica
+        tipo: 'LIQUIDACION',
+        estado: 'PENDIENTE',
+        metodoPago: 'TRANSFERENCIA', // Método por defecto para liquidaciones
+        referenciaExterna: `LIQ-${id}-${Date.now()}`,
+        usuario: { connect: { id: reserva.propietarioId } }, // Relacionar con el usuario (propietario)
+      },
+    });
+
+    if (reserva.propietario.datosBancarios) {
+      this.logger.log(`Liquidación pendiente creada para reserva ${id}`);
+    } else {
+      this.logger.warn(
+        `Liquidación creada para reserva ${id}, pero el propietario ${reserva.propietarioId} NO tiene datos bancarios registrados.`,
+      );
+    }
+
     return this.actualizarReserva(id, { estado: EstadoReserva.COMPLETADA });
   }
 

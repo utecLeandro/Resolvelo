@@ -62,6 +62,7 @@ model Usuario {
   reservasRecibidas       Reserva[]          @relation("PropietarioReserva")
   reservasRealizadas      Reserva[]          @relation("UsuarioReserva")
   transacciones           Transaccion[]
+  datosBancarios          DatosBancarios?
 
   @@index([email])
   @@index([documentoIdentidad])
@@ -196,6 +197,20 @@ model Transaccion {
   @@index([fechaCreacion])
   @@index([referenciaExterna])
   @@map("transacciones")
+}
+
+model DatosBancarios {
+  id            BigInt   @id @default(autoincrement())
+  banco         String   @db.VarChar(100)
+  tipoCuenta    String   @db.VarChar(50) // CA, CC
+  numeroCuenta  String   @db.VarChar(255) // ENCRIPTADO
+  moneda        String   @default("UYU") @db.VarChar(3)
+  titular       String   @db.VarChar(100)
+  usuarioId     BigInt   @unique
+  usuario       Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  fechaCreacion DateTime @default(now())
+  
+  @@map("datos_bancarios")
 }
 
 model Calificacion {
@@ -513,6 +528,7 @@ enum TipoTransaccion {
   DEPOSITO
   REEMBOLSO
   COMISION
+  LIQUIDACION
 }
 
 enum CategoriaEquipo {
