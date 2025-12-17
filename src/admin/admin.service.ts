@@ -159,6 +159,8 @@ export class AdminService {
     limit: number = 10,
     search: string = '',
     estado?: string,
+    estadoModeracion?: string,
+    incluirTodosEstadosModeracion: boolean = false,
   ) {
     try {
       const skip = (page - 1) * limit;
@@ -174,6 +176,15 @@ export class AdminService {
         if (estadosValidos.includes(estado)) {
           where.estado = estado;
         }
+      }
+
+      if (estadoModeracion) {
+        where.estadoModeracion = estadoModeracion;
+      } else if (!incluirTodosEstadosModeracion) {
+        // Por defecto o si no se incluyen todos, quizás mostrar solo pendientes?
+        // El frontend parece controlar esto explícitamente, pero si no viene nada:
+        // where.estadoModeracion = 'PENDIENTE_REVISION'; 
+        // Dejamos que el frontend controle qué ver.
       }
 
       const [total, publicaciones] = await Promise.all([

@@ -13,16 +13,20 @@ export class AdminPublicationsController {
 
   @Get()
   async listarPublicaciones(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-    @Query('search') search: string = '',
+    @Query('pagina') page: number = 1,
+    @Query('limite') limit: number = 10,
+    @Query('busqueda') search: string = '',
     @Query('estado') estado: string = 'TODOS',
+    @Query('estadoModeracion') estadoModeracion: string = '',
+    @Query('incluirTodosEstadosModeracion') incluirTodos: string = 'false',
   ) {
     return this.adminService.listarPublicacionesAdmin(
       Number(page),
       Number(limit),
       search,
       estado,
+      estadoModeracion,
+      incluirTodos === 'true',
     );
   }
 }
