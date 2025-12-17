@@ -131,10 +131,15 @@ export class AdminService {
 
     return {
       data: usuarios.map((u) => ({
-        ...u,
         id: u.id.toString(),
+        nombre: u.nombre,
+        apellido: u.apellido,
+        email: u.email,
+        rol: u.rol,
+        telefono: u.telefono,
         fechaRegistro: u.fechaCreacion, // Mapeamos para compatibilidad si el frontend lo espera así
         estado: u.activo ? 'ACTIVO' : 'INACTIVO', // Mapeamos un estado legible
+        estadoVerificacion: u.estadoVerificacion,
       })),
       meta: {
         total,
@@ -159,7 +164,11 @@ export class AdminService {
     }
 
     if (estado && estado !== 'TODOS') {
-      where.estado = estado;
+      // Validar que el estado sea válido para evitar errores de Prisma
+      const estadosValidos = ['ACTIVA', 'PAUSADA', 'INACTIVA', 'ELIMINADA'];
+      if (estadosValidos.includes(estado)) {
+        where.estado = estado;
+      }
     }
 
     const [total, publicaciones] = await Promise.all([
@@ -186,7 +195,7 @@ export class AdminService {
         id: p.id.toString(),
         titulo: p.titulo,
         descripcion: p.descripcion,
-        precioPorDia: p.precioPorDia,
+        precioPorDia: Number(p.precioPorDia), // Convertir Decimal a Number explícitamente
         estado: p.estado,
         fechaCreacion: p.fechaCreacion,
         propietario: {
