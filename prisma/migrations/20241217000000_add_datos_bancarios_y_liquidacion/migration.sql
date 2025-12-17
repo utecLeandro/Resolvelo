@@ -1,13 +1,5 @@
--- AlterEnum
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_enum e ON t.oid = e.enumtypid WHERE t.typname = 'TipoTransaccion' AND e.enumlabel = 'LIQUIDACION') THEN
-        ALTER TYPE "TipoTransaccion" ADD VALUE 'LIQUIDACION';
-    END IF;
-END $$;
-
 -- CreateTable
-CREATE TABLE IF NOT EXISTS "datos_bancarios" (
+CREATE TABLE "datos_bancarios" (
     "id" BIGSERIAL NOT NULL,
     "banco" VARCHAR(100) NOT NULL,
     "tipoCuenta" VARCHAR(50) NOT NULL,
@@ -21,12 +13,7 @@ CREATE TABLE IF NOT EXISTS "datos_bancarios" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX IF NOT EXISTS "datos_bancarios_usuarioId_key" ON "datos_bancarios"("usuarioId");
+CREATE UNIQUE INDEX "datos_bancarios_usuarioId_key" ON "datos_bancarios"("usuarioId");
 
 -- AddForeignKey
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'datos_bancarios_usuarioId_fkey') THEN
-        ALTER TABLE "datos_bancarios" ADD CONSTRAINT "datos_bancarios_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "usuarios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE "datos_bancarios" ADD CONSTRAINT "datos_bancarios_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "usuarios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
