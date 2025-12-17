@@ -28,10 +28,6 @@ if [ "${PRISMA_BASELINE:-0}" = "1" ]; then
   echo "[Entrypoint] Baseline finalizado."
 fi
 
-# Fix específico para la migración fallida de datos bancarios (P3009)
-echo "[Entrypoint] 🛠️ Intentando limpiar migración fallida '20241217000000_add_datos_bancarios_y_liquidacion'..."
-npx prisma migrate resolve --rolled-back "20241217000000_add_datos_bancarios_y_liquidacion" || echo "[Entrypoint] ⚠️ No se requirió rollback o falló (puede ser normal si ya se resolvió)"
-
 # Migraciones normales
 if [ "${PRISMA_MIGRATE_DEPLOY:-0}" = "1" ]; then
   echo "[Entrypoint] Ejecutando 'prisma migrate deploy'..."
