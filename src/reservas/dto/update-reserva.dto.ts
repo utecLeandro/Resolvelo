@@ -1,4 +1,10 @@
-import { IsEnum, IsOptional, IsDateString, IsNumber, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsDateString,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 import { EstadoReserva } from '@prisma/client';
 
 export class UpdateReservaDto {
@@ -18,7 +24,7 @@ export class UpdateReservaDto {
   @IsOptional()
   @IsNumber()
   precioTotal?: number;
-  
+
   @IsOptional()
   @IsString()
   notasUsuario?: string;

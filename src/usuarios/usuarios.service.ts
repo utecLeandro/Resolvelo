@@ -124,7 +124,9 @@ export class UsuariosService {
       throw new NotFoundException('Usuario no encontrado');
     }
 
-    const numeroCuentaEncriptado = this.encryptionService.encrypt(datos.numeroCuenta);
+    const numeroCuentaEncriptado = this.encryptionService.encrypt(
+      datos.numeroCuenta,
+    );
 
     const datosGuardados = await this.prisma.datosBancarios.upsert({
       where: { usuarioId: BigInt(usuarioId) },
@@ -157,4 +159,3 @@ export class UsuariosService {
     };
   }
 }
-

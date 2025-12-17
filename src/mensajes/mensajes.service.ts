@@ -200,7 +200,7 @@ export class MensajesService {
         where: { id: BigInt(reservaId) },
         include: { publicacion: { select: { titulo: true } } },
       });
-      
+
       const receptor = await this.prisma.usuario.findUnique({
         where: { id: BigInt(receptorId) },
         select: { id: true, nombre: true, email: true },
@@ -208,14 +208,14 @@ export class MensajesService {
 
       const mensaje = await this.prisma.mensaje.findUnique({
         where: { id: BigInt(mensajeId) },
-        include: { emisor: { select: { nombre: true, apellido: true } } }
+        include: { emisor: { select: { nombre: true, apellido: true } } },
       });
 
       if (!reserva || !receptor || !mensaje) return;
 
       const frontendBase = 'https://develop.d2jhmkfagiypdq.amplifyapp.com';
       const link = `${frontendBase}/mensajes/reserva/${encodeURIComponent(reservaId)}`;
-      
+
       const nombreEmisor = `${mensaje.emisor.nombre} ${mensaje.emisor.apellido}`;
 
       await this.emailService.sendMail(
@@ -225,10 +225,12 @@ export class MensajesService {
           receptor.nombre,
           nombreEmisor,
           mensaje.contenido,
-          link
-        )
+          link,
+        ),
       );
-      this.logger.log(`Notificación de nuevo mensaje enviada a ${receptor.email}`);
+      this.logger.log(
+        `Notificación de nuevo mensaje enviada a ${receptor.email}`,
+      );
     } catch (e) {
       this.logger.error(
         'Fallo al enviar email de notificación de mensaje',

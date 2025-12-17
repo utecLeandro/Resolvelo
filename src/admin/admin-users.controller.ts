@@ -17,6 +17,10 @@ export class AdminUsersController {
     @Query('limit') limit: number = 10,
     @Query('search') search: string = '',
   ) {
-    return this.adminService.listarUsuarios(Number(page), Number(limit), search);
+    return this.adminService.listarUsuarios(
+      Number(page),
+      Number(limit),
+      search,
+    );
   }
 }

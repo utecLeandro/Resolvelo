@@ -8,6 +8,6 @@ import { EmailModule } from '../email/email.module';
   imports: [EmailModule],
   controllers: [ReservasController],
   providers: [ReservasService, PrismaService],
-  exports: [ReservasService]
+  exports: [ReservasService],
 })
 export class ReservasModule {}

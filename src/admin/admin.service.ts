@@ -282,7 +282,9 @@ export class AdminService {
             ? {
                 banco: datosBancarios.banco,
                 tipoCuenta: datosBancarios.tipoCuenta,
-                numeroCuenta: this.encryptionService.decrypt(datosBancarios.numeroCuenta),
+                numeroCuenta: this.encryptionService.decrypt(
+                  datosBancarios.numeroCuenta,
+                ),
                 moneda: datosBancarios.moneda,
                 titular: datosBancarios.titular,
               }
@@ -301,8 +303,13 @@ export class AdminService {
       throw new NotFoundException('Liquidación no encontrada');
     }
 
-    if (liquidacion.tipo !== 'LIQUIDACION' || liquidacion.estado !== 'PENDIENTE') {
-      throw new NotFoundException('La transacción no es una liquidación pendiente');
+    if (
+      liquidacion.tipo !== 'LIQUIDACION' ||
+      liquidacion.estado !== 'PENDIENTE'
+    ) {
+      throw new NotFoundException(
+        'La transacción no es una liquidación pendiente',
+      );
     }
 
     // Aquí iría la lógica real de pago o integración con banco/API

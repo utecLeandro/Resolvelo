@@ -402,7 +402,8 @@ export class PublicacionesService {
       // Convertir precios Decimal a números para el frontend
       const publicacionConPreciosNumericos = {
         ...publicacion,
-        totalReservas: publicacion._count?.reservas ?? publicacion.totalReservas,
+        totalReservas:
+          publicacion._count?.reservas ?? publicacion.totalReservas,
         totalCalificaciones:
           publicacion._count?.calificaciones ?? publicacion.totalCalificaciones,
         precioPorDia: Number(publicacion.precioPorDia),

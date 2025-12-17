@@ -10,17 +10,17 @@ import { Prisma } from '@prisma/client';
 
 export function serializeBigInt(v: any): any {
   if (v === null || v === undefined) return v;
-  
+
   if (typeof v === 'bigint') return v.toString();
-  
+
   if (v instanceof Date) return v.toISOString();
-  
+
   if (v instanceof Prisma.Decimal) return v.toString();
-  
+
   if (Array.isArray(v)) {
     return v.map((item) => serializeBigInt(item));
   }
-  
+
   if (typeof v === 'object') {
     // Evitar serializar objetos especiales de NestJS o Node que no sean datos planos si es posible,
     // pero para seguridad serializamos recursivamente todo objeto plano.
@@ -30,7 +30,7 @@ export function serializeBigInt(v: any): any {
     }
     return out;
   }
-  
+
   return v;
 }
 

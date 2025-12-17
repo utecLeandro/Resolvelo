@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import { CrearReservaDto } from './dto/crear-reserva.dto';
@@ -79,7 +84,9 @@ export class ReservasService {
     }
 
     if (inicio < ahora) {
-      throw new BadRequestException('La fecha de inicio debe ser en el futuro o el día actual');
+      throw new BadRequestException(
+        'La fecha de inicio debe ser en el futuro o el día actual',
+      );
     }
 
     if (fin < inicio) {
