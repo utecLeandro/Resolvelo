@@ -189,8 +189,8 @@ export class AuthService {
         throw new NotFoundException('Usuario no encontrado');
       }
 
-      if (usuario.emailVerificado) {
-        return { message: 'El email del usuario ya está verificado' };
+      if (usuario.estadoVerificacion === 'VERIFICADA') {
+        return { message: 'El usuario ya está verificado' };
       }
 
       await this.prisma.usuario.update({
