@@ -114,16 +114,17 @@ export class AdminService {
         where,
         skip,
         take: limit,
-        orderBy: { fechaRegistro: 'desc' },
+        orderBy: { fechaCreacion: 'desc' },
         select: {
           id: true,
           nombre: true,
           apellido: true,
           email: true,
           rol: true,
-          fechaRegistro: true,
+          fechaCreacion: true,
           telefono: true,
-          estado: true,
+          activo: true,
+          estadoVerificacion: true,
         },
       }),
     ]);
@@ -132,6 +133,8 @@ export class AdminService {
       data: usuarios.map((u) => ({
         ...u,
         id: u.id.toString(),
+        fechaRegistro: u.fechaCreacion, // Mapeamos para compatibilidad si el frontend lo espera así
+        estado: u.activo ? 'ACTIVO' : 'INACTIVO', // Mapeamos un estado legible
       })),
       meta: {
         total,
@@ -167,7 +170,7 @@ export class AdminService {
         take: limit,
         orderBy: { fechaCreacion: 'desc' },
         include: {
-          usuario: {
+          propietario: {
             select: {
               nombre: true,
               apellido: true,
@@ -187,8 +190,8 @@ export class AdminService {
         estado: p.estado,
         fechaCreacion: p.fechaCreacion,
         propietario: {
-          nombre: `${p.usuario.nombre} ${p.usuario.apellido}`,
-          email: p.usuario.email,
+          nombre: `${p.propietario.nombre} ${p.propietario.apellido}`,
+          email: p.propietario.email,
         },
       })),
       meta: {
