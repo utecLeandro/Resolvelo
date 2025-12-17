@@ -6,7 +6,10 @@
 name: Backend Deploy to App Runner
 
 on:
-  push:
+  workflow_run:
+    workflows: ["🚀 CI/CD Pipeline - ReSolVelo"]
+    types:
+      - completed
     branches: [ "main", "develop" ]
   # Permite ejecutar manualmente desde la UI de GitHub Actions
   workflow_dispatch:
@@ -31,6 +34,7 @@ jobs:
   deploy:
     name: Build & Deploy to App Runner
     runs-on: ubuntu-latest
+    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') || github.event_name == 'workflow_dispatch' }}
     permissions:
       id-token: write
       contents: read
@@ -96,7 +100,7 @@ jobs:
       - name: Build & Push Docker image
         env:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          IMAGE_TAG: ${{ github.event.workflow_run.head_sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           set -euo pipefail
           IMAGE_URI="$ECR_REGISTRY/${ECR_REPOSITORY}:$IMAGE_TAG"
