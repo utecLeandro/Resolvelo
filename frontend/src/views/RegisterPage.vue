@@ -7,6 +7,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '../services/api'
 import { Switch } from '@headlessui/vue'
+import BaseModal from '../components/common/BaseModal.vue'
 
 const router = useRouter()
 
@@ -21,6 +22,7 @@ const showConfirmPassword = ref(false)
 const telefono = ref('')
 const documentoIdentidad = ref('')
 const aceptaTerminos = ref(false)
+const showTermsModal = ref(false)
 const isLoading = ref(false)
 const formError = ref('')
 const fieldErrors = ref<Record<string, string>>({})
@@ -319,7 +321,9 @@ const onSubmit = async () => {
                   :class="aceptaTerminos ? 'bg-blue-600' : 'bg-gray-200'" aria-label="Aceptar términos y condiciones">
             <span class="inline-block h-5 w-5 transform rounded-full bg-white transition" :class="aceptaTerminos ? 'translate-x-5' : 'translate-x-1'" />
           </Switch>
-          <span class="text-sm text-gray-700">Acepto los términos y la política de privacidad</span>
+          <span class="text-sm text-gray-700">
+            Acepto los <button type="button" @click="showTermsModal = true" class="text-blue-600 hover:underline font-medium">términos y la política de privacidad</button>
+          </span>
         </div>
         <p v-if="fieldErrors.aceptaTerminos" class="text-sm text-red-600">{{ fieldErrors.aceptaTerminos }}</p>
 
@@ -349,6 +353,56 @@ const onSubmit = async () => {
       </form>
     </div>
   </div>
+
+  <BaseModal :isOpen="showTermsModal" title="Términos y Política de Privacidad" @close="showTermsModal = false">
+    <div class="space-y-4 text-sm text-gray-700 max-h-[60vh] overflow-y-auto pr-2">
+      <h4 class="font-bold text-gray-900">Alojamiento y Transferencia Internacional de Datos</h4>
+      
+      <p class="font-semibold text-gray-900">ReSolVelo es un servicio digital con infraestructura global para garantizar su rendimiento y disponibilidad.</p>
+      
+      <ul class="list-disc pl-5 space-y-2">
+        <li>
+          <strong>Consentimiento para la Transferencia Internacional:</strong> Para operar nuestra plataforma, utilizamos los servicios de infraestructura en la nube de proveedores líderes como Amazon Web Services (AWS). Esto significa que la información que nos proporcionas, incluidos tus datos personales, puede ser almacenada y procesada en servidores ubicados fuera de tu país de residencia (incluyendo, pero no limitándose a, Estados Unidos, Brasil y países de la Unión Europea), donde las leyes de protección de datos pueden ser diferentes.
+        </li>
+        <li>
+          <strong>Finalidad de la Transferencia:</strong> Esta transferencia es necesaria para poder prestarte el servicio de ReSolVelo de manera eficiente y segura.
+        </li>
+        <li>
+          <strong>Aceptación:</strong> Al crear una cuenta y utilizar nuestros servicios, aceptas y consientes explícitamente esta transferencia, almacenamiento y procesamiento de tus datos en el extranjero. Nos comprometemos a que nuestros proveedores de servicios cumplan con altos estándares de seguridad y protección de datos.
+        </li>
+      </ul>
+
+      <h4 class="font-bold text-gray-900 mt-6">Recopilación de Datos y Cumplimiento Normativo</h4>
+      <p>En estricto cumplimiento de la <strong>Ley N° 18.331 de Protección de Datos Personales y Acción de Habeas Data</strong> de la República Oriental del Uruguay:</p>
+
+      <ul class="list-disc pl-5 space-y-2">
+        <li>
+          <strong>Información Requerida:</strong> Para garantizar la seguridad de las transacciones y validar la identidad de nuestros usuarios, ReSolVelo solicitará información personal sensible, incluyendo <strong>Cédula de Identidad</strong> y <strong>datos bancarios</strong>.
+        </li>
+        <li>
+          <strong>Uso de la Información:</strong> Estos datos serán utilizados exclusivamente para la verificación de identidad, gestión de reservas y procesamiento de pagos/cobros dentro de la plataforma.
+        </li>
+        <li>
+          <strong>Compromiso de Privacidad:</strong> Sus datos se encuentran resguardados bajo estrictas medidas de seguridad y no serán compartidos con terceros sin su consentimiento, salvo las excepciones previstas por la ley para el cumplimiento del servicio.
+        </li>
+      </ul>
+    </div>
+    
+    <template #footer>
+      <button 
+        @click="showTermsModal = false" 
+        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
+        Cerrar
+      </button>
+      <button 
+        @click="{ aceptaTerminos = true; showTermsModal = false }" 
+        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
+        Aceptar y Cerrar
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <style scoped>

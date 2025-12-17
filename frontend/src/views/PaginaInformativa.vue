@@ -84,7 +84,7 @@
               <div>
                 <h3>Información de contacto</h3>
                 <p><strong>Email:</strong> soporte@resolvelo.com</p>
-                <p><strong>Teléfono:</strong> +51 999 888 777</p>
+                <p><strong>Teléfono:</strong> +598 98 065 249</p>
                 <p>
                   <strong>Horario de atención:</strong> Lunes a Viernes, 9:00 AM
                   - 6:00 PM
@@ -93,9 +93,7 @@
               <div>
                 <h3>Oficina principal</h3>
                 <p>
-                  Av. Universitaria 123<br />
-                  Lima, Perú<br />
-                  Lima 15001
+                  Montevideo, Uruguay<br />
                 </p>
               </div>
             </div>
