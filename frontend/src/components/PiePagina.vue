@@ -212,10 +212,10 @@
               <div>
                 <p class="text-gray-300 text-sm">Teléfono</p>
                 <a
-                  href="tel:+59899123456"
+                  href="tel:+59898065249"
                   class="text-white hover:text-blue-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded-md"
                 >
-                  +598 99 123 456
+                  +598 98 065 249
                 </a>
               </div>
             </div>

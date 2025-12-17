@@ -170,28 +170,38 @@
 
           <div v-else-if="rutaActual === '/politica-privacidad'">
             <h2>Política de Privacidad</h2>
+            
+            <h3>Alojamiento y Transferencia Internacional de Datos</h3>
             <p>
-              Esta política describe cómo ReSolVelo recopila, usa y protege tu
-              información personal.
+              ReSolVelo es un servicio digital con infraestructura global para garantizar su rendimiento y disponibilidad.
             </p>
+            <ul>
+              <li>
+                <strong>Consentimiento para la Transferencia Internacional:</strong> Para operar nuestra plataforma, utilizamos los servicios de infraestructura en la nube de proveedores líderes como Amazon Web Services (AWS). Esto significa que la información que nos proporcionas, incluidos tus datos personales, puede ser almacenada y procesada en servidores ubicados fuera de tu país de residencia (incluyendo, pero no limitándose a, Estados Unidos, Brasil y países de la Unión Europea), donde las leyes de protección de datos pueden ser diferentes.
+              </li>
+              <li>
+                <strong>Finalidad de la Transferencia:</strong> Esta transferencia es necesaria para poder prestarte el servicio de ReSolVelo de manera eficiente y segura.
+              </li>
+              <li>
+                <strong>Aceptación:</strong> Al crear una cuenta y utilizar nuestros servicios, aceptas y consientes explícitamente esta transferencia, almacenamiento y procesamiento de tus datos en el extranjero. Nos comprometemos a que nuestros proveedores de servicios cumplan con altos estándares de seguridad y protección de datos.
+              </li>
+            </ul>
 
-            <h3>Información que recopilamos</h3>
+            <h3>Recopilación de Datos y Cumplimiento Normativo</h3>
             <p>
-              Recopilamos información necesaria para proporcionar nuestros
-              servicios, incluyendo datos de contacto y preferencias de usuario.
+              En estricto cumplimiento de la <strong>Ley N° 18.331 de Protección de Datos Personales y Acción de Habeas Data</strong> de la República Oriental del Uruguay:
             </p>
-
-            <h3>Cómo usamos tu información</h3>
-            <p>
-              Usamos tu información para facilitar transacciones, mejorar
-              nuestros servicios y comunicarnos contigo.
-            </p>
-
-            <h3>Protección de datos</h3>
-            <p>
-              Implementamos medidas de seguridad técnicas y organizacionales
-              para proteger tu información personal.
-            </p>
+            <ul>
+              <li>
+                <strong>Información Requerida:</strong> Para garantizar la seguridad de las transacciones y validar la identidad de nuestros usuarios, ReSolVelo solicitará información personal sensible, incluyendo <strong>Cédula de Identidad</strong> y <strong>datos bancarios</strong>.
+              </li>
+              <li>
+                <strong>Uso de la Información:</strong> Estos datos serán utilizados exclusivamente para la verificación de identidad, gestión de reservas y procesamiento de pagos/cobros dentro de la plataforma.
+              </li>
+              <li>
+                <strong>Compromiso de Privacidad:</strong> Sus datos se encuentran resguardados bajo estrictas medidas de seguridad y no serán compartidos con terceros sin su consentimiento, salvo las excepciones previstas por la ley para el cumplimiento del servicio.
+              </li>
+            </ul>
           </div>
 
           <div v-else>
