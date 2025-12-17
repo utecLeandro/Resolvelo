@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, Length, Matches, IsIn } from 'class-validator';
+import { IsNotEmpty, IsString, Length, IsIn } from 'class-validator';
 
 export class DatosBancariosDto {
   @IsNotEmpty({ message: 'El banco es requerido' })

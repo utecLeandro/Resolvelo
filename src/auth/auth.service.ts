@@ -14,7 +14,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
-import { emailTemplates } from '../email/email.templates';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // import { emailTemplates } from '../email/email.templates';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { GubuyValidateDto } from './dto/gubuy-validate.dto';
