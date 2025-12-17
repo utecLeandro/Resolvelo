@@ -92,6 +92,114 @@ export class AdminService {
     };
   }
 
+  async listarUsuarios(
+    page: number = 1,
+    limit: number = 10,
+    search: string = '',
+  ) {
+    const skip = (page - 1) * limit;
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { nombre: { contains: search } }, // Case-insensitive en Postgres por defecto o con mode: 'insensitive' si se configura
+        { apellido: { contains: search } },
+        { email: { contains: search } },
+      ];
+    }
+
+    const [total, usuarios] = await Promise.all([
+      this.prisma.usuario.count({ where }),
+      this.prisma.usuario.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { fechaRegistro: 'desc' },
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          email: true,
+          rol: true,
+          fechaRegistro: true,
+          telefono: true,
+          estado: true,
+        },
+      }),
+    ]);
+
+    return {
+      data: usuarios.map((u) => ({
+        ...u,
+        id: u.id.toString(),
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async listarPublicacionesAdmin(
+    page: number = 1,
+    limit: number = 10,
+    search: string = '',
+    estado?: string,
+  ) {
+    const skip = (page - 1) * limit;
+    const where: any = {};
+
+    if (search) {
+      where.titulo = { contains: search };
+    }
+
+    if (estado && estado !== 'TODOS') {
+      where.estado = estado;
+    }
+
+    const [total, publicaciones] = await Promise.all([
+      this.prisma.publicacion.count({ where }),
+      this.prisma.publicacion.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { fechaCreacion: 'desc' },
+        include: {
+          usuario: {
+            select: {
+              nombre: true,
+              apellido: true,
+              email: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      data: publicaciones.map((p) => ({
+        id: p.id.toString(),
+        titulo: p.titulo,
+        descripcion: p.descripcion,
+        precioPorDia: p.precioPorDia,
+        estado: p.estado,
+        fechaCreacion: p.fechaCreacion,
+        propietario: {
+          nombre: `${p.usuario.nombre} ${p.usuario.apellido}`,
+          email: p.usuario.email,
+        },
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async obtenerLiquidacionesPendientes() {
     const liquidaciones = await this.prisma.transaccion.findMany({
       where: {
