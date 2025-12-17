@@ -94,7 +94,7 @@ export class AdminService {
     };
   }
 
-  async verificarUsuario(id: string, motivo?: string) {
+  async verificarUsuario(id: string, _motivo?: string) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: BigInt(id) },
     });
@@ -107,9 +107,9 @@ export class AdminService {
       where: { id: BigInt(id) },
       data: {
         estadoVerificacion: 'VERIFICADA',
-        // No modificamos emailVerificado ni telefonoVerificado automáticamente
-        // para no interferir con el proceso de verificación propio del usuario
-        // TODO: Registrar motivo
+        emailVerificado: true,
+        telefonoVerificado: true,
+        // TODO: Registrar _motivo
       },
     });
 
