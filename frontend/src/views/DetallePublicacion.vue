@@ -324,23 +324,26 @@
           <div class="bg-white border border-gray-200 rounded-lg p-6">
             <button
               @click="contactarPropietario"
-              :disabled="!fechaInicio || !fechaFin || !!mensajeErrorFechas || disponibilidadRango === false"
+              :disabled="!fechaInicio || !fechaFin || !!mensajeErrorFechas || disponibilidadRango === false || esPropietario"
               :class="[
                 'w-full py-3 px-6 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
-                (!fechaInicio || !fechaFin || !!mensajeErrorFechas || disponibilidadRango === false)
+                (!fechaInicio || !fechaFin || !!mensajeErrorFechas || disponibilidadRango === false || esPropietario)
                   ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'
               ]"
             >
-              Alquilar
+              {{ esPropietario ? 'Eres el propietario' : 'Alquilar' }}
             </button>
-            <p v-if="!usuarioAutenticado" class="text-xs text-gray-500 text-center mt-2">
+            <p v-if="esPropietario" class="text-xs text-orange-600 text-center mt-2">
+              No puedes alquilar tu propia publicación
+            </p>
+            <p v-else-if="!usuarioAutenticado" class="text-xs text-gray-500 text-center mt-2">
               Necesitas iniciar sesión para contactar al propietario
             </p>
             <p v-else class="text-xs text-green-600 text-center mt-2">
               ✓ Listo para contactar al propietario
             </p>
-            <p v-if="!fechaInicio || !fechaFin" class="text-xs text-red-600 text-center mt-2">Selecciona un rango válido para continuar</p>
+            <p v-if="(!fechaInicio || !fechaFin) && !esPropietario" class="text-xs text-red-600 text-center mt-2">Selecciona un rango válido para continuar</p>
           </div>
         </div>
 
@@ -458,6 +461,12 @@ const rangoFechas = ref<Date[] | null>(null)
 const reservasActivas = ref<ReservaActiva[]>([])
 const disponibilidadRango = ref<boolean | null>(null)
 const comprobandoDisponibilidad = ref(false)
+
+const esPropietario = computed(() => {
+  if (!publicacion.value || !datosUsuario.value) return false
+  // Comparar IDs convirtiendo a string para asegurar compatibilidad
+  return String(publicacion.value.propietarioId) === String(datosUsuario.value.id)
+})
 
 // Computed properties para mantener compatibilidad con el código existente
 const fechaInicio = computed(() => {
