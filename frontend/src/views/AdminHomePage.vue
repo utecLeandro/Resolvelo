@@ -159,6 +159,49 @@
           </div>
         </div>
       </RouterLink>
+
+      <!-- Ingresos -->
+      <RouterLink
+        to="/admin/ingresos"
+        class="group bg-white border border-gray-200 rounded-lg shadow-sm p-5 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+        <div class="flex items-start">
+          <div
+            class="w-10 h-10 mr-4 rounded-full bg-yellow-600/90 text-white flex items-center justify-center"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+              />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-gray-900">
+                Ingresos
+              </h2>
+            </div>
+            <p class="text-sm text-gray-600 mt-1">
+              Analizar ganancias y comisiones
+            </p>
+            <div class="mt-4">
+              <span
+                class="inline-flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-md bg-yellow-600 text-white group-hover:bg-yellow-700"
+                >Ingresar</span
+              >
+            </div>
+          </div>
+        </div>
+      </RouterLink>
     </div>
   </div>
 </template>

@@ -33,6 +33,7 @@ import AdminUsersPage from '../views/AdminUsersPage.vue'
 import AdminHomePage from '../views/AdminHomePage.vue'
 import AdminPublicacionesPage from '../views/AdminPublicacionesPage.vue'
 import AdminLiquidacionesPage from '../views/AdminLiquidacionesPage.vue'
+import AdminIngresosPage from '../views/AdminIngresosPage.vue'
 
 // Definición de rutas de la aplicación
 const routes: RouteRecordRaw[] = [
@@ -76,6 +77,16 @@ const routes: RouteRecordRaw[] = [
     meta: {
       title: 'Liquidaciones Pendientes - ReSolVelo',
       description: 'Gestión de pagos a propietarios',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/admin/ingresos',
+    name: 'AdminIngresos',
+    component: AdminIngresosPage,
+    meta: {
+      title: 'Ingresos - ReSolVelo',
+      description: 'Análisis de ingresos y comisiones',
       requiresAuth: true,
     },
   },

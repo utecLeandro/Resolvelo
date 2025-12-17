@@ -10,6 +10,12 @@ import { RolUsuario } from '@prisma/client';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  @Get('ingresos')
+  @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.SUPER_ADMIN)
+  async obtenerIngresos() {
+    return this.adminService.obtenerIngresos();
+  }
+
   @Get('liquidaciones/pendientes')
   @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.SUPER_ADMIN)
   async obtenerLiquidacionesPendientes() {

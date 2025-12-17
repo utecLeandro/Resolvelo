@@ -915,6 +915,11 @@ export const usuarioService = {
 
 // Servicios de administración
 export const adminService = {
+  async obtenerIngresos(): Promise<any[]> {
+    const response = await api.get('/admin/ingresos')
+    return response.data
+  },
+
   async obtenerLiquidacionesPendientes(): Promise<any[]> {
     const response = await api.get('/admin/liquidaciones/pendientes')
     return response.data

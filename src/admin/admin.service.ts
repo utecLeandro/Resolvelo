@@ -10,6 +10,48 @@ export class AdminService {
     private readonly encryptionService: EncryptionService,
   ) {}
 
+  async obtenerIngresos() {
+    const reservas = await this.prisma.reserva.findMany({
+      where: {
+        estado: 'COMPLETADA',
+      },
+      include: {
+        publicacion: {
+          select: {
+            titulo: true,
+          },
+        },
+        propietario: {
+          select: {
+            nombre: true,
+            apellido: true,
+            email: true,
+          },
+        },
+        usuario: {
+          select: {
+            nombre: true,
+            apellido: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        fechaFin: 'desc',
+      },
+    });
+
+    return reservas.map((reserva) => ({
+      id: reserva.id.toString(),
+      fecha: reserva.fechaFin,
+      publicacion: reserva.publicacion.titulo,
+      propietario: `${reserva.propietario.nombre} ${reserva.propietario.apellido}`,
+      arrendatario: `${reserva.usuario.nombre} ${reserva.usuario.apellido}`,
+      montoTotal: reserva.precioTotal,
+      comision: reserva.comisionPlataforma,
+    }));
+  }
+
   async listarRoles() {
     return Object.values(RolUsuario);
   }
