@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Patch, Param, Body, Request, Delete } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -30,5 +30,24 @@ export class AdminPublicationsController {
       incluirTodos === 'true',
       categoria || undefined,
     );
+  }
+
+  @Patch(':id/aprobar')
+  async aprobarPublicacion(@Param('id') id: string, @Request() req: any) {
+    return this.adminService.aprobarPublicacion(id, req.user.id);
+  }
+
+  @Patch(':id/rechazar')
+  async rechazarPublicacion(
+    @Param('id') id: string,
+    @Body('motivo') motivo: string,
+    @Request() req: any,
+  ) {
+    return this.adminService.rechazarPublicacion(id, motivo, req.user.id);
+  }
+
+  @Delete(':id')
+  async eliminarPublicacion(@Param('id') id: string, @Request() req: any) {
+    return this.adminService.eliminarPublicacion(id, req.user.id);
   }
 }

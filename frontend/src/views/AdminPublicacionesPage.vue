@@ -241,13 +241,106 @@
         </div>
       </div>
     </div>
+    <!-- Modal de rechazo -->
+    <BaseModal
+      :is-open="mostrarModalRechazo"
+      title="Rechazar publicación"
+      @close="cerrarModalRechazo"
+    >
+      <div class="space-y-4">
+        <p class="text-sm text-gray-600">
+          Por favor, indica el motivo por el cual estás rechazando esta publicación.
+          Este mensaje será enviado al propietario.
+        </p>
+        
+        <div>
+          <label for="motivo" class="block text-sm font-medium text-gray-700">Motivo del rechazo</label>
+          <textarea
+            id="motivo"
+            v-model="motivoRechazo"
+            rows="3"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            placeholder="Ej: Las fotos no cumplen con los requisitos de calidad..."
+          ></textarea>
+        </div>
+
+        <div v-if="errorRechazo" class="text-sm text-red-600">
+          {{ errorRechazo }}
+        </div>
+      </div>
+
+      <template #footer>
+        <button
+          type="button"
+          class="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+          @click="cerrarModalRechazo"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+          :disabled="!motivoRechazo.trim() || procesandoRechazo"
+          @click="confirmarRechazo"
+        >
+          <span v-if="procesandoRechazo" class="mr-2">
+            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16 8 8 0 010-16z"></path>
+            </svg>
+          </span>
+          Rechazar publicación
+        </button>
+      </template>
+    </BaseModal>
+
+    <!-- Modal de eliminación -->
+    <BaseModal
+      :is-open="mostrarModalEliminar"
+      title="Eliminar publicación"
+      @close="cerrarModalEliminar"
+    >
+      <div class="space-y-4">
+        <p class="text-sm text-gray-600">
+          ¿Estás seguro de que deseas eliminar esta publicación? Esta acción no se puede deshacer.
+        </p>
+
+        <div v-if="errorEliminacion" class="text-sm text-red-600">
+          {{ errorEliminacion }}
+        </div>
+      </div>
+
+      <template #footer>
+        <button
+          type="button"
+          class="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+          @click="cerrarModalEliminar"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+          :disabled="procesandoEliminacion"
+          @click="confirmarEliminacion"
+        >
+          <span v-if="procesandoEliminacion" class="mr-2">
+            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16 8 8 0 010-16z"></path>
+            </svg>
+          </span>
+          Eliminar
+        </button>
+      </template>
+    </BaseModal>
   </div>
-  
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import BaseModal from '../components/common/BaseModal.vue'
 import { type Publicacion, type RespuestaPublicaciones } from '../services/api'
 import { adminService } from '../services/admin'
 
@@ -257,6 +350,19 @@ const paginacion = ref({ paginaActual: 1, totalPaginas: 1, totalElementos: 0, el
 const isLoading = ref(false)
 const errorMensaje = ref<string | null>(null)
 const errorCodigo = ref<number | null>(null)
+
+// Estado para modal de rechazo
+const mostrarModalRechazo = ref(false)
+const publicacionARechazar = ref<string | null>(null)
+const motivoRechazo = ref('')
+const procesandoRechazo = ref(false)
+const errorRechazo = ref('')
+
+// Estado para modal de eliminación
+const mostrarModalEliminar = ref(false)
+const publicacionAEliminar = ref<string | null>(null)
+const procesandoEliminacion = ref(false)
+const errorEliminacion = ref('')
 
 // Catálogo de categorías (enum) — alineado con FiltrosBusqueda.vue
 const categorias = [
@@ -364,10 +470,38 @@ function estadoBadgeClass(estado?: string) {
   }
 }
 
-async function eliminar(id: string) {
-  // Placeholder: la eliminación real debería requerir confirmación y usar publicacionesService.eliminarPublicacion
-  console.warn('Eliminar no implementado aún, id=', id)
+// === Lógica de Eliminación ===
+
+function eliminar(id: string) {
+  publicacionAEliminar.value = id
+  errorEliminacion.value = ''
+  mostrarModalEliminar.value = true
 }
+
+function cerrarModalEliminar() {
+  mostrarModalEliminar.value = false
+  publicacionAEliminar.value = null
+  errorEliminacion.value = ''
+}
+
+async function confirmarEliminacion() {
+  if (!publicacionAEliminar.value) return
+
+  try {
+    procesandoEliminacion.value = true
+    errorEliminacion.value = ''
+    await adminService.eliminarPublicacion(publicacionAEliminar.value)
+    cerrarModalEliminar()
+    await cargarPublicaciones(paginacion.value.paginaActual)
+  } catch (err: any) {
+    console.error('Error al eliminar publicación', err)
+    errorEliminacion.value = err?.response?.data?.message || err?.message || 'Error al eliminar la publicación'
+  } finally {
+    procesandoEliminacion.value = false
+  }
+}
+
+// === Lógica de Aprobación ===
 
 async function aprobar(id: string) {
   try {
@@ -390,31 +524,45 @@ async function aprobar(id: string) {
   }
 }
 
-async function rechazar(id: string) {
-  const motivo = window.prompt('Motivo del rechazo (opcional):') || undefined
-  const comentario = window.prompt('Comentario adicional (opcional):') || undefined
+// === Lógica de Rechazo ===
+
+function rechazar(id: string) {
+  publicacionARechazar.value = id
+  motivoRechazo.value = ''
+  errorRechazo.value = ''
+  mostrarModalRechazo.value = true
+}
+
+function cerrarModalRechazo() {
+  mostrarModalRechazo.value = false
+  publicacionARechazar.value = null
+  motivoRechazo.value = ''
+  errorRechazo.value = ''
+}
+
+async function confirmarRechazo() {
+  if (!publicacionARechazar.value) return
+  if (!motivoRechazo.value.trim()) {
+    errorRechazo.value = 'Debes indicar un motivo para el rechazo.'
+    return
+  }
+
   try {
-    isLoading.value = true
-    await adminService.rechazarPublicacion(id, motivo, comentario)
+    procesandoRechazo.value = true
+    errorRechazo.value = ''
+    await adminService.rechazarPublicacion(publicacionARechazar.value, motivoRechazo.value)
+    cerrarModalRechazo()
     await cargarPublicaciones(paginacion.value.paginaActual)
   } catch (err: any) {
     console.error('Error al rechazar publicación', err)
-    const status = err?.response?.status
-    errorCodigo.value = typeof status === 'number' ? status : null
-    if (status === 401) {
-      errorMensaje.value = 'No autorizado. Inicia sesión con una cuenta de administrador.'
-    } else if (status === 403) {
-      errorMensaje.value = 'Acceso denegado. Necesitas rol de administrador.'
-    } else {
-      errorMensaje.value = err?.response?.data?.message || err?.message || 'Error al rechazar publicación'
-    }
+    errorRechazo.value = err?.response?.data?.message || err?.message || 'Error al rechazar la publicación'
   } finally {
-    isLoading.value = false
+    procesandoRechazo.value = false
   }
 }
 
 onMounted(() => {
-  cargarPublicaciones(1)
+  cargarPublicaciones()
 })
 </script>
 

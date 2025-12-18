@@ -353,6 +353,71 @@ export class AdminService {
     return this.mapearLiquidaciones(liquidaciones);
   }
 
+  async aprobarPublicacion(id: string, adminId: string | number) {
+    const publicacion = await this.prisma.publicacion.findUnique({
+      where: { id: BigInt(id) },
+    });
+
+    if (!publicacion) {
+      throw new NotFoundException('Publicación no encontrada');
+    }
+
+    return this.prisma.publicacion.update({
+      where: { id: BigInt(id) },
+      data: {
+        estadoModeracion: 'APROBADA',
+        fechaModeracion: new Date(),
+        moderadoPor: adminId.toString(),
+      },
+    });
+  }
+
+  async rechazarPublicacion(
+    id: string,
+    motivo: string,
+    adminId: string | number,
+  ) {
+    const publicacion = await this.prisma.publicacion.findUnique({
+      where: { id: BigInt(id) },
+    });
+
+    if (!publicacion) {
+      throw new NotFoundException('Publicación no encontrada');
+    }
+
+    // TODO: Notificar al usuario por email con el motivo
+
+    return this.prisma.publicacion.update({
+      where: { id: BigInt(id) },
+      data: {
+        estadoModeracion: 'RECHAZADA',
+        fechaModeracion: new Date(),
+        moderadoPor: adminId.toString(),
+        // TODO: Guardar motivo de rechazo si existiera campo
+      },
+    });
+  }
+
+  async eliminarPublicacion(id: string, adminId: string | number) {
+    const publicacion = await this.prisma.publicacion.findUnique({
+      where: { id: BigInt(id) },
+    });
+
+    if (!publicacion) {
+      throw new NotFoundException('Publicación no encontrada');
+    }
+
+    return this.prisma.publicacion.update({
+      where: { id: BigInt(id) },
+      data: {
+        estado: 'ELIMINADA',
+        estadoModeracion: 'RECHAZADA', // Opcional: marcar como rechazada también para consistencia
+        fechaModeracion: new Date(),
+        moderadoPor: adminId.toString(),
+      },
+    });
+  }
+
   async obtenerHistorialLiquidaciones() {
     const liquidaciones = await this.prisma.transaccion.findMany({
       where: {

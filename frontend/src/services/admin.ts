@@ -132,6 +132,17 @@ export const adminService = {
     }
     return response.data
   },
+
+  async eliminarPublicacion(id: string): Promise<{ message: string }> {
+    const response = await api.delete(`/admin/publicaciones/${id}`)
+    if (response.status !== 200) {
+      const mensaje = (response.data && (response.data.message || response.data.error)) || 'Error al eliminar publicación'
+      const err: any = new Error(mensaje)
+      err.response = response
+      throw err
+    }
+    return response.data
+  },
 }
 
 export default adminService
